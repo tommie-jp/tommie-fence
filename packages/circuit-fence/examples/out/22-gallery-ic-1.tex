@@ -1,0 +1,1156 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\makeatletter
+\pgfdeclareshape{ic74HC138s1000}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpoint{-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
+  \anchor{north}{\pgfpoint{0cm}{4.4cm}}
+  \anchor{south}{\pgfpoint{0cm}{-4.4cm}}
+  \anchor{east}{\pgfpoint{2.1cm}{0cm}}
+  \anchor{west}{\pgfpoint{-2.1cm}{0cm}}
+  \anchor{north west}{\pgfpoint{-2.1cm}{4.4cm}}
+  \anchor{pin 16}{\pgfpoint{0cm}{4.8cm}}
+  \anchor{bpin 16}{\pgfpoint{0cm}{4.4cm}}
+  \anchor{pin 6}{\pgfpoint{1cm}{4.8cm}}
+  \anchor{bpin 6}{\pgfpoint{1cm}{4.4cm}}
+  \anchor{pin 1}{\pgfpoint{-2.5cm}{1cm}}
+  \anchor{bpin 1}{\pgfpoint{-2.1cm}{1cm}}
+  \anchor{pin 2}{\pgfpoint{-2.5cm}{0cm}}
+  \anchor{bpin 2}{\pgfpoint{-2.1cm}{0cm}}
+  \anchor{pin 3}{\pgfpoint{-2.5cm}{-1cm}}
+  \anchor{bpin 3}{\pgfpoint{-2.1cm}{-1cm}}
+  \anchor{pin 15}{\pgfpoint{2.5cm}{3cm}}
+  \anchor{bpin 15}{\pgfpoint{2.1cm}{3cm}}
+  \anchor{pin 14}{\pgfpoint{2.5cm}{2cm}}
+  \anchor{bpin 14}{\pgfpoint{2.1cm}{2cm}}
+  \anchor{pin 13}{\pgfpoint{2.5cm}{1cm}}
+  \anchor{bpin 13}{\pgfpoint{2.1cm}{1cm}}
+  \anchor{pin 12}{\pgfpoint{2.5cm}{0cm}}
+  \anchor{bpin 12}{\pgfpoint{2.1cm}{0cm}}
+  \anchor{pin 11}{\pgfpoint{2.5cm}{-1cm}}
+  \anchor{bpin 11}{\pgfpoint{2.1cm}{-1cm}}
+  \anchor{pin 10}{\pgfpoint{2.5cm}{-2cm}}
+  \anchor{bpin 10}{\pgfpoint{2.1cm}{-2cm}}
+  \anchor{pin 9}{\pgfpoint{2.5cm}{-3cm}}
+  \anchor{bpin 9}{\pgfpoint{2.1cm}{-3cm}}
+  \anchor{pin 7}{\pgfpoint{2.5cm}{-4cm}}
+  \anchor{bpin 7}{\pgfpoint{2.1cm}{-4cm}}
+  \anchor{pin 8}{\pgfpoint{-1cm}{-4.8cm}}
+  \anchor{bpin 8}{\pgfpoint{-1cm}{-4.4cm}}
+  \anchor{pin 4}{\pgfpoint{0cm}{-4.8cm}}
+  \anchor{bpin 4}{\pgfpoint{0cm}{-4.4cm}}
+  \anchor{pin 5}{\pgfpoint{1cm}{-4.8cm}}
+  \anchor{bpin 5}{\pgfpoint{1cm}{-4.4cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-2.1cm}{-4.4cm}}{\pgfpoint{2.1cm}{4.4cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{4.8cm}}\pgfpathlineto{\pgfpoint{0cm}{4.4cm}}
+    \pgfpathmoveto{\pgfpoint{1cm}{4.8cm}}\pgfpathlineto{\pgfpoint{1cm}{4.4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{1cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{0cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{-1cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{3cm}}\pgfpathlineto{\pgfpoint{2.1cm}{3cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{2cm}}\pgfpathlineto{\pgfpoint{2.1cm}{2cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{1cm}}\pgfpathlineto{\pgfpoint{2.1cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{0cm}}\pgfpathlineto{\pgfpoint{2.1cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{-1cm}}\pgfpathlineto{\pgfpoint{2.1cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{-2cm}}\pgfpathlineto{\pgfpoint{2.1cm}{-2cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{-3cm}}\pgfpathlineto{\pgfpoint{2.1cm}{-3cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{-4cm}}\pgfpathlineto{\pgfpoint{2.1cm}{-4cm}}
+    \pgfpathmoveto{\pgfpoint{-1cm}{-4.8cm}}\pgfpathlineto{\pgfpoint{-1cm}{-4.4cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-4.8cm}}\pgfpathlineto{\pgfpoint{0cm}{-4.4cm}}
+    \pgfpathmoveto{\pgfpoint{1cm}{-4.8cm}}\pgfpathlineto{\pgfpoint{1cm}{-4.4cm}}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{ic74HC139s1000}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpoint{-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
+  \anchor{north}{\pgfpoint{0cm}{4.4cm}}
+  \anchor{south}{\pgfpoint{0cm}{-4.4cm}}
+  \anchor{east}{\pgfpoint{2.2cm}{0cm}}
+  \anchor{west}{\pgfpoint{-2.2cm}{0cm}}
+  \anchor{north west}{\pgfpoint{-2.2cm}{4.4cm}}
+  \anchor{pin 16}{\pgfpoint{0cm}{4.8cm}}
+  \anchor{bpin 16}{\pgfpoint{0cm}{4.4cm}}
+  \anchor{pin 2}{\pgfpoint{-2.6cm}{1cm}}
+  \anchor{bpin 2}{\pgfpoint{-2.2cm}{1cm}}
+  \anchor{pin 3}{\pgfpoint{-2.6cm}{0cm}}
+  \anchor{bpin 3}{\pgfpoint{-2.2cm}{0cm}}
+  \anchor{pin 14}{\pgfpoint{-2.6cm}{-1cm}}
+  \anchor{bpin 14}{\pgfpoint{-2.2cm}{-1cm}}
+  \anchor{pin 13}{\pgfpoint{-2.6cm}{-2cm}}
+  \anchor{bpin 13}{\pgfpoint{-2.2cm}{-2cm}}
+  \anchor{pin 4}{\pgfpoint{2.6cm}{3cm}}
+  \anchor{bpin 4}{\pgfpoint{2.2cm}{3cm}}
+  \anchor{pin 5}{\pgfpoint{2.6cm}{2cm}}
+  \anchor{bpin 5}{\pgfpoint{2.2cm}{2cm}}
+  \anchor{pin 6}{\pgfpoint{2.6cm}{1cm}}
+  \anchor{bpin 6}{\pgfpoint{2.2cm}{1cm}}
+  \anchor{pin 7}{\pgfpoint{2.6cm}{0cm}}
+  \anchor{bpin 7}{\pgfpoint{2.2cm}{0cm}}
+  \anchor{pin 12}{\pgfpoint{2.6cm}{-1cm}}
+  \anchor{bpin 12}{\pgfpoint{2.2cm}{-1cm}}
+  \anchor{pin 11}{\pgfpoint{2.6cm}{-2cm}}
+  \anchor{bpin 11}{\pgfpoint{2.2cm}{-2cm}}
+  \anchor{pin 10}{\pgfpoint{2.6cm}{-3cm}}
+  \anchor{bpin 10}{\pgfpoint{2.2cm}{-3cm}}
+  \anchor{pin 9}{\pgfpoint{2.6cm}{-4cm}}
+  \anchor{bpin 9}{\pgfpoint{2.2cm}{-4cm}}
+  \anchor{pin 8}{\pgfpoint{-1cm}{-4.8cm}}
+  \anchor{bpin 8}{\pgfpoint{-1cm}{-4.4cm}}
+  \anchor{pin 1}{\pgfpoint{0cm}{-4.8cm}}
+  \anchor{bpin 1}{\pgfpoint{0cm}{-4.4cm}}
+  \anchor{pin 15}{\pgfpoint{1cm}{-4.8cm}}
+  \anchor{bpin 15}{\pgfpoint{1cm}{-4.4cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-2.2cm}{-4.4cm}}{\pgfpoint{2.2cm}{4.4cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{4.8cm}}\pgfpathlineto{\pgfpoint{0cm}{4.4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{1cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{0cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{-1cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{-2cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{-2cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{3cm}}\pgfpathlineto{\pgfpoint{2.2cm}{3cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{2cm}}\pgfpathlineto{\pgfpoint{2.2cm}{2cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{1cm}}\pgfpathlineto{\pgfpoint{2.2cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{0cm}}\pgfpathlineto{\pgfpoint{2.2cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{-1cm}}\pgfpathlineto{\pgfpoint{2.2cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{-2cm}}\pgfpathlineto{\pgfpoint{2.2cm}{-2cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{-3cm}}\pgfpathlineto{\pgfpoint{2.2cm}{-3cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{-4cm}}\pgfpathlineto{\pgfpoint{2.2cm}{-4cm}}
+    \pgfpathmoveto{\pgfpoint{-1cm}{-4.8cm}}\pgfpathlineto{\pgfpoint{-1cm}{-4.4cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-4.8cm}}\pgfpathlineto{\pgfpoint{0cm}{-4.4cm}}
+    \pgfpathmoveto{\pgfpoint{1cm}{-4.8cm}}\pgfpathlineto{\pgfpoint{1cm}{-4.4cm}}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{ic74HC151s1000}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpoint{-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
+  \anchor{north}{\pgfpoint{0cm}{5.4cm}}
+  \anchor{south}{\pgfpoint{0cm}{-5.4cm}}
+  \anchor{east}{\pgfpoint{2cm}{0cm}}
+  \anchor{west}{\pgfpoint{-2cm}{0cm}}
+  \anchor{north west}{\pgfpoint{-2cm}{5.4cm}}
+  \anchor{pin 16}{\pgfpoint{0cm}{5.8cm}}
+  \anchor{bpin 16}{\pgfpoint{0cm}{5.4cm}}
+  \anchor{pin 11}{\pgfpoint{-2.4cm}{5cm}}
+  \anchor{bpin 11}{\pgfpoint{-2cm}{5cm}}
+  \anchor{pin 10}{\pgfpoint{-2.4cm}{4cm}}
+  \anchor{bpin 10}{\pgfpoint{-2cm}{4cm}}
+  \anchor{pin 9}{\pgfpoint{-2.4cm}{3cm}}
+  \anchor{bpin 9}{\pgfpoint{-2cm}{3cm}}
+  \anchor{pin 4}{\pgfpoint{-2.4cm}{2cm}}
+  \anchor{bpin 4}{\pgfpoint{-2cm}{2cm}}
+  \anchor{pin 3}{\pgfpoint{-2.4cm}{1cm}}
+  \anchor{bpin 3}{\pgfpoint{-2cm}{1cm}}
+  \anchor{pin 2}{\pgfpoint{-2.4cm}{0cm}}
+  \anchor{bpin 2}{\pgfpoint{-2cm}{0cm}}
+  \anchor{pin 1}{\pgfpoint{-2.4cm}{-1cm}}
+  \anchor{bpin 1}{\pgfpoint{-2cm}{-1cm}}
+  \anchor{pin 15}{\pgfpoint{-2.4cm}{-2cm}}
+  \anchor{bpin 15}{\pgfpoint{-2cm}{-2cm}}
+  \anchor{pin 14}{\pgfpoint{-2.4cm}{-3cm}}
+  \anchor{bpin 14}{\pgfpoint{-2cm}{-3cm}}
+  \anchor{pin 13}{\pgfpoint{-2.4cm}{-4cm}}
+  \anchor{bpin 13}{\pgfpoint{-2cm}{-4cm}}
+  \anchor{pin 12}{\pgfpoint{-2.4cm}{-5cm}}
+  \anchor{bpin 12}{\pgfpoint{-2cm}{-5cm}}
+  \anchor{pin 5}{\pgfpoint{2.4cm}{0cm}}
+  \anchor{bpin 5}{\pgfpoint{2cm}{0cm}}
+  \anchor{pin 6}{\pgfpoint{2.4cm}{-1cm}}
+  \anchor{bpin 6}{\pgfpoint{2cm}{-1cm}}
+  \anchor{pin 8}{\pgfpoint{0cm}{-5.8cm}}
+  \anchor{bpin 8}{\pgfpoint{0cm}{-5.4cm}}
+  \anchor{pin 7}{\pgfpoint{1cm}{-5.8cm}}
+  \anchor{bpin 7}{\pgfpoint{1cm}{-5.4cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-2cm}{-5.4cm}}{\pgfpoint{2cm}{5.4cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{5.8cm}}\pgfpathlineto{\pgfpoint{0cm}{5.4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.4cm}{5cm}}\pgfpathlineto{\pgfpoint{-2cm}{5cm}}
+    \pgfpathmoveto{\pgfpoint{-2.4cm}{4cm}}\pgfpathlineto{\pgfpoint{-2cm}{4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.4cm}{3cm}}\pgfpathlineto{\pgfpoint{-2cm}{3cm}}
+    \pgfpathmoveto{\pgfpoint{-2.4cm}{2cm}}\pgfpathlineto{\pgfpoint{-2cm}{2cm}}
+    \pgfpathmoveto{\pgfpoint{-2.4cm}{1cm}}\pgfpathlineto{\pgfpoint{-2cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.4cm}{0cm}}\pgfpathlineto{\pgfpoint{-2cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{-2.4cm}{-1cm}}\pgfpathlineto{\pgfpoint{-2cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.4cm}{-2cm}}\pgfpathlineto{\pgfpoint{-2cm}{-2cm}}
+    \pgfpathmoveto{\pgfpoint{-2.4cm}{-3cm}}\pgfpathlineto{\pgfpoint{-2cm}{-3cm}}
+    \pgfpathmoveto{\pgfpoint{-2.4cm}{-4cm}}\pgfpathlineto{\pgfpoint{-2cm}{-4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.4cm}{-5cm}}\pgfpathlineto{\pgfpoint{-2cm}{-5cm}}
+    \pgfpathmoveto{\pgfpoint{2.4cm}{0cm}}\pgfpathlineto{\pgfpoint{2cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{2.4cm}{-1cm}}\pgfpathlineto{\pgfpoint{2cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-5.8cm}}\pgfpathlineto{\pgfpoint{0cm}{-5.4cm}}
+    \pgfpathmoveto{\pgfpoint{1cm}{-5.8cm}}\pgfpathlineto{\pgfpoint{1cm}{-5.4cm}}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{ic74HC153s1000}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpoint{-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
+  \anchor{north}{\pgfpoint{0cm}{5.4cm}}
+  \anchor{south}{\pgfpoint{0cm}{-5.4cm}}
+  \anchor{east}{\pgfpoint{2.2cm}{0cm}}
+  \anchor{west}{\pgfpoint{-2.2cm}{0cm}}
+  \anchor{north west}{\pgfpoint{-2.2cm}{5.4cm}}
+  \anchor{pin 16}{\pgfpoint{0cm}{5.8cm}}
+  \anchor{bpin 16}{\pgfpoint{0cm}{5.4cm}}
+  \anchor{pin 14}{\pgfpoint{-2.6cm}{4cm}}
+  \anchor{bpin 14}{\pgfpoint{-2.2cm}{4cm}}
+  \anchor{pin 2}{\pgfpoint{-2.6cm}{3cm}}
+  \anchor{bpin 2}{\pgfpoint{-2.2cm}{3cm}}
+  \anchor{pin 6}{\pgfpoint{-2.6cm}{2cm}}
+  \anchor{bpin 6}{\pgfpoint{-2.2cm}{2cm}}
+  \anchor{pin 5}{\pgfpoint{-2.6cm}{1cm}}
+  \anchor{bpin 5}{\pgfpoint{-2.2cm}{1cm}}
+  \anchor{pin 4}{\pgfpoint{-2.6cm}{0cm}}
+  \anchor{bpin 4}{\pgfpoint{-2.2cm}{0cm}}
+  \anchor{pin 3}{\pgfpoint{-2.6cm}{-1cm}}
+  \anchor{bpin 3}{\pgfpoint{-2.2cm}{-1cm}}
+  \anchor{pin 10}{\pgfpoint{-2.6cm}{-2cm}}
+  \anchor{bpin 10}{\pgfpoint{-2.2cm}{-2cm}}
+  \anchor{pin 11}{\pgfpoint{-2.6cm}{-3cm}}
+  \anchor{bpin 11}{\pgfpoint{-2.2cm}{-3cm}}
+  \anchor{pin 12}{\pgfpoint{-2.6cm}{-4cm}}
+  \anchor{bpin 12}{\pgfpoint{-2.2cm}{-4cm}}
+  \anchor{pin 13}{\pgfpoint{-2.6cm}{-5cm}}
+  \anchor{bpin 13}{\pgfpoint{-2.2cm}{-5cm}}
+  \anchor{pin 7}{\pgfpoint{2.6cm}{0cm}}
+  \anchor{bpin 7}{\pgfpoint{2.2cm}{0cm}}
+  \anchor{pin 9}{\pgfpoint{2.6cm}{-1cm}}
+  \anchor{bpin 9}{\pgfpoint{2.2cm}{-1cm}}
+  \anchor{pin 8}{\pgfpoint{-1cm}{-5.8cm}}
+  \anchor{bpin 8}{\pgfpoint{-1cm}{-5.4cm}}
+  \anchor{pin 1}{\pgfpoint{0cm}{-5.8cm}}
+  \anchor{bpin 1}{\pgfpoint{0cm}{-5.4cm}}
+  \anchor{pin 15}{\pgfpoint{1cm}{-5.8cm}}
+  \anchor{bpin 15}{\pgfpoint{1cm}{-5.4cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-2.2cm}{-5.4cm}}{\pgfpoint{2.2cm}{5.4cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{5.8cm}}\pgfpathlineto{\pgfpoint{0cm}{5.4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{4cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{3cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{3cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{2cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{2cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{1cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{0cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{-1cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{-2cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{-2cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{-3cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{-3cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{-4cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{-4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{-5cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{-5cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{0cm}}\pgfpathlineto{\pgfpoint{2.2cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{-1cm}}\pgfpathlineto{\pgfpoint{2.2cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{-1cm}{-5.8cm}}\pgfpathlineto{\pgfpoint{-1cm}{-5.4cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-5.8cm}}\pgfpathlineto{\pgfpoint{0cm}{-5.4cm}}
+    \pgfpathmoveto{\pgfpoint{1cm}{-5.8cm}}\pgfpathlineto{\pgfpoint{1cm}{-5.4cm}}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{ic74HC157s1000}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpoint{-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
+  \anchor{north}{\pgfpoint{0cm}{4.4cm}}
+  \anchor{south}{\pgfpoint{0cm}{-4.4cm}}
+  \anchor{east}{\pgfpoint{2.1cm}{0cm}}
+  \anchor{west}{\pgfpoint{-2.1cm}{0cm}}
+  \anchor{north west}{\pgfpoint{-2.1cm}{4.4cm}}
+  \anchor{pin 16}{\pgfpoint{0cm}{4.8cm}}
+  \anchor{bpin 16}{\pgfpoint{0cm}{4.4cm}}
+  \anchor{pin 1}{\pgfpoint{-2.5cm}{4cm}}
+  \anchor{bpin 1}{\pgfpoint{-2.1cm}{4cm}}
+  \anchor{pin 2}{\pgfpoint{-2.5cm}{3cm}}
+  \anchor{bpin 2}{\pgfpoint{-2.1cm}{3cm}}
+  \anchor{pin 3}{\pgfpoint{-2.5cm}{2cm}}
+  \anchor{bpin 3}{\pgfpoint{-2.1cm}{2cm}}
+  \anchor{pin 5}{\pgfpoint{-2.5cm}{1cm}}
+  \anchor{bpin 5}{\pgfpoint{-2.1cm}{1cm}}
+  \anchor{pin 6}{\pgfpoint{-2.5cm}{0cm}}
+  \anchor{bpin 6}{\pgfpoint{-2.1cm}{0cm}}
+  \anchor{pin 11}{\pgfpoint{-2.5cm}{-1cm}}
+  \anchor{bpin 11}{\pgfpoint{-2.1cm}{-1cm}}
+  \anchor{pin 10}{\pgfpoint{-2.5cm}{-2cm}}
+  \anchor{bpin 10}{\pgfpoint{-2.1cm}{-2cm}}
+  \anchor{pin 14}{\pgfpoint{-2.5cm}{-3cm}}
+  \anchor{bpin 14}{\pgfpoint{-2.1cm}{-3cm}}
+  \anchor{pin 13}{\pgfpoint{-2.5cm}{-4cm}}
+  \anchor{bpin 13}{\pgfpoint{-2.1cm}{-4cm}}
+  \anchor{pin 4}{\pgfpoint{2.5cm}{1cm}}
+  \anchor{bpin 4}{\pgfpoint{2.1cm}{1cm}}
+  \anchor{pin 7}{\pgfpoint{2.5cm}{0cm}}
+  \anchor{bpin 7}{\pgfpoint{2.1cm}{0cm}}
+  \anchor{pin 9}{\pgfpoint{2.5cm}{-1cm}}
+  \anchor{bpin 9}{\pgfpoint{2.1cm}{-1cm}}
+  \anchor{pin 12}{\pgfpoint{2.5cm}{-2cm}}
+  \anchor{bpin 12}{\pgfpoint{2.1cm}{-2cm}}
+  \anchor{pin 8}{\pgfpoint{0cm}{-4.8cm}}
+  \anchor{bpin 8}{\pgfpoint{0cm}{-4.4cm}}
+  \anchor{pin 15}{\pgfpoint{1cm}{-4.8cm}}
+  \anchor{bpin 15}{\pgfpoint{1cm}{-4.4cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-2.1cm}{-4.4cm}}{\pgfpoint{2.1cm}{4.4cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{4.8cm}}\pgfpathlineto{\pgfpoint{0cm}{4.4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{4cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{3cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{3cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{2cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{2cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{1cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{0cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{-1cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{-2cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{-2cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{-3cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{-3cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{-4cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{-4cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{1cm}}\pgfpathlineto{\pgfpoint{2.1cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{0cm}}\pgfpathlineto{\pgfpoint{2.1cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{-1cm}}\pgfpathlineto{\pgfpoint{2.1cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{-2cm}}\pgfpathlineto{\pgfpoint{2.1cm}{-2cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-4.8cm}}\pgfpathlineto{\pgfpoint{0cm}{-4.4cm}}
+    \pgfpathmoveto{\pgfpoint{1cm}{-4.8cm}}\pgfpathlineto{\pgfpoint{1cm}{-4.4cm}}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{ic74HC161s1000}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpoint{-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
+  \anchor{north}{\pgfpoint{0cm}{3.4cm}}
+  \anchor{south}{\pgfpoint{0cm}{-3.4cm}}
+  \anchor{east}{\pgfpoint{2.2cm}{0cm}}
+  \anchor{west}{\pgfpoint{-2.2cm}{0cm}}
+  \anchor{north west}{\pgfpoint{-2.2cm}{3.4cm}}
+  \anchor{pin 16}{\pgfpoint{-1cm}{3.8cm}}
+  \anchor{bpin 16}{\pgfpoint{-1cm}{3.4cm}}
+  \anchor{pin 1}{\pgfpoint{0cm}{3.8cm}}
+  \anchor{bpin 1}{\pgfpoint{0cm}{3.4cm}}
+  \anchor{pin 9}{\pgfpoint{1cm}{3.8cm}}
+  \anchor{bpin 9}{\pgfpoint{1cm}{3.4cm}}
+  \anchor{pin 3}{\pgfpoint{-2.6cm}{3cm}}
+  \anchor{bpin 3}{\pgfpoint{-2.2cm}{3cm}}
+  \anchor{pin 4}{\pgfpoint{-2.6cm}{2cm}}
+  \anchor{bpin 4}{\pgfpoint{-2.2cm}{2cm}}
+  \anchor{pin 5}{\pgfpoint{-2.6cm}{1cm}}
+  \anchor{bpin 5}{\pgfpoint{-2.2cm}{1cm}}
+  \anchor{pin 6}{\pgfpoint{-2.6cm}{0cm}}
+  \anchor{bpin 6}{\pgfpoint{-2.2cm}{0cm}}
+  \anchor{pin 7}{\pgfpoint{-2.6cm}{-1cm}}
+  \anchor{bpin 7}{\pgfpoint{-2.2cm}{-1cm}}
+  \anchor{pin 10}{\pgfpoint{-2.6cm}{-2cm}}
+  \anchor{bpin 10}{\pgfpoint{-2.2cm}{-2cm}}
+  \anchor{pin 2}{\pgfpoint{-2.6cm}{-3cm}}
+  \anchor{bpin 2}{\pgfpoint{-2.2cm}{-3cm}}
+  \anchor{pin 14}{\pgfpoint{2.6cm}{2cm}}
+  \anchor{bpin 14}{\pgfpoint{2.2cm}{2cm}}
+  \anchor{pin 13}{\pgfpoint{2.6cm}{1cm}}
+  \anchor{bpin 13}{\pgfpoint{2.2cm}{1cm}}
+  \anchor{pin 12}{\pgfpoint{2.6cm}{0cm}}
+  \anchor{bpin 12}{\pgfpoint{2.2cm}{0cm}}
+  \anchor{pin 11}{\pgfpoint{2.6cm}{-1cm}}
+  \anchor{bpin 11}{\pgfpoint{2.2cm}{-1cm}}
+  \anchor{pin 15}{\pgfpoint{2.6cm}{-2cm}}
+  \anchor{bpin 15}{\pgfpoint{2.2cm}{-2cm}}
+  \anchor{pin 8}{\pgfpoint{0cm}{-3.8cm}}
+  \anchor{bpin 8}{\pgfpoint{0cm}{-3.4cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-2.2cm}{-3.4cm}}{\pgfpoint{2.2cm}{3.4cm}}
+    \pgfpathmoveto{\pgfpoint{-1cm}{3.8cm}}\pgfpathlineto{\pgfpoint{-1cm}{3.4cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{3.8cm}}\pgfpathlineto{\pgfpoint{0cm}{3.4cm}}
+    \pgfpathmoveto{\pgfpoint{1cm}{3.8cm}}\pgfpathlineto{\pgfpoint{1cm}{3.4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{3cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{3cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{2cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{2cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{1cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{0cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{-1cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{-2cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{-2cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{-3cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{-3cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{2cm}}\pgfpathlineto{\pgfpoint{2.2cm}{2cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{1cm}}\pgfpathlineto{\pgfpoint{2.2cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{0cm}}\pgfpathlineto{\pgfpoint{2.2cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{-1cm}}\pgfpathlineto{\pgfpoint{2.2cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{-2cm}}\pgfpathlineto{\pgfpoint{2.2cm}{-2cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-3.8cm}}\pgfpathlineto{\pgfpoint{0cm}{-3.4cm}}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{ic74HC163s1000}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpoint{-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
+  \anchor{north}{\pgfpoint{0cm}{3.4cm}}
+  \anchor{south}{\pgfpoint{0cm}{-3.4cm}}
+  \anchor{east}{\pgfpoint{2.2cm}{0cm}}
+  \anchor{west}{\pgfpoint{-2.2cm}{0cm}}
+  \anchor{north west}{\pgfpoint{-2.2cm}{3.4cm}}
+  \anchor{pin 16}{\pgfpoint{-1cm}{3.8cm}}
+  \anchor{bpin 16}{\pgfpoint{-1cm}{3.4cm}}
+  \anchor{pin 1}{\pgfpoint{0cm}{3.8cm}}
+  \anchor{bpin 1}{\pgfpoint{0cm}{3.4cm}}
+  \anchor{pin 9}{\pgfpoint{1cm}{3.8cm}}
+  \anchor{bpin 9}{\pgfpoint{1cm}{3.4cm}}
+  \anchor{pin 3}{\pgfpoint{-2.6cm}{3cm}}
+  \anchor{bpin 3}{\pgfpoint{-2.2cm}{3cm}}
+  \anchor{pin 4}{\pgfpoint{-2.6cm}{2cm}}
+  \anchor{bpin 4}{\pgfpoint{-2.2cm}{2cm}}
+  \anchor{pin 5}{\pgfpoint{-2.6cm}{1cm}}
+  \anchor{bpin 5}{\pgfpoint{-2.2cm}{1cm}}
+  \anchor{pin 6}{\pgfpoint{-2.6cm}{0cm}}
+  \anchor{bpin 6}{\pgfpoint{-2.2cm}{0cm}}
+  \anchor{pin 7}{\pgfpoint{-2.6cm}{-1cm}}
+  \anchor{bpin 7}{\pgfpoint{-2.2cm}{-1cm}}
+  \anchor{pin 10}{\pgfpoint{-2.6cm}{-2cm}}
+  \anchor{bpin 10}{\pgfpoint{-2.2cm}{-2cm}}
+  \anchor{pin 2}{\pgfpoint{-2.6cm}{-3cm}}
+  \anchor{bpin 2}{\pgfpoint{-2.2cm}{-3cm}}
+  \anchor{pin 14}{\pgfpoint{2.6cm}{2cm}}
+  \anchor{bpin 14}{\pgfpoint{2.2cm}{2cm}}
+  \anchor{pin 13}{\pgfpoint{2.6cm}{1cm}}
+  \anchor{bpin 13}{\pgfpoint{2.2cm}{1cm}}
+  \anchor{pin 12}{\pgfpoint{2.6cm}{0cm}}
+  \anchor{bpin 12}{\pgfpoint{2.2cm}{0cm}}
+  \anchor{pin 11}{\pgfpoint{2.6cm}{-1cm}}
+  \anchor{bpin 11}{\pgfpoint{2.2cm}{-1cm}}
+  \anchor{pin 15}{\pgfpoint{2.6cm}{-2cm}}
+  \anchor{bpin 15}{\pgfpoint{2.2cm}{-2cm}}
+  \anchor{pin 8}{\pgfpoint{0cm}{-3.8cm}}
+  \anchor{bpin 8}{\pgfpoint{0cm}{-3.4cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-2.2cm}{-3.4cm}}{\pgfpoint{2.2cm}{3.4cm}}
+    \pgfpathmoveto{\pgfpoint{-1cm}{3.8cm}}\pgfpathlineto{\pgfpoint{-1cm}{3.4cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{3.8cm}}\pgfpathlineto{\pgfpoint{0cm}{3.4cm}}
+    \pgfpathmoveto{\pgfpoint{1cm}{3.8cm}}\pgfpathlineto{\pgfpoint{1cm}{3.4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{3cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{3cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{2cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{2cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{1cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{0cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{-1cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{-2cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{-2cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{-3cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{-3cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{2cm}}\pgfpathlineto{\pgfpoint{2.2cm}{2cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{1cm}}\pgfpathlineto{\pgfpoint{2.2cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{0cm}}\pgfpathlineto{\pgfpoint{2.2cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{-1cm}}\pgfpathlineto{\pgfpoint{2.2cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{-2cm}}\pgfpathlineto{\pgfpoint{2.2cm}{-2cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-3.8cm}}\pgfpathlineto{\pgfpoint{0cm}{-3.4cm}}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{ic74HC164s1000}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpoint{-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
+  \anchor{north}{\pgfpoint{0cm}{4.4cm}}
+  \anchor{south}{\pgfpoint{0cm}{-4.4cm}}
+  \anchor{east}{\pgfpoint{2.1cm}{0cm}}
+  \anchor{west}{\pgfpoint{-2.1cm}{0cm}}
+  \anchor{north west}{\pgfpoint{-2.1cm}{4.4cm}}
+  \anchor{pin 14}{\pgfpoint{0cm}{4.8cm}}
+  \anchor{bpin 14}{\pgfpoint{0cm}{4.4cm}}
+  \anchor{pin 9}{\pgfpoint{1cm}{4.8cm}}
+  \anchor{bpin 9}{\pgfpoint{1cm}{4.4cm}}
+  \anchor{pin 1}{\pgfpoint{-2.5cm}{1cm}}
+  \anchor{bpin 1}{\pgfpoint{-2.1cm}{1cm}}
+  \anchor{pin 2}{\pgfpoint{-2.5cm}{0cm}}
+  \anchor{bpin 2}{\pgfpoint{-2.1cm}{0cm}}
+  \anchor{pin 8}{\pgfpoint{-2.5cm}{-1cm}}
+  \anchor{bpin 8}{\pgfpoint{-2.1cm}{-1cm}}
+  \anchor{pin 3}{\pgfpoint{2.5cm}{3cm}}
+  \anchor{bpin 3}{\pgfpoint{2.1cm}{3cm}}
+  \anchor{pin 4}{\pgfpoint{2.5cm}{2cm}}
+  \anchor{bpin 4}{\pgfpoint{2.1cm}{2cm}}
+  \anchor{pin 5}{\pgfpoint{2.5cm}{1cm}}
+  \anchor{bpin 5}{\pgfpoint{2.1cm}{1cm}}
+  \anchor{pin 6}{\pgfpoint{2.5cm}{0cm}}
+  \anchor{bpin 6}{\pgfpoint{2.1cm}{0cm}}
+  \anchor{pin 10}{\pgfpoint{2.5cm}{-1cm}}
+  \anchor{bpin 10}{\pgfpoint{2.1cm}{-1cm}}
+  \anchor{pin 11}{\pgfpoint{2.5cm}{-2cm}}
+  \anchor{bpin 11}{\pgfpoint{2.1cm}{-2cm}}
+  \anchor{pin 12}{\pgfpoint{2.5cm}{-3cm}}
+  \anchor{bpin 12}{\pgfpoint{2.1cm}{-3cm}}
+  \anchor{pin 13}{\pgfpoint{2.5cm}{-4cm}}
+  \anchor{bpin 13}{\pgfpoint{2.1cm}{-4cm}}
+  \anchor{pin 7}{\pgfpoint{0cm}{-4.8cm}}
+  \anchor{bpin 7}{\pgfpoint{0cm}{-4.4cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-2.1cm}{-4.4cm}}{\pgfpoint{2.1cm}{4.4cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{4.8cm}}\pgfpathlineto{\pgfpoint{0cm}{4.4cm}}
+    \pgfpathmoveto{\pgfpoint{1cm}{4.8cm}}\pgfpathlineto{\pgfpoint{1cm}{4.4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{1cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{0cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{-1cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{3cm}}\pgfpathlineto{\pgfpoint{2.1cm}{3cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{2cm}}\pgfpathlineto{\pgfpoint{2.1cm}{2cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{1cm}}\pgfpathlineto{\pgfpoint{2.1cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{0cm}}\pgfpathlineto{\pgfpoint{2.1cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{-1cm}}\pgfpathlineto{\pgfpoint{2.1cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{-2cm}}\pgfpathlineto{\pgfpoint{2.1cm}{-2cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{-3cm}}\pgfpathlineto{\pgfpoint{2.1cm}{-3cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{-4cm}}\pgfpathlineto{\pgfpoint{2.1cm}{-4cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-4.8cm}}\pgfpathlineto{\pgfpoint{0cm}{-4.4cm}}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{ic74HC165s1000}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpoint{-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
+  \anchor{north}{\pgfpoint{0cm}{5.4cm}}
+  \anchor{south}{\pgfpoint{0cm}{-5.4cm}}
+  \anchor{east}{\pgfpoint{2.2cm}{0cm}}
+  \anchor{west}{\pgfpoint{-2.2cm}{0cm}}
+  \anchor{north west}{\pgfpoint{-2.2cm}{5.4cm}}
+  \anchor{pin 16}{\pgfpoint{0cm}{5.8cm}}
+  \anchor{bpin 16}{\pgfpoint{0cm}{5.4cm}}
+  \anchor{pin 1}{\pgfpoint{-2.6cm}{5cm}}
+  \anchor{bpin 1}{\pgfpoint{-2.2cm}{5cm}}
+  \anchor{pin 2}{\pgfpoint{-2.6cm}{4cm}}
+  \anchor{bpin 2}{\pgfpoint{-2.2cm}{4cm}}
+  \anchor{pin 10}{\pgfpoint{-2.6cm}{3cm}}
+  \anchor{bpin 10}{\pgfpoint{-2.2cm}{3cm}}
+  \anchor{pin 11}{\pgfpoint{-2.6cm}{2cm}}
+  \anchor{bpin 11}{\pgfpoint{-2.2cm}{2cm}}
+  \anchor{pin 12}{\pgfpoint{-2.6cm}{1cm}}
+  \anchor{bpin 12}{\pgfpoint{-2.2cm}{1cm}}
+  \anchor{pin 13}{\pgfpoint{-2.6cm}{0cm}}
+  \anchor{bpin 13}{\pgfpoint{-2.2cm}{0cm}}
+  \anchor{pin 14}{\pgfpoint{-2.6cm}{-1cm}}
+  \anchor{bpin 14}{\pgfpoint{-2.2cm}{-1cm}}
+  \anchor{pin 3}{\pgfpoint{-2.6cm}{-2cm}}
+  \anchor{bpin 3}{\pgfpoint{-2.2cm}{-2cm}}
+  \anchor{pin 4}{\pgfpoint{-2.6cm}{-3cm}}
+  \anchor{bpin 4}{\pgfpoint{-2.2cm}{-3cm}}
+  \anchor{pin 5}{\pgfpoint{-2.6cm}{-4cm}}
+  \anchor{bpin 5}{\pgfpoint{-2.2cm}{-4cm}}
+  \anchor{pin 6}{\pgfpoint{-2.6cm}{-5cm}}
+  \anchor{bpin 6}{\pgfpoint{-2.2cm}{-5cm}}
+  \anchor{pin 9}{\pgfpoint{2.6cm}{0cm}}
+  \anchor{bpin 9}{\pgfpoint{2.2cm}{0cm}}
+  \anchor{pin 7}{\pgfpoint{2.6cm}{-1cm}}
+  \anchor{bpin 7}{\pgfpoint{2.2cm}{-1cm}}
+  \anchor{pin 8}{\pgfpoint{0cm}{-5.8cm}}
+  \anchor{bpin 8}{\pgfpoint{0cm}{-5.4cm}}
+  \anchor{pin 15}{\pgfpoint{1cm}{-5.8cm}}
+  \anchor{bpin 15}{\pgfpoint{1cm}{-5.4cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-2.2cm}{-5.4cm}}{\pgfpoint{2.2cm}{5.4cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{5.8cm}}\pgfpathlineto{\pgfpoint{0cm}{5.4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{5cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{5cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{4cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{3cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{3cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{2cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{2cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{1cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{0cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{-1cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{-2cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{-2cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{-3cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{-3cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{-4cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{-4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{-5cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{-5cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{0cm}}\pgfpathlineto{\pgfpoint{2.2cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{-1cm}}\pgfpathlineto{\pgfpoint{2.2cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-5.8cm}}\pgfpathlineto{\pgfpoint{0cm}{-5.4cm}}
+    \pgfpathmoveto{\pgfpoint{1cm}{-5.8cm}}\pgfpathlineto{\pgfpoint{1cm}{-5.4cm}}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{ic74HC194s1000}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpoint{-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
+  \anchor{north}{\pgfpoint{0cm}{4.4cm}}
+  \anchor{south}{\pgfpoint{0cm}{-4.4cm}}
+  \anchor{east}{\pgfpoint{2.1cm}{0cm}}
+  \anchor{west}{\pgfpoint{-2.1cm}{0cm}}
+  \anchor{north west}{\pgfpoint{-2.1cm}{4.4cm}}
+  \anchor{pin 16}{\pgfpoint{0cm}{4.8cm}}
+  \anchor{bpin 16}{\pgfpoint{0cm}{4.4cm}}
+  \anchor{pin 1}{\pgfpoint{1cm}{4.8cm}}
+  \anchor{bpin 1}{\pgfpoint{1cm}{4.4cm}}
+  \anchor{pin 2}{\pgfpoint{-2.5cm}{4cm}}
+  \anchor{bpin 2}{\pgfpoint{-2.1cm}{4cm}}
+  \anchor{pin 3}{\pgfpoint{-2.5cm}{3cm}}
+  \anchor{bpin 3}{\pgfpoint{-2.1cm}{3cm}}
+  \anchor{pin 4}{\pgfpoint{-2.5cm}{2cm}}
+  \anchor{bpin 4}{\pgfpoint{-2.1cm}{2cm}}
+  \anchor{pin 5}{\pgfpoint{-2.5cm}{1cm}}
+  \anchor{bpin 5}{\pgfpoint{-2.1cm}{1cm}}
+  \anchor{pin 6}{\pgfpoint{-2.5cm}{0cm}}
+  \anchor{bpin 6}{\pgfpoint{-2.1cm}{0cm}}
+  \anchor{pin 7}{\pgfpoint{-2.5cm}{-1cm}}
+  \anchor{bpin 7}{\pgfpoint{-2.1cm}{-1cm}}
+  \anchor{pin 9}{\pgfpoint{-2.5cm}{-2cm}}
+  \anchor{bpin 9}{\pgfpoint{-2.1cm}{-2cm}}
+  \anchor{pin 10}{\pgfpoint{-2.5cm}{-3cm}}
+  \anchor{bpin 10}{\pgfpoint{-2.1cm}{-3cm}}
+  \anchor{pin 11}{\pgfpoint{-2.5cm}{-4cm}}
+  \anchor{bpin 11}{\pgfpoint{-2.1cm}{-4cm}}
+  \anchor{pin 15}{\pgfpoint{2.5cm}{1cm}}
+  \anchor{bpin 15}{\pgfpoint{2.1cm}{1cm}}
+  \anchor{pin 14}{\pgfpoint{2.5cm}{0cm}}
+  \anchor{bpin 14}{\pgfpoint{2.1cm}{0cm}}
+  \anchor{pin 13}{\pgfpoint{2.5cm}{-1cm}}
+  \anchor{bpin 13}{\pgfpoint{2.1cm}{-1cm}}
+  \anchor{pin 12}{\pgfpoint{2.5cm}{-2cm}}
+  \anchor{bpin 12}{\pgfpoint{2.1cm}{-2cm}}
+  \anchor{pin 8}{\pgfpoint{0cm}{-4.8cm}}
+  \anchor{bpin 8}{\pgfpoint{0cm}{-4.4cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-2.1cm}{-4.4cm}}{\pgfpoint{2.1cm}{4.4cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{4.8cm}}\pgfpathlineto{\pgfpoint{0cm}{4.4cm}}
+    \pgfpathmoveto{\pgfpoint{1cm}{4.8cm}}\pgfpathlineto{\pgfpoint{1cm}{4.4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{4cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{3cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{3cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{2cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{2cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{1cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{0cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{-1cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{-2cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{-2cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{-3cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{-3cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{-4cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{-4cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{1cm}}\pgfpathlineto{\pgfpoint{2.1cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{0cm}}\pgfpathlineto{\pgfpoint{2.1cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{-1cm}}\pgfpathlineto{\pgfpoint{2.1cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{-2cm}}\pgfpathlineto{\pgfpoint{2.1cm}{-2cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-4.8cm}}\pgfpathlineto{\pgfpoint{0cm}{-4.4cm}}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{ic74HC595s1000}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpoint{-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
+  \anchor{north}{\pgfpoint{0cm}{4.4cm}}
+  \anchor{south}{\pgfpoint{0cm}{-4.4cm}}
+  \anchor{east}{\pgfpoint{2.2cm}{0cm}}
+  \anchor{west}{\pgfpoint{-2.2cm}{0cm}}
+  \anchor{north west}{\pgfpoint{-2.2cm}{4.4cm}}
+  \anchor{pin 16}{\pgfpoint{0cm}{4.8cm}}
+  \anchor{bpin 16}{\pgfpoint{0cm}{4.4cm}}
+  \anchor{pin 10}{\pgfpoint{1cm}{4.8cm}}
+  \anchor{bpin 10}{\pgfpoint{1cm}{4.4cm}}
+  \anchor{pin 14}{\pgfpoint{-2.6cm}{1cm}}
+  \anchor{bpin 14}{\pgfpoint{-2.2cm}{1cm}}
+  \anchor{pin 11}{\pgfpoint{-2.6cm}{0cm}}
+  \anchor{bpin 11}{\pgfpoint{-2.2cm}{0cm}}
+  \anchor{pin 12}{\pgfpoint{-2.6cm}{-1cm}}
+  \anchor{bpin 12}{\pgfpoint{-2.2cm}{-1cm}}
+  \anchor{pin 15}{\pgfpoint{2.6cm}{4cm}}
+  \anchor{bpin 15}{\pgfpoint{2.2cm}{4cm}}
+  \anchor{pin 1}{\pgfpoint{2.6cm}{3cm}}
+  \anchor{bpin 1}{\pgfpoint{2.2cm}{3cm}}
+  \anchor{pin 2}{\pgfpoint{2.6cm}{2cm}}
+  \anchor{bpin 2}{\pgfpoint{2.2cm}{2cm}}
+  \anchor{pin 3}{\pgfpoint{2.6cm}{1cm}}
+  \anchor{bpin 3}{\pgfpoint{2.2cm}{1cm}}
+  \anchor{pin 4}{\pgfpoint{2.6cm}{0cm}}
+  \anchor{bpin 4}{\pgfpoint{2.2cm}{0cm}}
+  \anchor{pin 5}{\pgfpoint{2.6cm}{-1cm}}
+  \anchor{bpin 5}{\pgfpoint{2.2cm}{-1cm}}
+  \anchor{pin 6}{\pgfpoint{2.6cm}{-2cm}}
+  \anchor{bpin 6}{\pgfpoint{2.2cm}{-2cm}}
+  \anchor{pin 7}{\pgfpoint{2.6cm}{-3cm}}
+  \anchor{bpin 7}{\pgfpoint{2.2cm}{-3cm}}
+  \anchor{pin 9}{\pgfpoint{2.6cm}{-4cm}}
+  \anchor{bpin 9}{\pgfpoint{2.2cm}{-4cm}}
+  \anchor{pin 8}{\pgfpoint{0cm}{-4.8cm}}
+  \anchor{bpin 8}{\pgfpoint{0cm}{-4.4cm}}
+  \anchor{pin 13}{\pgfpoint{1cm}{-4.8cm}}
+  \anchor{bpin 13}{\pgfpoint{1cm}{-4.4cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-2.2cm}{-4.4cm}}{\pgfpoint{2.2cm}{4.4cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{4.8cm}}\pgfpathlineto{\pgfpoint{0cm}{4.4cm}}
+    \pgfpathmoveto{\pgfpoint{1cm}{4.8cm}}\pgfpathlineto{\pgfpoint{1cm}{4.4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{1cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{0cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{-1cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{4cm}}\pgfpathlineto{\pgfpoint{2.2cm}{4cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{3cm}}\pgfpathlineto{\pgfpoint{2.2cm}{3cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{2cm}}\pgfpathlineto{\pgfpoint{2.2cm}{2cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{1cm}}\pgfpathlineto{\pgfpoint{2.2cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{0cm}}\pgfpathlineto{\pgfpoint{2.2cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{-1cm}}\pgfpathlineto{\pgfpoint{2.2cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{-2cm}}\pgfpathlineto{\pgfpoint{2.2cm}{-2cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{-3cm}}\pgfpathlineto{\pgfpoint{2.2cm}{-3cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{-4cm}}\pgfpathlineto{\pgfpoint{2.2cm}{-4cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-4.8cm}}\pgfpathlineto{\pgfpoint{0cm}{-4.4cm}}
+    \pgfpathmoveto{\pgfpoint{1cm}{-4.8cm}}\pgfpathlineto{\pgfpoint{1cm}{-4.4cm}}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{icCD4511Bs1000}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpoint{-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
+  \anchor{north}{\pgfpoint{0cm}{3.4cm}}
+  \anchor{south}{\pgfpoint{0cm}{-3.4cm}}
+  \anchor{east}{\pgfpoint{2.2cm}{0cm}}
+  \anchor{west}{\pgfpoint{-2.2cm}{0cm}}
+  \anchor{north west}{\pgfpoint{-2.2cm}{3.4cm}}
+  \anchor{pin 16}{\pgfpoint{-1cm}{3.8cm}}
+  \anchor{bpin 16}{\pgfpoint{-1cm}{3.4cm}}
+  \anchor{pin 3}{\pgfpoint{0cm}{3.8cm}}
+  \anchor{bpin 3}{\pgfpoint{0cm}{3.4cm}}
+  \anchor{pin 4}{\pgfpoint{1cm}{3.8cm}}
+  \anchor{bpin 4}{\pgfpoint{1cm}{3.4cm}}
+  \anchor{pin 7}{\pgfpoint{-2.6cm}{1cm}}
+  \anchor{bpin 7}{\pgfpoint{-2.2cm}{1cm}}
+  \anchor{pin 1}{\pgfpoint{-2.6cm}{0cm}}
+  \anchor{bpin 1}{\pgfpoint{-2.2cm}{0cm}}
+  \anchor{pin 2}{\pgfpoint{-2.6cm}{-1cm}}
+  \anchor{bpin 2}{\pgfpoint{-2.2cm}{-1cm}}
+  \anchor{pin 6}{\pgfpoint{-2.6cm}{-2cm}}
+  \anchor{bpin 6}{\pgfpoint{-2.2cm}{-2cm}}
+  \anchor{pin 13}{\pgfpoint{2.6cm}{3cm}}
+  \anchor{bpin 13}{\pgfpoint{2.2cm}{3cm}}
+  \anchor{pin 12}{\pgfpoint{2.6cm}{2cm}}
+  \anchor{bpin 12}{\pgfpoint{2.2cm}{2cm}}
+  \anchor{pin 11}{\pgfpoint{2.6cm}{1cm}}
+  \anchor{bpin 11}{\pgfpoint{2.2cm}{1cm}}
+  \anchor{pin 10}{\pgfpoint{2.6cm}{0cm}}
+  \anchor{bpin 10}{\pgfpoint{2.2cm}{0cm}}
+  \anchor{pin 9}{\pgfpoint{2.6cm}{-1cm}}
+  \anchor{bpin 9}{\pgfpoint{2.2cm}{-1cm}}
+  \anchor{pin 15}{\pgfpoint{2.6cm}{-2cm}}
+  \anchor{bpin 15}{\pgfpoint{2.2cm}{-2cm}}
+  \anchor{pin 14}{\pgfpoint{2.6cm}{-3cm}}
+  \anchor{bpin 14}{\pgfpoint{2.2cm}{-3cm}}
+  \anchor{pin 8}{\pgfpoint{0cm}{-3.8cm}}
+  \anchor{bpin 8}{\pgfpoint{0cm}{-3.4cm}}
+  \anchor{pin 5}{\pgfpoint{1cm}{-3.8cm}}
+  \anchor{bpin 5}{\pgfpoint{1cm}{-3.4cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-2.2cm}{-3.4cm}}{\pgfpoint{2.2cm}{3.4cm}}
+    \pgfpathmoveto{\pgfpoint{-1cm}{3.8cm}}\pgfpathlineto{\pgfpoint{-1cm}{3.4cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{3.8cm}}\pgfpathlineto{\pgfpoint{0cm}{3.4cm}}
+    \pgfpathmoveto{\pgfpoint{1cm}{3.8cm}}\pgfpathlineto{\pgfpoint{1cm}{3.4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{1cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{0cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{-1cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.6cm}{-2cm}}\pgfpathlineto{\pgfpoint{-2.2cm}{-2cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{3cm}}\pgfpathlineto{\pgfpoint{2.2cm}{3cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{2cm}}\pgfpathlineto{\pgfpoint{2.2cm}{2cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{1cm}}\pgfpathlineto{\pgfpoint{2.2cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{0cm}}\pgfpathlineto{\pgfpoint{2.2cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{-1cm}}\pgfpathlineto{\pgfpoint{2.2cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{-2cm}}\pgfpathlineto{\pgfpoint{2.2cm}{-2cm}}
+    \pgfpathmoveto{\pgfpoint{2.6cm}{-3cm}}\pgfpathlineto{\pgfpoint{2.2cm}{-3cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-3.8cm}}\pgfpathlineto{\pgfpoint{0cm}{-3.4cm}}
+    \pgfpathmoveto{\pgfpoint{1cm}{-3.8cm}}\pgfpathlineto{\pgfpoint{1cm}{-3.4cm}}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{icCD74HC283s1000}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpoint{-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
+  \anchor{north}{\pgfpoint{0cm}{4.4cm}}
+  \anchor{south}{\pgfpoint{0cm}{-4.4cm}}
+  \anchor{east}{\pgfpoint{2cm}{0cm}}
+  \anchor{west}{\pgfpoint{-2cm}{0cm}}
+  \anchor{north west}{\pgfpoint{-2cm}{4.4cm}}
+  \anchor{pin 16}{\pgfpoint{0cm}{4.8cm}}
+  \anchor{bpin 16}{\pgfpoint{0cm}{4.4cm}}
+  \anchor{pin 5}{\pgfpoint{-2.4cm}{4cm}}
+  \anchor{bpin 5}{\pgfpoint{-2cm}{4cm}}
+  \anchor{pin 6}{\pgfpoint{-2.4cm}{3cm}}
+  \anchor{bpin 6}{\pgfpoint{-2cm}{3cm}}
+  \anchor{pin 3}{\pgfpoint{-2.4cm}{2cm}}
+  \anchor{bpin 3}{\pgfpoint{-2cm}{2cm}}
+  \anchor{pin 2}{\pgfpoint{-2.4cm}{1cm}}
+  \anchor{bpin 2}{\pgfpoint{-2cm}{1cm}}
+  \anchor{pin 14}{\pgfpoint{-2.4cm}{0cm}}
+  \anchor{bpin 14}{\pgfpoint{-2cm}{0cm}}
+  \anchor{pin 15}{\pgfpoint{-2.4cm}{-1cm}}
+  \anchor{bpin 15}{\pgfpoint{-2cm}{-1cm}}
+  \anchor{pin 12}{\pgfpoint{-2.4cm}{-2cm}}
+  \anchor{bpin 12}{\pgfpoint{-2cm}{-2cm}}
+  \anchor{pin 11}{\pgfpoint{-2.4cm}{-3cm}}
+  \anchor{bpin 11}{\pgfpoint{-2cm}{-3cm}}
+  \anchor{pin 7}{\pgfpoint{-2.4cm}{-4cm}}
+  \anchor{bpin 7}{\pgfpoint{-2cm}{-4cm}}
+  \anchor{pin 4}{\pgfpoint{2.4cm}{2cm}}
+  \anchor{bpin 4}{\pgfpoint{2cm}{2cm}}
+  \anchor{pin 1}{\pgfpoint{2.4cm}{1cm}}
+  \anchor{bpin 1}{\pgfpoint{2cm}{1cm}}
+  \anchor{pin 13}{\pgfpoint{2.4cm}{0cm}}
+  \anchor{bpin 13}{\pgfpoint{2cm}{0cm}}
+  \anchor{pin 10}{\pgfpoint{2.4cm}{-1cm}}
+  \anchor{bpin 10}{\pgfpoint{2cm}{-1cm}}
+  \anchor{pin 9}{\pgfpoint{2.4cm}{-2cm}}
+  \anchor{bpin 9}{\pgfpoint{2cm}{-2cm}}
+  \anchor{pin 8}{\pgfpoint{0cm}{-4.8cm}}
+  \anchor{bpin 8}{\pgfpoint{0cm}{-4.4cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-2cm}{-4.4cm}}{\pgfpoint{2cm}{4.4cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{4.8cm}}\pgfpathlineto{\pgfpoint{0cm}{4.4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.4cm}{4cm}}\pgfpathlineto{\pgfpoint{-2cm}{4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.4cm}{3cm}}\pgfpathlineto{\pgfpoint{-2cm}{3cm}}
+    \pgfpathmoveto{\pgfpoint{-2.4cm}{2cm}}\pgfpathlineto{\pgfpoint{-2cm}{2cm}}
+    \pgfpathmoveto{\pgfpoint{-2.4cm}{1cm}}\pgfpathlineto{\pgfpoint{-2cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.4cm}{0cm}}\pgfpathlineto{\pgfpoint{-2cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{-2.4cm}{-1cm}}\pgfpathlineto{\pgfpoint{-2cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.4cm}{-2cm}}\pgfpathlineto{\pgfpoint{-2cm}{-2cm}}
+    \pgfpathmoveto{\pgfpoint{-2.4cm}{-3cm}}\pgfpathlineto{\pgfpoint{-2cm}{-3cm}}
+    \pgfpathmoveto{\pgfpoint{-2.4cm}{-4cm}}\pgfpathlineto{\pgfpoint{-2cm}{-4cm}}
+    \pgfpathmoveto{\pgfpoint{2.4cm}{2cm}}\pgfpathlineto{\pgfpoint{2cm}{2cm}}
+    \pgfpathmoveto{\pgfpoint{2.4cm}{1cm}}\pgfpathlineto{\pgfpoint{2cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{2.4cm}{0cm}}\pgfpathlineto{\pgfpoint{2cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{2.4cm}{-1cm}}\pgfpathlineto{\pgfpoint{2cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{2.4cm}{-2cm}}\pgfpathlineto{\pgfpoint{2cm}{-2cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-4.8cm}}\pgfpathlineto{\pgfpoint{0cm}{-4.4cm}}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{icNE555s1000}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpoint{-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
+  \anchor{north}{\pgfpoint{0cm}{1.4cm}}
+  \anchor{south}{\pgfpoint{0cm}{-1.4cm}}
+  \anchor{east}{\pgfpoint{2.1cm}{0cm}}
+  \anchor{west}{\pgfpoint{-2.1cm}{0cm}}
+  \anchor{north west}{\pgfpoint{-2.1cm}{1.4cm}}
+  \anchor{pin 8}{\pgfpoint{0cm}{1.8cm}}
+  \anchor{bpin 8}{\pgfpoint{0cm}{1.4cm}}
+  \anchor{pin 4}{\pgfpoint{1cm}{1.8cm}}
+  \anchor{bpin 4}{\pgfpoint{1cm}{1.4cm}}
+  \anchor{pin 7}{\pgfpoint{-2.5cm}{1cm}}
+  \anchor{bpin 7}{\pgfpoint{-2.1cm}{1cm}}
+  \anchor{pin 6}{\pgfpoint{-2.5cm}{0cm}}
+  \anchor{bpin 6}{\pgfpoint{-2.1cm}{0cm}}
+  \anchor{pin 2}{\pgfpoint{-2.5cm}{-1cm}}
+  \anchor{bpin 2}{\pgfpoint{-2.1cm}{-1cm}}
+  \anchor{pin 3}{\pgfpoint{2.5cm}{0cm}}
+  \anchor{bpin 3}{\pgfpoint{2.1cm}{0cm}}
+  \anchor{pin 1}{\pgfpoint{0cm}{-1.8cm}}
+  \anchor{bpin 1}{\pgfpoint{0cm}{-1.4cm}}
+  \anchor{pin 5}{\pgfpoint{1cm}{-1.8cm}}
+  \anchor{bpin 5}{\pgfpoint{1cm}{-1.4cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-2.1cm}{-1.4cm}}{\pgfpoint{2.1cm}{1.4cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{1.8cm}}\pgfpathlineto{\pgfpoint{0cm}{1.4cm}}
+    \pgfpathmoveto{\pgfpoint{1cm}{1.8cm}}\pgfpathlineto{\pgfpoint{1cm}{1.4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{1cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{0cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{-1cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{0cm}}\pgfpathlineto{\pgfpoint{2.1cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-1.8cm}}\pgfpathlineto{\pgfpoint{0cm}{-1.4cm}}
+    \pgfpathmoveto{\pgfpoint{1cm}{-1.8cm}}\pgfpathlineto{\pgfpoint{1cm}{-1.4cm}}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{icTLC555s1000}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpoint{-.5\wd\pgfnodeparttextbox}{-.5\ht\pgfnodeparttextbox}}
+  \anchor{north}{\pgfpoint{0cm}{1.4cm}}
+  \anchor{south}{\pgfpoint{0cm}{-1.4cm}}
+  \anchor{east}{\pgfpoint{2.1cm}{0cm}}
+  \anchor{west}{\pgfpoint{-2.1cm}{0cm}}
+  \anchor{north west}{\pgfpoint{-2.1cm}{1.4cm}}
+  \anchor{pin 8}{\pgfpoint{0cm}{1.8cm}}
+  \anchor{bpin 8}{\pgfpoint{0cm}{1.4cm}}
+  \anchor{pin 4}{\pgfpoint{1cm}{1.8cm}}
+  \anchor{bpin 4}{\pgfpoint{1cm}{1.4cm}}
+  \anchor{pin 7}{\pgfpoint{-2.5cm}{1cm}}
+  \anchor{bpin 7}{\pgfpoint{-2.1cm}{1cm}}
+  \anchor{pin 6}{\pgfpoint{-2.5cm}{0cm}}
+  \anchor{bpin 6}{\pgfpoint{-2.1cm}{0cm}}
+  \anchor{pin 2}{\pgfpoint{-2.5cm}{-1cm}}
+  \anchor{bpin 2}{\pgfpoint{-2.1cm}{-1cm}}
+  \anchor{pin 3}{\pgfpoint{2.5cm}{0cm}}
+  \anchor{bpin 3}{\pgfpoint{2.1cm}{0cm}}
+  \anchor{pin 1}{\pgfpoint{0cm}{-1.8cm}}
+  \anchor{bpin 1}{\pgfpoint{0cm}{-1.4cm}}
+  \anchor{pin 5}{\pgfpoint{1cm}{-1.8cm}}
+  \anchor{bpin 5}{\pgfpoint{1cm}{-1.4cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-2.1cm}{-1.4cm}}{\pgfpoint{2.1cm}{1.4cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{1.8cm}}\pgfpathlineto{\pgfpoint{0cm}{1.4cm}}
+    \pgfpathmoveto{\pgfpoint{1cm}{1.8cm}}\pgfpathlineto{\pgfpoint{1cm}{1.4cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{1cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{0cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{-2.5cm}{-1cm}}\pgfpathlineto{\pgfpoint{-2.1cm}{-1cm}}
+    \pgfpathmoveto{\pgfpoint{2.5cm}{0cm}}\pgfpathlineto{\pgfpoint{2.1cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-1.8cm}}\pgfpathlineto{\pgfpoint{0cm}{-1.4cm}}
+    \pgfpathmoveto{\pgfpoint{1cm}{-1.8cm}}\pgfpathlineto{\pgfpoint{1cm}{-1.4cm}}
+  }
+}
+\makeatother
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\coordinate (x2p25y3p5) at (2.5,-5);
+\coordinate (x5p5y3p5) at (9,-5);
+\coordinate (x8p5y3p5) at (15,-5);
+\coordinate (x11p75y3p5) at (21.5,-5);
+\coordinate (x15y3p5) at (28,-5);
+\coordinate (x2p5y9) at (3,-16);
+\coordinate (x5p5y9) at (9,-16);
+\coordinate (x8p75y9) at (15.5,-16);
+\coordinate (x11p75y9) at (21.5,-16);
+\coordinate (x15y9) at (28,-16);
+\coordinate (x2p5y15p5) at (3,-29);
+\coordinate (x5p5y15p5) at (9,-29);
+\coordinate (x8p75y15p5) at (15.5,-29);
+\coordinate (x11p75y15p5) at (21.5,-29);
+\coordinate (x14p75y15p5) at (27.5,-29);
+\node[icNE555s1000, draw, font=\scriptsize] (part-U1) at (x2p25y3p5) {$\mathrm{NE555}$}; % line 4
+\node[anchor=south west] at (part-U1.north west) {$U_{1}$}; % line 4
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U1.bpin 1) {X}; % line 4
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 2) {X}; % line 4
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 3) {X}; % line 4
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U1.bpin 4) {X}; % line 4
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U1.bpin 5) {X}; % line 4
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 6) {X}; % line 4
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 7) {X}; % line 4
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U1.bpin 8) {X}; % line 4
+\node[icTLC555s1000, draw, font=\scriptsize] (part-U2) at (x5p5y3p5) {$\mathrm{TLC555}$}; % line 5
+\node[anchor=south west] at (part-U2.north west) {$U_{2}$}; % line 5
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U2.bpin 1) {X}; % line 5
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 2) {X}; % line 5
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 3) {X}; % line 5
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U2.bpin 4) {X}; % line 5
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U2.bpin 5) {X}; % line 5
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 6) {X}; % line 5
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 7) {X}; % line 5
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U2.bpin 8) {X}; % line 5
+\node[icCD4511Bs1000, draw, font=\scriptsize] (part-U3) at (x8p5y3p5) {$\mathrm{CD4511B}$}; % line 6
+\node[anchor=south west] at (part-U3.north west) {$U_{3}$}; % line 6
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 1) {X}; % line 6
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 2) {X}; % line 6
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U3.bpin 3) {X}; % line 6
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U3.bpin 4) {X}; % line 6
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U3.bpin 5) {X}; % line 6
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 6) {X}; % line 6
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 7) {X}; % line 6
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U3.bpin 8) {X}; % line 6
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 9) {X}; % line 6
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 10) {X}; % line 6
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 11) {X}; % line 6
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 12) {X}; % line 6
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 13) {X}; % line 6
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 14) {X}; % line 6
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 15) {X}; % line 6
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U3.bpin 16) {X}; % line 6
+\node[ic74HC163s1000, draw, font=\scriptsize] (part-U4) at (x11p75y3p5) {$\mathrm{74HC163}$}; % line 7
+\node[anchor=south west] at (part-U4.north west) {$U_{4}$}; % line 7
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U4.bpin 1) {X}; % line 7
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 2) {X}; % line 7
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 3) {X}; % line 7
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 4) {X}; % line 7
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 5) {X}; % line 7
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 6) {X}; % line 7
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 7) {X}; % line 7
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U4.bpin 8) {X}; % line 7
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U4.bpin 9) {X}; % line 7
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 10) {X}; % line 7
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 11) {X}; % line 7
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 12) {X}; % line 7
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 13) {X}; % line 7
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 14) {X}; % line 7
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 15) {X}; % line 7
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U4.bpin 16) {X}; % line 7
+\node[ic74HC161s1000, draw, font=\scriptsize] (part-U5) at (x15y3p5) {$\mathrm{74HC161}$}; % line 8
+\node[anchor=south west] at (part-U5.north west) {$U_{5}$}; % line 8
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U5.bpin 1) {X}; % line 8
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 2) {X}; % line 8
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 3) {X}; % line 8
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 4) {X}; % line 8
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 5) {X}; % line 8
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 6) {X}; % line 8
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 7) {X}; % line 8
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U5.bpin 8) {X}; % line 8
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U5.bpin 9) {X}; % line 8
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 10) {X}; % line 8
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 11) {X}; % line 8
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 12) {X}; % line 8
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 13) {X}; % line 8
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 14) {X}; % line 8
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 15) {X}; % line 8
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U5.bpin 16) {X}; % line 8
+\node[ic74HC595s1000, draw, font=\scriptsize] (part-U6) at (x2p5y9) {$\mathrm{74HC595}$}; % line 9
+\node[anchor=south west] at (part-U6.north west) {$U_{6}$}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U6.bpin 1) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U6.bpin 2) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U6.bpin 3) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U6.bpin 4) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U6.bpin 5) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U6.bpin 6) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U6.bpin 7) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U6.bpin 8) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U6.bpin 9) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U6.bpin 10) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U6.bpin 11) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U6.bpin 12) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U6.bpin 13) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U6.bpin 14) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U6.bpin 15) {X}; % line 9
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U6.bpin 16) {X}; % line 9
+\node[ic74HC164s1000, draw, font=\scriptsize] (part-U7) at (x5p5y9) {$\mathrm{74HC164}$}; % line 10
+\node[anchor=south west] at (part-U7.north west) {$U_{7}$}; % line 10
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U7.bpin 1) {X}; % line 10
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U7.bpin 2) {X}; % line 10
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U7.bpin 3) {X}; % line 10
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U7.bpin 4) {X}; % line 10
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U7.bpin 5) {X}; % line 10
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U7.bpin 6) {X}; % line 10
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U7.bpin 7) {X}; % line 10
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U7.bpin 8) {X}; % line 10
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U7.bpin 9) {X}; % line 10
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U7.bpin 10) {X}; % line 10
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U7.bpin 11) {X}; % line 10
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U7.bpin 12) {X}; % line 10
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U7.bpin 13) {X}; % line 10
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U7.bpin 14) {X}; % line 10
+\node[ic74HC165s1000, draw, font=\scriptsize] (part-U8) at (x8p75y9) {$\mathrm{74HC165}$}; % line 11
+\node[anchor=south west] at (part-U8.north west) {$U_{8}$}; % line 11
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U8.bpin 1) {X}; % line 11
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U8.bpin 2) {X}; % line 11
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U8.bpin 3) {X}; % line 11
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U8.bpin 4) {X}; % line 11
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U8.bpin 5) {X}; % line 11
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U8.bpin 6) {X}; % line 11
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U8.bpin 7) {X}; % line 11
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U8.bpin 8) {X}; % line 11
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U8.bpin 9) {X}; % line 11
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U8.bpin 10) {X}; % line 11
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U8.bpin 11) {X}; % line 11
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U8.bpin 12) {X}; % line 11
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U8.bpin 13) {X}; % line 11
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U8.bpin 14) {X}; % line 11
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U8.bpin 15) {X}; % line 11
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U8.bpin 16) {X}; % line 11
+\node[ic74HC194s1000, draw, font=\scriptsize] (part-U9) at (x11p75y9) {$\mathrm{74HC194}$}; % line 12
+\node[anchor=south west] at (part-U9.north west) {$U_{9}$}; % line 12
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U9.bpin 1) {X}; % line 12
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U9.bpin 2) {X}; % line 12
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U9.bpin 3) {X}; % line 12
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U9.bpin 4) {X}; % line 12
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U9.bpin 5) {X}; % line 12
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U9.bpin 6) {X}; % line 12
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U9.bpin 7) {X}; % line 12
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U9.bpin 8) {X}; % line 12
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U9.bpin 9) {X}; % line 12
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U9.bpin 10) {X}; % line 12
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U9.bpin 11) {X}; % line 12
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U9.bpin 12) {X}; % line 12
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U9.bpin 13) {X}; % line 12
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U9.bpin 14) {X}; % line 12
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U9.bpin 15) {X}; % line 12
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U9.bpin 16) {X}; % line 12
+\node[ic74HC138s1000, draw, font=\scriptsize] (part-U10) at (x15y9) {$\mathrm{74HC138}$}; % line 13
+\node[anchor=south west] at (part-U10.north west) {$U_{10}$}; % line 13
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U10.bpin 1) {X}; % line 13
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U10.bpin 2) {X}; % line 13
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U10.bpin 3) {X}; % line 13
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U10.bpin 4) {X}; % line 13
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U10.bpin 5) {X}; % line 13
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U10.bpin 6) {X}; % line 13
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U10.bpin 7) {X}; % line 13
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U10.bpin 8) {X}; % line 13
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U10.bpin 9) {X}; % line 13
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U10.bpin 10) {X}; % line 13
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U10.bpin 11) {X}; % line 13
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U10.bpin 12) {X}; % line 13
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U10.bpin 13) {X}; % line 13
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U10.bpin 14) {X}; % line 13
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U10.bpin 15) {X}; % line 13
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U10.bpin 16) {X}; % line 13
+\node[ic74HC139s1000, draw, font=\scriptsize] (part-U11) at (x2p5y15p5) {$\mathrm{74HC139}$}; % line 14
+\node[anchor=south west] at (part-U11.north west) {$U_{11}$}; % line 14
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U11.bpin 1) {X}; % line 14
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U11.bpin 2) {X}; % line 14
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U11.bpin 3) {X}; % line 14
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U11.bpin 4) {X}; % line 14
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U11.bpin 5) {X}; % line 14
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U11.bpin 6) {X}; % line 14
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U11.bpin 7) {X}; % line 14
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U11.bpin 8) {X}; % line 14
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U11.bpin 9) {X}; % line 14
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U11.bpin 10) {X}; % line 14
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U11.bpin 11) {X}; % line 14
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U11.bpin 12) {X}; % line 14
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U11.bpin 13) {X}; % line 14
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U11.bpin 14) {X}; % line 14
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U11.bpin 15) {X}; % line 14
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U11.bpin 16) {X}; % line 14
+\node[ic74HC157s1000, draw, font=\scriptsize] (part-U12) at (x5p5y15p5) {$\mathrm{74HC157}$}; % line 15
+\node[anchor=south west] at (part-U12.north west) {$U_{12}$}; % line 15
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U12.bpin 1) {X}; % line 15
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U12.bpin 2) {X}; % line 15
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U12.bpin 3) {X}; % line 15
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U12.bpin 4) {X}; % line 15
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U12.bpin 5) {X}; % line 15
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U12.bpin 6) {X}; % line 15
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U12.bpin 7) {X}; % line 15
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U12.bpin 8) {X}; % line 15
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U12.bpin 9) {X}; % line 15
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U12.bpin 10) {X}; % line 15
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U12.bpin 11) {X}; % line 15
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U12.bpin 12) {X}; % line 15
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U12.bpin 13) {X}; % line 15
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U12.bpin 14) {X}; % line 15
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U12.bpin 15) {X}; % line 15
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U12.bpin 16) {X}; % line 15
+\node[ic74HC153s1000, draw, font=\scriptsize] (part-U13) at (x8p75y15p5) {$\mathrm{74HC153}$}; % line 16
+\node[anchor=south west] at (part-U13.north west) {$U_{13}$}; % line 16
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U13.bpin 1) {X}; % line 16
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U13.bpin 2) {X}; % line 16
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U13.bpin 3) {X}; % line 16
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U13.bpin 4) {X}; % line 16
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U13.bpin 5) {X}; % line 16
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U13.bpin 6) {X}; % line 16
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U13.bpin 7) {X}; % line 16
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U13.bpin 8) {X}; % line 16
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U13.bpin 9) {X}; % line 16
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U13.bpin 10) {X}; % line 16
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U13.bpin 11) {X}; % line 16
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U13.bpin 12) {X}; % line 16
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U13.bpin 13) {X}; % line 16
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U13.bpin 14) {X}; % line 16
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U13.bpin 15) {X}; % line 16
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U13.bpin 16) {X}; % line 16
+\node[ic74HC151s1000, draw, font=\scriptsize] (part-U14) at (x11p75y15p5) {$\mathrm{74HC151}$}; % line 17
+\node[anchor=south west] at (part-U14.north west) {$U_{14}$}; % line 17
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U14.bpin 1) {X}; % line 17
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U14.bpin 2) {X}; % line 17
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U14.bpin 3) {X}; % line 17
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U14.bpin 4) {X}; % line 17
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U14.bpin 5) {X}; % line 17
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U14.bpin 6) {X}; % line 17
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U14.bpin 7) {X}; % line 17
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U14.bpin 8) {X}; % line 17
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U14.bpin 9) {X}; % line 17
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U14.bpin 10) {X}; % line 17
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U14.bpin 11) {X}; % line 17
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U14.bpin 12) {X}; % line 17
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U14.bpin 13) {X}; % line 17
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U14.bpin 14) {X}; % line 17
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U14.bpin 15) {X}; % line 17
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U14.bpin 16) {X}; % line 17
+\node[icCD74HC283s1000, draw, font=\scriptsize] (part-U15) at (x14p75y15p5) {$\mathrm{CD74HC283}$}; % line 18
+\node[anchor=south west] at (part-U15.north west) {$U_{15}$}; % line 18
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U15.bpin 1) {X}; % line 18
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U15.bpin 2) {X}; % line 18
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U15.bpin 3) {X}; % line 18
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U15.bpin 4) {X}; % line 18
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U15.bpin 5) {X}; % line 18
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U15.bpin 6) {X}; % line 18
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U15.bpin 7) {X}; % line 18
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=4pt, inner sep=0] at (part-U15.bpin 8) {X}; % line 18
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U15.bpin 9) {X}; % line 18
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U15.bpin 10) {X}; % line 18
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U15.bpin 11) {X}; % line 18
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U15.bpin 12) {X}; % line 18
+\node[circuitnotemark, font=\scriptsize, anchor=east, xshift=-2pt, inner sep=0] at (part-U15.bpin 13) {X}; % line 18
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U15.bpin 14) {X}; % line 18
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-U15.bpin 15) {X}; % line 18
+\node[circuitnotemark, font=\scriptsize, anchor=west, yshift=-4pt, inner sep=0] at (part-U15.bpin 16) {X}; % line 18
+\node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(13.289,0.853);
+\node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};
+\path (circuitstamp.north east) rectangle ++(-5.08,-0.593);
+\end{circuitikz}
+\end{document}

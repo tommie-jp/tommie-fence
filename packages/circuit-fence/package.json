@@ -57,7 +57,8 @@
     "coverage": "vitest run --coverage",
     "examples": "npm run build && node dist/cli.cjs render examples --out examples/out && node scripts/figures.mjs examples examples/out",
     "docs": "npm run build && node dist/cli.cjs render docs/01-syntax.md --out docs/out && node scripts/figures.mjs docs/01-syntax.md docs/out",
-    "check": "npm run typecheck && npm run test"
+    "check": "npm run typecheck && npm run test",
+    "gallery": "node scripts/gallery.mjs"
   },
   "dependencies": {
     "node-tikzjax": "^1.0.5",

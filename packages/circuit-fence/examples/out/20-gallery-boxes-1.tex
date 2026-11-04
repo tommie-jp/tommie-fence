@@ -1,0 +1,63 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\coordinate (x1p75y3) at (1.5,-4);
+\coordinate (x3p5y3) at (5,-4);
+\coordinate (x5p25y3) at (8.5,-4);
+\coordinate (x7p25y3) at (12.5,-4);
+\coordinate (x9y3) at (16,-4);
+\coordinate (x10p75y3) at (19.5,-4);
+\coordinate (x12p75y3) at (23.5,-4);
+\coordinate (x14p5y3) at (27,-4);
+\coordinate (x1p75y8p5) at (1.5,-15);
+\coordinate (x3p5y8p5) at (5,-15);
+\node[dipchip, num pins=4, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U1) at (x1p75y3) {}; % line 4
+\node[anchor=south] at (part-U1.north) {$U_{1}$}; % line 4
+\node[dipchip, num pins=6, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667] (part-U2) at (x3p5y3) {}; % line 5
+\node[anchor=south] at (part-U2.north) {$U_{2}$}; % line 5
+\node[dipchip, num pins=8, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U3) at (x5p25y3) {}; % line 6
+\node[anchor=south] at (part-U3.north) {$U_{3}$}; % line 6
+\node[dipchip, num pins=14, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667] (part-U4) at (x7p25y3) {}; % line 7
+\node[anchor=south] at (part-U4.north) {$U_{4}$}; % line 7
+\node[dipchip, num pins=16, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U5) at (x9y3) {}; % line 8
+\node[anchor=south] at (part-U5.north) {$U_{5}$}; % line 8
+\node[dipchip, num pins=18, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667] (part-U6) at (x10p75y3) {}; % line 9
+\node[anchor=south] at (part-U6.north) {$U_{6}$}; % line 9
+\node[dipchip, num pins=20, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U7) at (x12p75y3) {}; % line 10
+\node[anchor=south] at (part-U7.north) {$U_{7}$}; % line 10
+\node[dipchip, num pins=24, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U8) at (x14p5y3) {}; % line 11
+\node[anchor=south] at (part-U8.north) {$U_{8}$}; % line 11
+\node[dipchip, num pins=28, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U9) at (x1p75y8p5) {}; % line 12
+\node[anchor=south] at (part-U9.north) {$U_{9}$}; % line 12
+\node[dipchip, num pins=40, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U10) at (x3p5y8p5) {}; % line 13
+\node[anchor=south] at (part-U10.north) {$U_{10}$}; % line 13
+\path (1.077,-5.754) rectangle (1.923,-4.766); % line 15
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (1.5,-5.26) {X}; % line 15
+\path (4.577,-5.754) rectangle (5.423,-4.766); % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (5,-5.26) {X}; % line 16
+\path (8.077,-6.254) rectangle (8.923,-5.266); % line 17
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (8.5,-5.76) {X}; % line 17
+\path (11.971,-6.754) rectangle (13.029,-5.766); % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (12.5,-6.26) {X}; % line 18
+\path (15.471,-7.254) rectangle (16.529,-6.266); % line 19
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (16,-6.76) {X}; % line 19
+\path (18.971,-7.254) rectangle (20.029,-6.266); % line 20
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (19.5,-6.76) {X}; % line 20
+\path (22.971,-7.754) rectangle (24.029,-6.766); % line 21
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (23.5,-7.26) {X}; % line 21
+\path (26.471,-8.254) rectangle (27.529,-7.266); % line 22
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (27,-7.76) {X}; % line 22
+\path (0.971,-19.754) rectangle (2.029,-18.766); % line 23
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (1.5,-19.26) {X}; % line 23
+\path (4.471,-21.254) rectangle (5.529,-20.266); % line 24
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (5,-20.76) {X}; % line 24
+\node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(11.674,0.853);
+\node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};
+\path (circuitstamp.north east) rectangle ++(-5.08,-0.593);
+\end{circuitikz}
+\end{document}

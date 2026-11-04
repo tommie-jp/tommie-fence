@@ -46,6 +46,15 @@ GitHub のようにフェンスが描画されない場所で、ソースと図�
 | [16-orientation.md](16-orientation.md) | 記号の向き (`r90` / `r180` / `r270` / `mirror`) |
 | [17-named-chips.md](17-named-chips.md) | ピンに名前のある部品 (リレー・フォトカプラ・7 セグ) |
 | [18-port-direction.md](18-port-direction.md) | 端子の向き (`in` / `out` / `inout`) |
+| [19-gallery-symbols.md](19-gallery-symbols.md) | 部品ギャラリー: 記号を種類ごとに 1 つずつ (2 端子・1 端子・多端子・ゲート、`standard` の違い) |
+| [20-gallery-boxes.md](20-gallery-boxes.md) | 部品ギャラリー: 番号だけの DIP・ピンヘッダ・コネクタ・ピンに名前のある部品・マイコンボード |
+| [21-gallery-chips.md](21-gallery-chips.md) | 部品ギャラリー: ピンの名前の表の型番を `dipN` で |
+| [22-gallery-ic.md](22-gallery-ic.md) | 部品ギャラリー: 働きで並べた IC (`ic`) の型番 |
+| [23-gallery-modules.md](23-gallery-modules.md) | 部品ギャラリー: 型番のあるトランジスタ・レギュレータ、`ic3` と `device` の型番 |
+
+19〜23 の部品ギャラリーは、部品の種類と型番の表から書き出した物
+(`src/gallery/gallery.ts`)。**表に部品を足したら `npm run gallery` で書き出し直し、
+`npm run examples` で図を作り直す** — 書き出し直さないと `gallery.test.ts` が落ちる。
 
 ## わざと壊してある例
 

@@ -1,0 +1,246 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\coordinate (x2y4p5) at (2,-7);
+\coordinate (x4p75y4p5) at (7.5,-7);
+\coordinate (x7p25y4p5) at (12.5,-7);
+\coordinate (x9p75y4p5) at (17.5,-7);
+\coordinate (x12p25y4p5) at (22.5,-7);
+\node[dipchip, num pins=40, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=2.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U1) at (x2y4p5) {pico}; % line 4
+\node[anchor=south] at (part-U1.north) {$U_{1}$}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 1) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 2) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 3) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 4) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 5) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 6) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 7) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 8) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 9) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 10) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 11) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 12) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 13) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 14) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 15) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 16) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 17) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 18) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 19) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 20) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 21) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 22) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 23) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 24) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 25) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 26) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 27) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 28) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 29) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 30) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 31) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 32) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 33) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 34) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 35) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 36) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 37) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 38) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 39) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 40) {X}; % line 4
+\node[dipchip, num pins=40, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=2.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U2) at (x4p75y4p5) {pico-w}; % line 5
+\node[anchor=south] at (part-U2.north) {$U_{2}$}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 1) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 2) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 3) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 4) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 5) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 6) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 7) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 8) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 9) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 10) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 11) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 12) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 13) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 14) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 15) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 16) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 17) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 18) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 19) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 20) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 21) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 22) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 23) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 24) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 25) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 26) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 27) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 28) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 29) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 30) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 31) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 32) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 33) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 34) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 35) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 36) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 37) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 38) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 39) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 40) {X}; % line 5
+\node[dipchip, num pins=40, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=2.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U3) at (x7p25y4p5) {pico2}; % line 6
+\node[anchor=south] at (part-U3.north) {$U_{3}$}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 1) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 2) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 3) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 4) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 5) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 6) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 7) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 8) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 9) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 10) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 11) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 12) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 13) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 14) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 15) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 16) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 17) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 18) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 19) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 20) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 21) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 22) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 23) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 24) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 25) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 26) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 27) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 28) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 29) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 30) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 31) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 32) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 33) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 34) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 35) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 36) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 37) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 38) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 39) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 40) {X}; % line 6
+\node[dipchip, num pins=40, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=2.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U4) at (x9p75y4p5) {pico2-w}; % line 7
+\node[anchor=south] at (part-U4.north) {$U_{4}$}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 1) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 2) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 3) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 4) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 5) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 6) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 7) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 8) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 9) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 10) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 11) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 12) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 13) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 14) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 15) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 16) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 17) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 18) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 19) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 20) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 21) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 22) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 23) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 24) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 25) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 26) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 27) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 28) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 29) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 30) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 31) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 32) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 33) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 34) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 35) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 36) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 37) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 38) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 39) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 40) {X}; % line 7
+\node[dipchip, num pins=48, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=2.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U5) at (x12p25y4p5) {GW1NR}; % line 8
+\node[anchor=south] at (part-U5.north) {$U_{5}$}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 1) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 2) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 3) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 4) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 5) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 6) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 7) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 8) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 9) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 10) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 11) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 12) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 13) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 14) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 15) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 16) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 17) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 18) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 19) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 20) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 21) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 22) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 23) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 24) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 25) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 26) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 27) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 28) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 29) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 30) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 31) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 32) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 33) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 34) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 35) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 36) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 37) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 38) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 39) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 40) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 41) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 42) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 43) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 44) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 45) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 46) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 47) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 48) {X}; % line 8
+\path (1.577,-13.254) rectangle (2.423,-12.266); % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (2,-12.76) {X}; % line 10
+\path (6.865,-13.254) rectangle (8.135,-12.266); % line 11
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (7.5,-12.76) {X}; % line 11
+\path (11.971,-13.254) rectangle (13.029,-12.266); % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (12.5,-12.76) {X}; % line 12
+\path (16.759,-13.254) rectangle (18.241,-12.266); % line 13
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (17.5,-12.76) {X}; % line 13
+\path (21.23,-14.254) rectangle (23.77,-13.266); % line 14
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (22.5,-13.76) {X}; % line 14
+\node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(10.638,0.853);
+\node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};
+\path (circuitstamp.north east) rectangle ++(-5.08,-0.593);
+\end{circuitikz}
+\end{document}

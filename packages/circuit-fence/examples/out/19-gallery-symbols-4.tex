@@ -1,0 +1,346 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\makeatletter
+\pgfdeclareshape{reg3}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpointorigin}
+  \anchor{north}{\pgfpoint{0cm}{0.62cm}}
+  \anchor{south}{\pgfpoint{0cm}{-0.62cm}}
+  \anchor{east}{\pgfpoint{0.95cm}{0cm}}
+  \anchor{west}{\pgfpoint{-0.95cm}{0cm}}
+  \anchor{pin 1}{\pgfpoint{-1.35cm}{0cm}}
+  \anchor{bpin 1}{\pgfpoint{-0.95cm}{0cm}}
+  \anchor{pin 2}{\pgfpoint{0cm}{-1.02cm}}
+  \anchor{bpin 2}{\pgfpoint{0cm}{-0.62cm}}
+  \anchor{pin 3}{\pgfpoint{1.35cm}{0cm}}
+  \anchor{bpin 3}{\pgfpoint{0.95cm}{0cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-0.95cm}{-0.62cm}}{\pgfpoint{0.95cm}{0.62cm}}
+    \pgfpathmoveto{\pgfpoint{-1.35cm}{0cm}}\pgfpathlineto{\pgfpoint{-0.95cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-1.02cm}}\pgfpathlineto{\pgfpoint{0cm}{-0.62cm}}
+    \pgfpathmoveto{\pgfpoint{1.35cm}{0cm}}\pgfpathlineto{\pgfpoint{0.95cm}{0cm}}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{smacoax}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpointorigin}
+  \anchor{north}{\pgfpoint{0cm}{0.3cm}}
+  \anchor{south}{\pgfpoint{0cm}{-0.3cm}}
+  \anchor{east}{\pgfpoint{0.3cm}{0cm}}
+  \anchor{west}{\pgfpoint{-0.3cm}{0cm}}
+  \anchor{pin 1}{\pgfpoint{-0.7cm}{0cm}}
+  \anchor{pin 2}{\pgfpoint{0cm}{-0.7cm}}
+  \anchor{bpin 1}{\pgfpoint{-0.3cm}{0cm}}
+  \anchor{bpin 2}{\pgfpoint{0cm}{-0.3cm}}
+  \backgroundpath{
+    \pgfpathmoveto{\pgfpoint{-0.274cm}{-0.122cm}}
+    \pgfpatharc{204}{516}{0.3cm}
+    \pgfpathmoveto{\pgfpoint{-0.7cm}{0cm}}\pgfpathlineto{\pgfpointorigin}
+    \pgfpathmoveto{\pgfpoint{0cm}{-0.7cm}}\pgfpathlineto{\pgfpoint{0cm}{-0.3cm}}
+  }
+  \foregroundpath{
+    \pgfpathcircle{\pgfpointorigin}{0.07cm}
+    \pgfusepath{fill}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{dgfetn}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpointorigin}
+  \anchor{north}{\pgfpoint{-0.6cm}{0.58cm}}
+  \anchor{south}{\pgfpoint{-0.6cm}{-0.58cm}}
+  \anchor{east}{\pgfpoint{0.28cm}{0cm}}
+  \anchor{west}{\pgfpoint{-1.2cm}{0cm}}
+  \anchor{pin 1}{\pgfpoint{-1.2cm}{-0.3cm}}
+  \anchor{pin 2}{\pgfpoint{-1.2cm}{0.3cm}}
+  \anchor{bpin 1}{\pgfpoint{-1.2cm}{-0.44cm}}
+  \anchor{bpin 2}{\pgfpoint{-1.2cm}{0.44cm}}
+  \anchor{drain}{\pgfpoint{0cm}{0.77cm}}
+  \anchor{source}{\pgfpoint{0cm}{-0.77cm}}
+  \backgroundpath{
+    \pgfpathcircle{\pgfpoint{-0.3cm}{0cm}}{0.58cm}
+    \pgfpathmoveto{\pgfpoint{-1.2cm}{0.3cm}}\pgfpathlineto{\pgfpoint{-0.54cm}{0.3cm}}
+    \pgfpathmoveto{\pgfpoint{-0.54cm}{0.08cm}}\pgfpathlineto{\pgfpoint{-0.54cm}{0.4cm}}
+    \pgfpathmoveto{\pgfpoint{-1.2cm}{-0.3cm}}\pgfpathlineto{\pgfpoint{-0.54cm}{-0.3cm}}
+    \pgfpathmoveto{\pgfpoint{-0.54cm}{-0.08cm}}\pgfpathlineto{\pgfpoint{-0.54cm}{-0.4cm}}
+    \pgfpathmoveto{\pgfpoint{-0.42cm}{-0.44cm}}\pgfpathlineto{\pgfpoint{-0.42cm}{0.44cm}}
+    \pgfpathmoveto{\pgfpoint{-0.42cm}{0.3cm}}\pgfpathlineto{\pgfpoint{0cm}{0.3cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{0.3cm}}\pgfpathlineto{\pgfpoint{0cm}{0.77cm}}
+    \pgfpathmoveto{\pgfpoint{-0.42cm}{-0.3cm}}\pgfpathlineto{\pgfpoint{0cm}{-0.3cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-0.3cm}}\pgfpathlineto{\pgfpoint{0cm}{-0.77cm}}
+    \pgfpathmoveto{\pgfpoint{-0.42cm}{0cm}}\pgfpathlineto{\pgfpoint{0cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{0cm}}\pgfpathlineto{\pgfpoint{0cm}{-0.3cm}}
+  }
+  \foregroundpath{
+    \pgfpathmoveto{\pgfpoint{-0.42cm}{0cm}}\pgfpathlineto{\pgfpoint{-0.25cm}{0.07cm}}\pgfpathlineto{\pgfpoint{-0.25cm}{-0.07cm}}\pgfpathclose
+    \pgfusepath{fill}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{xfmrct}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpointorigin}
+  \anchor{north}{\pgfpoint{0cm}{0.75cm}}
+  \anchor{south}{\pgfpoint{0cm}{-0.75cm}}
+  \anchor{east}{\pgfpoint{0.9cm}{0cm}}
+  \anchor{west}{\pgfpoint{-0.9cm}{0cm}}
+  \anchor{A1}{\pgfpoint{-0.9cm}{0.75cm}}
+  \anchor{A2}{\pgfpoint{-0.9cm}{-0.75cm}}
+  \anchor{B1}{\pgfpoint{0.9cm}{0.75cm}}
+  \anchor{B2}{\pgfpoint{0.9cm}{-0.75cm}}
+  \anchor{CT}{\pgfpoint{0.9cm}{0cm}}
+  \backgroundpath{
+    \pgfscope\pgfsetlinewidth{1.8\pgflinewidth}
+    \pgfpathmoveto{\pgfpoint{-0.32cm}{-0.6cm}}\pgfpatharc{-90}{-270}{0.15cm}
+    \pgfpathmoveto{\pgfpoint{-0.32cm}{-0.3cm}}\pgfpatharc{-90}{-270}{0.15cm}
+    \pgfpathmoveto{\pgfpoint{-0.32cm}{0cm}}\pgfpatharc{-90}{-270}{0.15cm}
+    \pgfpathmoveto{\pgfpoint{-0.32cm}{0.3cm}}\pgfpatharc{-90}{-270}{0.15cm}
+    \pgfpathmoveto{\pgfpoint{0.32cm}{-0.6cm}}\pgfpatharc{-90}{90}{0.15cm}
+    \pgfpathmoveto{\pgfpoint{0.32cm}{-0.3cm}}\pgfpatharc{-90}{90}{0.15cm}
+    \pgfpathmoveto{\pgfpoint{0.32cm}{0cm}}\pgfpatharc{-90}{90}{0.15cm}
+    \pgfpathmoveto{\pgfpoint{0.32cm}{0.3cm}}\pgfpatharc{-90}{90}{0.15cm}
+    \pgfpathmoveto{\pgfpoint{-0.1cm}{-0.6cm}}\pgfpathlineto{\pgfpoint{-0.1cm}{0.6cm}}
+    \pgfpathmoveto{\pgfpoint{0.1cm}{-0.6cm}}\pgfpathlineto{\pgfpoint{0.1cm}{0.6cm}}
+    \pgfusepath{stroke}\endpgfscope
+    \pgfpathmoveto{\pgfpoint{-0.9cm}{0.75cm}}\pgfpathlineto{\pgfpoint{-0.32cm}{0.75cm}}    \pgfpathmoveto{\pgfpoint{-0.32cm}{0.75cm}}\pgfpathlineto{\pgfpoint{-0.32cm}{0.6cm}}
+    \pgfpathmoveto{\pgfpoint{-0.9cm}{-0.75cm}}\pgfpathlineto{\pgfpoint{-0.32cm}{-0.75cm}}    \pgfpathmoveto{\pgfpoint{-0.32cm}{-0.75cm}}\pgfpathlineto{\pgfpoint{-0.32cm}{-0.6cm}}
+    \pgfpathmoveto{\pgfpoint{0.9cm}{0.75cm}}\pgfpathlineto{\pgfpoint{0.32cm}{0.75cm}}    \pgfpathmoveto{\pgfpoint{0.32cm}{0.75cm}}\pgfpathlineto{\pgfpoint{0.32cm}{0.6cm}}
+    \pgfpathmoveto{\pgfpoint{0.9cm}{-0.75cm}}\pgfpathlineto{\pgfpoint{0.32cm}{-0.75cm}}    \pgfpathmoveto{\pgfpoint{0.32cm}{-0.75cm}}\pgfpathlineto{\pgfpoint{0.32cm}{-0.6cm}}
+    \pgfpathmoveto{\pgfpoint{0.32cm}{0cm}}\pgfpathlineto{\pgfpoint{0.9cm}{0cm}}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{xfmrct2}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpointorigin}
+  \anchor{north}{\pgfpoint{0cm}{0.75cm}}
+  \anchor{south}{\pgfpoint{0cm}{-0.75cm}}
+  \anchor{east}{\pgfpoint{0.9cm}{0cm}}
+  \anchor{west}{\pgfpoint{-0.9cm}{0cm}}
+  \anchor{A1}{\pgfpoint{-0.9cm}{0.75cm}}
+  \anchor{A2}{\pgfpoint{-0.9cm}{-0.75cm}}
+  \anchor{ACT}{\pgfpoint{-0.9cm}{0cm}}
+  \anchor{B1}{\pgfpoint{0.9cm}{0.75cm}}
+  \anchor{B2}{\pgfpoint{0.9cm}{-0.75cm}}
+  \anchor{BCT}{\pgfpoint{0.9cm}{0cm}}
+  \backgroundpath{
+    \pgfscope\pgfsetlinewidth{1.8\pgflinewidth}
+    \pgfpathmoveto{\pgfpoint{-0.32cm}{-0.6cm}}\pgfpatharc{-90}{-270}{0.15cm}
+    \pgfpathmoveto{\pgfpoint{-0.32cm}{-0.3cm}}\pgfpatharc{-90}{-270}{0.15cm}
+    \pgfpathmoveto{\pgfpoint{-0.32cm}{0cm}}\pgfpatharc{-90}{-270}{0.15cm}
+    \pgfpathmoveto{\pgfpoint{-0.32cm}{0.3cm}}\pgfpatharc{-90}{-270}{0.15cm}
+    \pgfpathmoveto{\pgfpoint{0.32cm}{-0.6cm}}\pgfpatharc{-90}{90}{0.15cm}
+    \pgfpathmoveto{\pgfpoint{0.32cm}{-0.3cm}}\pgfpatharc{-90}{90}{0.15cm}
+    \pgfpathmoveto{\pgfpoint{0.32cm}{0cm}}\pgfpatharc{-90}{90}{0.15cm}
+    \pgfpathmoveto{\pgfpoint{0.32cm}{0.3cm}}\pgfpatharc{-90}{90}{0.15cm}
+    \pgfpathmoveto{\pgfpoint{-0.1cm}{-0.6cm}}\pgfpathlineto{\pgfpoint{-0.1cm}{0.6cm}}
+    \pgfpathmoveto{\pgfpoint{0.1cm}{-0.6cm}}\pgfpathlineto{\pgfpoint{0.1cm}{0.6cm}}
+    \pgfusepath{stroke}\endpgfscope
+    \pgfpathmoveto{\pgfpoint{-0.9cm}{0.75cm}}\pgfpathlineto{\pgfpoint{-0.32cm}{0.75cm}}    \pgfpathmoveto{\pgfpoint{-0.32cm}{0.75cm}}\pgfpathlineto{\pgfpoint{-0.32cm}{0.6cm}}
+    \pgfpathmoveto{\pgfpoint{-0.9cm}{-0.75cm}}\pgfpathlineto{\pgfpoint{-0.32cm}{-0.75cm}}    \pgfpathmoveto{\pgfpoint{-0.32cm}{-0.75cm}}\pgfpathlineto{\pgfpoint{-0.32cm}{-0.6cm}}
+    \pgfpathmoveto{\pgfpoint{0.9cm}{0.75cm}}\pgfpathlineto{\pgfpoint{0.32cm}{0.75cm}}    \pgfpathmoveto{\pgfpoint{0.32cm}{0.75cm}}\pgfpathlineto{\pgfpoint{0.32cm}{0.6cm}}
+    \pgfpathmoveto{\pgfpoint{0.9cm}{-0.75cm}}\pgfpathlineto{\pgfpoint{0.32cm}{-0.75cm}}    \pgfpathmoveto{\pgfpoint{0.32cm}{-0.75cm}}\pgfpathlineto{\pgfpoint{0.32cm}{-0.6cm}}
+    \pgfpathmoveto{\pgfpoint{0.32cm}{0cm}}\pgfpathlineto{\pgfpoint{0.9cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{-0.32cm}{0cm}}\pgfpathlineto{\pgfpoint{-0.9cm}{0cm}}
+  }
+}
+\makeatother
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\ctikzset{tripoles/mos style/arrows}
+\coordinate (x2p75y2) at (3.5,-2);
+\coordinate (x6p75y2) at (11.5,-2);
+\coordinate (x10p5y2) at (19,-2);
+\coordinate (x14p5y2) at (27,-2);
+\coordinate (x2p75y4p5) at (3.5,-7);
+\coordinate (x6p75y4p5) at (11.5,-7);
+\coordinate (x10p5y4p5) at (19,-7);
+\coordinate (x14p5y4p5) at (27,-7);
+\coordinate (x2p75y7) at (3.5,-12);
+\coordinate (x6p75y7) at (11.5,-12);
+\coordinate (x10p5y7) at (19,-12);
+\coordinate (x14p5y7) at (27,-12);
+\coordinate (x2p75y9p5) at (3.5,-17);
+\coordinate (x6p75y9p5) at (11.5,-17);
+\coordinate (x10p5y9p5) at (19,-17);
+\coordinate (x14p5y9p5) at (27,-17);
+\coordinate (x2p75y12) at (3.5,-22);
+\coordinate (x6p75y12) at (11.5,-22);
+\coordinate (x10p5y12) at (19,-22);
+\coordinate (x14p5y12) at (27,-22);
+\coordinate (x2p75y15) at (3.5,-28);
+\coordinate (x6p75y15) at (11.5,-28);
+\coordinate (x10p5y15) at (19,-28);
+\coordinate (x14p5y15) at (27,-28);
+\node[npn] (part-Q1) at (x2p75y2) {}; % line 4
+\node[anchor=west] at (part-Q1.east) {$Q_{1}$}; % line 4
+\node[pnp] (part-Q2) at (x6p75y2) {}; % line 5
+\node[anchor=west] at (part-Q2.east) {$Q_{2}$}; % line 5
+\node[npn, photo, nobase] (part-Q3) at (x10p5y2) {}; % line 6
+\node[anchor=west] at (part-Q3.east) {$Q_{3}$}; % line 6
+\node[nmos] (part-M1) at (x14p5y2) {}; % line 7
+\node[anchor=west] at (part-M1.east) {$M_{1}$}; % line 7
+\node[pmos] (part-M2) at (x2p75y4p5) {}; % line 8
+\node[anchor=west] at (part-M2.east) {$M_{2}$}; % line 8
+\node[njfet] (part-J1) at (x6p75y4p5) {}; % line 9
+\node[anchor=west] at (part-J1.east) {$J_{1}$}; % line 9
+\node[pjfet] (part-J2) at (x10p5y4p5) {}; % line 10
+\node[anchor=west] at (part-J2.east) {$J_{2}$}; % line 10
+\node[nigfete] (part-M3) at (x14p5y4p5) {}; % line 11
+\node[anchor=west] at (part-M3.east) {$M_{3}$}; % line 11
+\node[pigfete] (part-M4) at (x2p75y7) {}; % line 12
+\node[anchor=west] at (part-M4.east) {$M_{4}$}; % line 12
+\node[nigfetd] (part-M5) at (x6p75y7) {}; % line 13
+\node[anchor=west] at (part-M5.east) {$M_{5}$}; % line 13
+\node[pigfetd] (part-M6) at (x10p5y7) {}; % line 14
+\node[anchor=west] at (part-M6.east) {$M_{6}$}; % line 14
+\node[plain amp] (part-U1) at (x14p5y7) {}; % line 15
+\node[anchor=south] at (part-U1.north) {$U_{1}$}; % line 15
+\draw ($($(part-U1.+)!0.22!(part-U1.-)$)+(0.44,0)$) -- ++(0.28,0); % line 15
+\draw ($($(part-U1.+)!0.22!(part-U1.-)$)+(0.58,-0.14)$) -- ++(0,0.28); % line 15
+\draw ($($(part-U1.-)!0.22!(part-U1.+)$)+(0.44,0)$) -- ++(0.28,0); % line 15
+\node[transformer core] (part-T1) at (x2p75y9p5) {}; % line 16
+\node[anchor=south] at (part-T1.north) {$T_{1}$}; % line 16
+\node[xfmrct, draw] (part-T2) at (x6p75y9p5) {}; % line 17
+\node[anchor=south] at (part-T2.north) {$T_{2}$}; % line 17
+\node[xfmrct2, draw] (part-T3) at (x10p5y9p5) {}; % line 18
+\node[anchor=south] at (part-T3.north) {$T_{3}$}; % line 18
+\node[nigbt] (part-Q4) at (x14p5y9p5) {}; % line 19
+\node[anchor=west] at (part-Q4.east) {$Q_{4}$}; % line 19
+\node[pigbt] (part-Q5) at (x2p75y12) {}; % line 20
+\node[anchor=west] at (part-Q5.east) {$Q_{5}$}; % line 20
+\node[spdt] (part-S1) at (x6p75y12) {}; % line 21
+\node[anchor=south] at (part-S1.north) {$S_{1}$}; % line 21
+\node[spdt] (part-SW1) at (x10p5y12) {}; % line 22
+\node[anchor=south] at (part-SW1.north) {$S_{W1}$}; % line 22
+\node[smacoax, draw] (part-J3) at (x14p5y12) {}; % line 23
+\node[anchor=south] at (part-J3.north) {$J_{3}$}; % line 23
+\node[reg3, draw, font=\scriptsize] (part-U2) at (x2p75y15) {}; % line 24
+\node[anchor=south] at (part-U2.north) {$U_{2}$}; % line 24
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 1) {X}; % line 24
+\node[circuitnotemark, font=\tiny, anchor=west, yshift=4pt, inner sep=0] at (part-U2.bpin 2) {X}; % line 24
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 3) {X}; % line 24
+\node[reg3, draw, font=\scriptsize] (part-U3) at (x6p75y15) {}; % line 25
+\node[anchor=south] at (part-U3.north) {$U_{3}$}; % line 25
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 1) {X}; % line 25
+\node[circuitnotemark, font=\tiny, anchor=west, yshift=4pt, inner sep=0] at (part-U3.bpin 2) {X}; % line 25
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 3) {X}; % line 25
+\node[reg3, draw, font=\scriptsize] (part-CF1) at (x10p5y15) {}; % line 26
+\node[anchor=south] at (part-CF1.north) {$C_{F1}$}; % line 26
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-CF1.bpin 1) {X}; % line 26
+\node[circuitnotemark, font=\tiny, anchor=west, yshift=4pt, inner sep=0] at (part-CF1.bpin 2) {X}; % line 26
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-CF1.bpin 3) {X}; % line 26
+\node[dgfetn, draw] (part-M7) at (x14p5y15) {}; % line 27
+\node[anchor=west] at (part-M7.east) {$M_{7}$}; % line 27
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M7.bpin 1) {X}; % line 27
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M7.bpin 2) {X}; % line 27
+\path (0.828,-0.934) rectangle (6.172,0.054); % line 29
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (3.5,-0.44) {X}; % line 29
+\path (3.183,-4.054) rectangle (3.818,-3.066); % line 30
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (3.5,-3.56) {X}; % line 30
+\path (8.828,-0.934) rectangle (14.172,0.054); % line 31
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (11.5,-0.44) {X}; % line 31
+\path (11.183,-4.054) rectangle (11.818,-3.066); % line 32
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (11.5,-3.56) {X}; % line 32
+\path (17.333,-0.934) rectangle (20.667,0.054); % line 33
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (19,-0.44) {X}; % line 33
+\path (17.413,-4.054) rectangle (20.588,-3.066); % line 34
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (19,-3.56) {X}; % line 34
+\path (25.016,-0.934) rectangle (28.984,0.054); % line 35
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (27,-0.44) {X}; % line 35
+\path (26.577,-4.054) rectangle (27.423,-3.066); % line 36
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (27,-3.56) {X}; % line 36
+\path (1.516,-5.954) rectangle (5.484,-4.966); % line 37
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (3.5,-5.46) {X}; % line 37
+\path (3.077,-9.054) rectangle (3.923,-8.066); % line 38
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (3.5,-8.56) {X}; % line 38
+\path (10.098,-5.954) rectangle (12.902,-4.966); % line 39
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (11.5,-5.46) {X}; % line 39
+\path (10.971,-9.054) rectangle (12.029,-8.066); % line 40
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (11.5,-8.56) {X}; % line 40
+\path (17.598,-5.954) rectangle (20.402,-4.966); % line 41
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (19,-5.46) {X}; % line 41
+\path (18.471,-9.054) rectangle (19.529,-8.066); % line 42
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (19,-8.56) {X}; % line 42
+\path (24.09,-5.954) rectangle (29.91,-4.966); % line 43
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (27,-5.46) {X}; % line 43
+\path (26.365,-9.054) rectangle (27.635,-8.066); % line 44
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (27,-8.56) {X}; % line 44
+\path (0.59,-10.654) rectangle (6.41,-9.666); % line 45
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (3.5,-10.16) {X}; % line 45
+\path (2.865,-14.054) rectangle (4.135,-13.066); % line 46
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (3.5,-13.56) {X}; % line 46
+\path (8.775,-10.654) rectangle (14.225,-9.666); % line 47
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (11.5,-10.16) {X}; % line 47
+\path (10.865,-14.054) rectangle (12.135,-13.066); % line 48
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (11.5,-13.56) {X}; % line 48
+\path (16.275,-10.654) rectangle (21.725,-9.666); % line 49
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (19,-10.16) {X}; % line 49
+\path (18.365,-14.054) rectangle (19.635,-13.066); % line 50
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (19,-13.56) {X}; % line 50
+\path (26.074,-10.654) rectangle (27.926,-9.666); % line 51
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (27,-10.16) {X}; % line 51
+\path (26.471,-14.054) rectangle (27.529,-13.066); % line 52
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (27,-13.56) {X}; % line 52
+\path (2.759,-15.754) rectangle (4.241,-14.766); % line 53
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (3.5,-15.26) {X}; % line 53
+\path (2.336,-19.054) rectangle (4.664,-18.066); % line 54
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (3.5,-18.56) {X}; % line 54
+\path (8.748,-15.754) rectangle (14.252,-14.766); % line 55
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (11.5,-15.26) {X}; % line 55
+\path (10.018,-19.054) rectangle (12.982,-18.066); % line 56
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (11.5,-18.56) {X}; % line 56
+\path (16.275,-15.754) rectangle (21.725,-14.766); % line 57
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (19,-15.26) {X}; % line 57
+\path (17.413,-19.054) rectangle (20.588,-18.066); % line 58
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (19,-18.56) {X}; % line 58
+\path (25.307,-15.754) rectangle (28.693,-14.766); % line 59
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (27,-15.26) {X}; % line 59
+\path (26.471,-19.054) rectangle (27.529,-18.066); % line 60
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (27,-18.56) {X}; % line 60
+\path (1.807,-20.754) rectangle (5.193,-19.766); % line 61
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (3.5,-20.26) {X}; % line 61
+\path (2.971,-24.254) rectangle (4.029,-23.266); % line 62
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (3.5,-23.76) {X}; % line 62
+\path (10.018,-20.754) rectangle (12.982,-19.766); % line 63
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (11.5,-20.26) {X}; % line 63
+\path (11.077,-24.254) rectangle (11.923,-23.266); % line 64
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (11.5,-23.76) {X}; % line 64
+\path (17.518,-20.754) rectangle (20.482,-19.766); % line 65
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (19,-20.26) {X}; % line 65
+\path (17.73,-24.254) rectangle (20.27,-23.266); % line 66
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (19,-23.76) {X}; % line 66
+\path (25.836,-20.754) rectangle (28.164,-19.766); % line 67
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (27,-20.26) {X}; % line 67
+\path (26.683,-24.254) rectangle (27.318,-23.266); % line 68
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (27,-23.76) {X}; % line 68
+\path (1.833,-26.454) rectangle (5.167,-25.466); % line 69
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (3.5,-25.96) {X}; % line 69
+\path (2.548,-30.354) rectangle (4.453,-29.366); % line 70
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (3.5,-29.86) {X}; % line 70
+\path (10.415,-26.454) rectangle (12.585,-25.466); % line 71
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (11.5,-25.96) {X}; % line 71
+\path (11.183,-30.354) rectangle (11.818,-29.366); % line 72
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (11.5,-29.86) {X}; % line 72
+\path (17.333,-26.454) rectangle (20.667,-25.466); % line 73
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (19,-25.96) {X}; % line 73
+\path (17.518,-30.354) rectangle (20.482,-29.366); % line 74
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (19,-29.86) {X}; % line 74
+\path (24.339,-26.454) rectangle (29.261,-25.466); % line 75
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (26.8,-25.96) {X}; % line 75
+\path (26.059,-30.354) rectangle (27.541,-29.366); % line 76
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (26.8,-29.86) {X}; % line 76
+\node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(9.997,0.853);
+\node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};
+\path (circuitstamp.north east) rectangle ++(-5.08,-0.593);
+\end{circuitikz}
+\end{document}

@@ -1,0 +1,249 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\makeatletter
+\pgfdeclareshape{reg3}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpointorigin}
+  \anchor{north}{\pgfpoint{0cm}{0.62cm}}
+  \anchor{south}{\pgfpoint{0cm}{-0.62cm}}
+  \anchor{east}{\pgfpoint{0.95cm}{0cm}}
+  \anchor{west}{\pgfpoint{-0.95cm}{0cm}}
+  \anchor{pin 1}{\pgfpoint{-1.35cm}{0cm}}
+  \anchor{bpin 1}{\pgfpoint{-0.95cm}{0cm}}
+  \anchor{pin 2}{\pgfpoint{0cm}{-1.02cm}}
+  \anchor{bpin 2}{\pgfpoint{0cm}{-0.62cm}}
+  \anchor{pin 3}{\pgfpoint{1.35cm}{0cm}}
+  \anchor{bpin 3}{\pgfpoint{0.95cm}{0cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-0.95cm}{-0.62cm}}{\pgfpoint{0.95cm}{0.62cm}}
+    \pgfpathmoveto{\pgfpoint{-1.35cm}{0cm}}\pgfpathlineto{\pgfpoint{-0.95cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{0cm}{-1.02cm}}\pgfpathlineto{\pgfpoint{0cm}{-0.62cm}}
+    \pgfpathmoveto{\pgfpoint{1.35cm}{0cm}}\pgfpathlineto{\pgfpoint{0.95cm}{0cm}}
+  }
+}
+\makeatother
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\ctikzset{tripoles/mos style/arrows}
+\coordinate (x2y2) at (2,-2);
+\coordinate (x4p25y2) at (6.5,-2);
+\coordinate (x6p5y2) at (11,-2);
+\coordinate (x8p75y2) at (15.5,-2);
+\coordinate (x11p25y2) at (20.5,-2);
+\coordinate (x13p5y2) at (25,-2);
+\coordinate (x2y4p5) at (2,-7);
+\coordinate (x4p25y4p5) at (6.5,-7);
+\coordinate (x6p5y4p5) at (11,-7);
+\coordinate (x8p75y4p5) at (15.5,-7);
+\coordinate (x11p25y4p5) at (20.5,-7);
+\coordinate (x13p5y4p5) at (25,-7);
+\coordinate (x2y7) at (2,-12);
+\coordinate (x4p25y7) at (6.5,-12);
+\coordinate (x6p5y7) at (11,-12);
+\coordinate (x8p75y7) at (15.5,-12);
+\coordinate (x11p25y7) at (20.5,-12);
+\coordinate (x13p5y7) at (25,-12);
+\coordinate (x2y9p5) at (2,-17);
+\coordinate (x4p25y9p5) at (6.5,-17);
+\coordinate (x6p5y9p5) at (11,-17);
+\coordinate (x8p75y9p5) at (15.5,-17);
+\coordinate (x11p25y9p5) at (20.5,-17);
+\coordinate (x13p5y9p5) at (25,-17);
+\coordinate (x2y12p5) at (2,-23);
+\coordinate (x4p25y12p5) at (6.5,-23);
+\coordinate (x6p5y12p5) at (11,-23);
+\coordinate (x8p75y12p5) at (15.5,-23);
+\coordinate (x11p25y12p5) at (20.5,-23);
+\coordinate (x13p5y12p5) at (25,-23);
+\coordinate (x2y15p5) at (2,-29);
+\coordinate (x4p25y15p5) at (6.5,-29);
+\coordinate (x6p5y15p5) at (11,-29);
+\node[npn] (part-Q1) at (x2y2) {}; % line 4
+\node[font=\scriptsize, anchor=north] at (part-Q1.south) {$\mathrm{2SC1815}$}; % line 4
+\node[anchor=west] at (part-Q1.east) {$Q_{1}$}; % line 4
+\node[pnp] (part-Q2) at (x4p25y2) {}; % line 5
+\node[font=\scriptsize, anchor=north] at (part-Q2.south) {$\mathrm{2SA1015}$}; % line 5
+\node[anchor=west] at (part-Q2.east) {$Q_{2}$}; % line 5
+\node[npn] (part-Q3) at (x6p5y2) {}; % line 6
+\node[font=\scriptsize, anchor=north] at (part-Q3.south) {$\mathrm{2SC2120}$}; % line 6
+\node[anchor=west] at (part-Q3.east) {$Q_{3}$}; % line 6
+\node[pnp] (part-Q4) at (x8p75y2) {}; % line 7
+\node[font=\scriptsize, anchor=north] at (part-Q4.south) {$\mathrm{2SA950}$}; % line 7
+\node[anchor=west] at (part-Q4.east) {$Q_{4}$}; % line 7
+\node[npn] (part-Q5) at (x11p25y2) {}; % line 8
+\node[font=\scriptsize, anchor=north] at (part-Q5.south) {$\mathrm{2SC2655}$}; % line 8
+\node[anchor=west] at (part-Q5.east) {$Q_{5}$}; % line 8
+\node[pnp] (part-Q6) at (x13p5y2) {}; % line 9
+\node[font=\scriptsize, anchor=north] at (part-Q6.south) {$\mathrm{2SA1020}$}; % line 9
+\node[anchor=west] at (part-Q6.east) {$Q_{6}$}; % line 9
+\node[npn] (part-Q7) at (x2y4p5) {}; % line 10
+\node[font=\scriptsize, anchor=north] at (part-Q7.south) {$\mathrm{2SC3355}$}; % line 10
+\node[anchor=west] at (part-Q7.east) {$Q_{7}$}; % line 10
+\node[npn] (part-Q8) at (x4p25y4p5) {}; % line 11
+\node[font=\scriptsize, anchor=north] at (part-Q8.south) {$\mathrm{2N3904}$}; % line 11
+\node[anchor=west] at (part-Q8.east) {$Q_{8}$}; % line 11
+\node[pnp] (part-Q9) at (x6p5y4p5) {}; % line 12
+\node[font=\scriptsize, anchor=north] at (part-Q9.south) {$\mathrm{2N3906}$}; % line 12
+\node[anchor=west] at (part-Q9.east) {$Q_{9}$}; % line 12
+\node[npn] (part-Q10) at (x8p75y4p5) {}; % line 13
+\node[font=\scriptsize, anchor=north] at (part-Q10.south) {$\mathrm{2N2222A}$}; % line 13
+\node[anchor=west] at (part-Q10.east) {$Q_{10}$}; % line 13
+\node[npn] (part-Q11) at (x11p25y4p5) {}; % line 14
+\node[font=\scriptsize, anchor=north] at (part-Q11.south) {$\mathrm{P2N2222A}$}; % line 14
+\node[anchor=west] at (part-Q11.east) {$Q_{11}$}; % line 14
+\node[npn] (part-Q12) at (x13p5y4p5) {}; % line 15
+\node[font=\scriptsize, anchor=north] at (part-Q12.south) {$\mathrm{2SC1008}$}; % line 15
+\node[anchor=west] at (part-Q12.east) {$Q_{12}$}; % line 15
+\node[npn] (part-Q13) at (x2y7) {}; % line 16
+\node[font=\scriptsize, anchor=north] at (part-Q13.south) {$\mathrm{2N5109}$}; % line 16
+\node[anchor=west] at (part-Q13.east) {$Q_{13}$}; % line 16
+\node[npn] (part-Q14) at (x4p25y7) {}; % line 17
+\node[font=\scriptsize, anchor=north] at (part-Q14.south) {$\mathrm{2N3866}$}; % line 17
+\node[anchor=west] at (part-Q14.east) {$Q_{14}$}; % line 17
+\node[njfet] (part-Q15) at (x6p5y7) {}; % line 18
+\node[font=\scriptsize, anchor=north] at (part-Q15.south) {$\mathrm{2SK30A}$}; % line 18
+\node[anchor=west] at (part-Q15.east) {$Q_{15}$}; % line 18
+\node[njfet] (part-Q16) at (x8p75y7) {}; % line 19
+\node[font=\scriptsize, anchor=north] at (part-Q16.south) {$\mathrm{J310}$}; % line 19
+\node[anchor=west] at (part-Q16.east) {$Q_{16}$}; % line 19
+\node[njfet] (part-Q17) at (x11p25y7) {}; % line 20
+\node[font=\scriptsize, anchor=north] at (part-Q17.south) {$\mathrm{2SK170}$}; % line 20
+\node[anchor=west] at (part-Q17.east) {$Q_{17}$}; % line 20
+\node[njfet] (part-Q18) at (x13p5y7) {}; % line 21
+\node[font=\scriptsize, anchor=north] at (part-Q18.south) {$\mathrm{2SK117}$}; % line 21
+\node[anchor=west] at (part-Q18.east) {$Q_{18}$}; % line 21
+\node[pjfet] (part-Q19) at (x2y9p5) {}; % line 22
+\node[font=\scriptsize, anchor=north] at (part-Q19.south) {$\mathrm{2SJ74}$}; % line 22
+\node[anchor=west] at (part-Q19.east) {$Q_{19}$}; % line 22
+\node[nmos] (part-Q20) at (x4p25y9p5) {}; % line 23
+\node[font=\scriptsize, anchor=north] at (part-Q20.south) {$\mathrm{2N7000}$}; % line 23
+\node[anchor=west] at (part-Q20.east) {$Q_{20}$}; % line 23
+\node[nmos] (part-Q21) at (x6p5y9p5) {}; % line 24
+\node[font=\scriptsize, anchor=north] at (part-Q21.south) {$\mathrm{BS170}$}; % line 24
+\node[anchor=west] at (part-Q21.east) {$Q_{21}$}; % line 24
+\node[nmos] (part-Q22) at (x8p75y9p5) {}; % line 25
+\node[font=\scriptsize, anchor=north] at (part-Q22.south) {$\mathrm{2N7002}$}; % line 25
+\node[anchor=west] at (part-Q22.east) {$Q_{22}$}; % line 25
+\node[pmos] (part-Q23) at (x11p25y9p5) {}; % line 26
+\node[font=\scriptsize, anchor=north] at (part-Q23.south) {$\mathrm{BSS84}$}; % line 26
+\node[anchor=west] at (part-Q23.east) {$Q_{23}$}; % line 26
+\node[nmos] (part-Q24) at (x13p5y9p5) {}; % line 27
+\node[font=\scriptsize, anchor=north] at (part-Q24.south) {$\mathrm{IRF520}$}; % line 27
+\node[anchor=west] at (part-Q24.east) {$Q_{24}$}; % line 27
+\node[pmos] (part-Q25) at (x2y12p5) {}; % line 28
+\node[font=\scriptsize, anchor=north] at (part-Q25.south) {$\mathrm{IRF9540}$}; % line 28
+\node[anchor=west] at (part-Q25.east) {$Q_{25}$}; % line 28
+\node[nmos] (part-Q26) at (x4p25y12p5) {}; % line 29
+\node[font=\scriptsize, anchor=north] at (part-Q26.south) {$\mathrm{2SK2231}$}; % line 29
+\node[anchor=west] at (part-Q26.east) {$Q_{26}$}; % line 29
+\node[npn] (part-Q27) at (x6p5y12p5) {}; % line 30
+\node[font=\scriptsize, anchor=north] at (part-Q27.south) {$\mathrm{2SD882}$}; % line 30
+\node[anchor=west] at (part-Q27.east) {$Q_{27}$}; % line 30
+\node[pnp] (part-Q28) at (x8p75y12p5) {}; % line 31
+\node[font=\scriptsize, anchor=north] at (part-Q28.south) {$\mathrm{2SB772}$}; % line 31
+\node[anchor=west] at (part-Q28.east) {$Q_{28}$}; % line 31
+\node[reg3, draw, font=\scriptsize] (part-U1) at (x11p25y12p5) {}; % line 32
+\node[font=\scriptsize, anchor=south] at (part-U1.north) {$\mathrm{7805}$}; % line 32
+\node[anchor=south, yshift=9pt] at (part-U1.north) {$U_{1}$}; % line 32
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 1) {X}; % line 32
+\node[circuitnotemark, font=\tiny, anchor=west, yshift=4pt, inner sep=0] at (part-U1.bpin 2) {X}; % line 32
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 3) {X}; % line 32
+\node[reg3, draw, font=\scriptsize] (part-U2) at (x13p5y12p5) {}; % line 33
+\node[font=\scriptsize, anchor=south] at (part-U2.north) {$\mathrm{78L05}$}; % line 33
+\node[anchor=south, yshift=9pt] at (part-U2.north) {$U_{2}$}; % line 33
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 1) {X}; % line 33
+\node[circuitnotemark, font=\tiny, anchor=west, yshift=4pt, inner sep=0] at (part-U2.bpin 2) {X}; % line 33
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 3) {X}; % line 33
+\node[reg3, draw, font=\scriptsize] (part-U3) at (x2y15p5) {}; % line 34
+\node[font=\scriptsize, anchor=south] at (part-U3.north) {$\mathrm{7905}$}; % line 34
+\node[anchor=south, yshift=9pt] at (part-U3.north) {$U_{3}$}; % line 34
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 1) {X}; % line 34
+\node[circuitnotemark, font=\tiny, anchor=west, yshift=4pt, inner sep=0] at (part-U3.bpin 2) {X}; % line 34
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 3) {X}; % line 34
+\node[reg3, draw, font=\scriptsize] (part-U4) at (x4p25y15p5) {}; % line 35
+\node[font=\scriptsize, anchor=south] at (part-U4.north) {$\mathrm{79L05}$}; % line 35
+\node[anchor=south, yshift=9pt] at (part-U4.north) {$U_{4}$}; % line 35
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 1) {X}; % line 35
+\node[circuitnotemark, font=\tiny, anchor=west, yshift=4pt, inner sep=0] at (part-U4.bpin 2) {X}; % line 35
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 3) {X}; % line 35
+\node[reg3, draw, font=\scriptsize] (part-U5) at (x6p5y15p5) {}; % line 36
+\node[font=\scriptsize, anchor=south] at (part-U5.north) {$\mathrm{LM317}$}; % line 36
+\node[anchor=south, yshift=9pt] at (part-U5.north) {$U_{5}$}; % line 36
+\node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 1) {X}; % line 36
+\node[circuitnotemark, font=\tiny, anchor=west, yshift=4pt, inner sep=0] at (part-U5.bpin 2) {X}; % line 36
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 3) {X}; % line 36
+\path (1.683,-4.654) rectangle (2.318,-3.666); % line 38
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (2,-4.16) {X}; % line 38
+\path (6.183,-4.654) rectangle (6.818,-3.666); % line 39
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (6.5,-4.16) {X}; % line 39
+\path (10.683,-4.654) rectangle (11.318,-3.666); % line 40
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (11,-4.16) {X}; % line 40
+\path (15.183,-4.654) rectangle (15.818,-3.666); % line 41
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (15.5,-4.16) {X}; % line 41
+\path (20.183,-4.654) rectangle (20.818,-3.666); % line 42
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (20.5,-4.16) {X}; % line 42
+\path (24.683,-4.654) rectangle (25.318,-3.666); % line 43
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (25,-4.16) {X}; % line 43
+\path (1.683,-9.634) rectangle (2.318,-8.646); % line 44
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (2,-9.14) {X}; % line 44
+\path (6.183,-9.634) rectangle (6.818,-8.646); % line 45
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (6.5,-9.14) {X}; % line 45
+\path (10.683,-9.634) rectangle (11.318,-8.646); % line 46
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (11,-9.14) {X}; % line 46
+\path (15.183,-9.634) rectangle (15.818,-8.646); % line 47
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (15.5,-9.14) {X}; % line 47
+\path (20.183,-9.634) rectangle (20.818,-8.646); % line 48
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (20.5,-9.14) {X}; % line 48
+\path (24.683,-9.634) rectangle (25.318,-8.646); % line 49
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (25,-9.14) {X}; % line 49
+\path (1.683,-14.634) rectangle (2.318,-13.646); % line 50
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (2,-14.14) {X}; % line 50
+\path (6.183,-14.634) rectangle (6.818,-13.646); % line 51
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (6.5,-14.14) {X}; % line 51
+\path (10.471,-14.634) rectangle (11.529,-13.646); % line 52
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (11,-14.14) {X}; % line 52
+\path (14.971,-14.634) rectangle (16.029,-13.646); % line 53
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (15.5,-14.14) {X}; % line 53
+\path (19.971,-14.634) rectangle (21.029,-13.646); % line 54
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (20.5,-14.14) {X}; % line 54
+\path (24.471,-14.634) rectangle (25.529,-13.646); % line 55
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (25,-14.14) {X}; % line 55
+\path (1.471,-19.654) rectangle (2.529,-18.666); % line 56
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (2,-19.16) {X}; % line 56
+\path (6.077,-19.654) rectangle (6.923,-18.666); % line 57
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (6.5,-19.16) {X}; % line 57
+\path (10.577,-19.654) rectangle (11.423,-18.666); % line 58
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (11,-19.16) {X}; % line 58
+\path (15.077,-19.654) rectangle (15.923,-18.666); % line 59
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (15.5,-19.16) {X}; % line 59
+\path (20.077,-19.654) rectangle (20.923,-18.666); % line 60
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (20.5,-19.16) {X}; % line 60
+\path (24.577,-19.654) rectangle (25.423,-18.666); % line 61
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (25,-19.16) {X}; % line 61
+\path (1.577,-25.654) rectangle (2.423,-24.666); % line 62
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (2,-25.16) {X}; % line 62
+\path (6.077,-25.654) rectangle (6.923,-24.666); % line 63
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (6.5,-25.16) {X}; % line 63
+\path (10.683,-25.654) rectangle (11.318,-24.666); % line 64
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (11,-25.16) {X}; % line 64
+\path (15.183,-25.654) rectangle (15.818,-24.666); % line 65
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (15.5,-25.16) {X}; % line 65
+\path (19.548,-25.654) rectangle (21.453,-24.666); % line 66
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (20.5,-25.16) {X}; % line 66
+\path (24.048,-25.654) rectangle (25.953,-24.666); % line 67
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (25,-25.16) {X}; % line 67
+\path (1.048,-31.354) rectangle (2.952,-30.366); % line 68
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (2,-30.86) {X}; % line 68
+\path (5.548,-31.354) rectangle (7.453,-30.366); % line 69
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (6.5,-30.86) {X}; % line 69
+\path (10.048,-31.354) rectangle (11.953,-30.366); % line 70
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (11,-30.86) {X}; % line 70
+\node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(18.776,0.853);
+\node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};
+\path (circuitstamp.north east) rectangle ++(-5.08,-0.593);
+\end{circuitikz}
+\end{document}

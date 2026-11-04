@@ -1,0 +1,48 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\begin{document}
+\begin{circuitikz}[european resistors, cute inductors, european voltages, european currents, american ports, circuitikz/straight=true, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\coordinate (x1p5y2) at (1,-2);
+\coordinate (x3p5y2) at (5,-2);
+\coordinate (x4p75y2) at (7.5,-2);
+\coordinate (x6p75y2) at (11.5,-2);
+\coordinate (x8p25y2) at (14.5,-2);
+\coordinate (x10p25y2) at (18.5,-2);
+\coordinate (x11p5y2) at (21,-2);
+\coordinate (x13p5y2) at (25,-2);
+\coordinate (x1p5y4p5) at (1,-7);
+\coordinate (x3p5y4p5) at (5,-7);
+\draw (x1p5y2) to[R, l_=$R_{1}$] (x3p5y2); % line 4
+\draw (x4p75y2) to[vR, mirror, l_=$R_{2}$] (x6p75y2); % line 5
+\draw (x8p25y2) to[potentiometer, n=part-P1, l_=$P_{1}$] (x10p25y2); % line 6
+\draw (x11p5y2) to[L, l_=$L_{1}$] (x13p5y2); % line 7
+\draw (x1p5y4p5) to[I, l_=$I_{1}$] (x3p5y4p5); % line 8
+\path (2.63,-1.154) rectangle (3.37,-0.166); % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (3,-0.66) {X}; % line 10
+\path (2.153,-4.054) rectangle (3.847,-3.066); % line 11
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (3,-3.56) {X}; % line 11
+\path (7.86,-1.154) rectangle (11.14,-0.166); % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (9.5,-0.66) {X}; % line 12
+\path (8.23,-4.054) rectangle (10.77,-3.066); % line 13
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (9.5,-3.56) {X}; % line 13
+\path (14.119,-1.154) rectangle (18.881,-0.166); % line 14
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (16.5,-0.66) {X}; % line 14
+\path (15.124,-4.054) rectangle (17.876,-3.066); % line 15
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (16.5,-3.56) {X}; % line 15
+\path (22.444,-1.154) rectangle (23.556,-0.166); % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (23,-0.66) {X}; % line 16
+\path (22.153,-4.054) rectangle (23.847,-3.066); % line 17
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (23,-3.56) {X}; % line 17
+\path (2.259,-6.154) rectangle (3.741,-5.166); % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (3,-5.66) {X}; % line 18
+\path (2.259,-9.054) rectangle (3.741,-8.066); % line 19
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (3,-8.56) {X}; % line 19
+\node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(15.606,0.853);
+\node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};
+\path (circuitstamp.north east) rectangle ++(-5.08,-0.593);
+\end{circuitikz}
+\end{document}

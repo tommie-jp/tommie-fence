@@ -1,0 +1,225 @@
+\documentclass{standalone}
+\usepackage{circuitikz}
+\usetikzlibrary{calc}
+\definecolor{circuitnotemark}{HTML}{FE00FE}
+\makeatletter
+\pgfdeclareshape{terminaltwocon}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpointorigin}
+  \anchor{north}{\pgfpoint{0cm}{0.5cm}}
+  \anchor{south}{\pgfpoint{0cm}{-0.5cm}}
+  \anchor{east}{\pgfpoint{0.95cm}{0cm}}
+  \anchor{west}{\pgfpoint{-0.95cm}{0cm}}
+  \anchor{pin 1}{\pgfpoint{1.35cm}{0.25cm}}
+  \anchor{bpin 1}{\pgfpoint{0.95cm}{0.25cm}}
+  \anchor{pin 2}{\pgfpoint{1.35cm}{-0.25cm}}
+  \anchor{bpin 2}{\pgfpoint{0.95cm}{-0.25cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-0.95cm}{-0.5cm}}{\pgfpoint{0.95cm}{0.5cm}}
+    \pgfpathmoveto{\pgfpoint{0.95cm}{0.25cm}}\pgfpathlineto{\pgfpoint{1.35cm}{0.25cm}}
+    \pgfpathmoveto{\pgfpoint{0.95cm}{-0.25cm}}\pgfpathlineto{\pgfpoint{1.35cm}{-0.25cm}}
+    \pgfpathcircle{\pgfpoint{-0.5cm}{0.25cm}}{0.11cm}\pgfpathmoveto{\pgfpoint{-0.577cm}{0.173cm}}\pgfpathlineto{\pgfpoint{-0.423cm}{0.327cm}}
+    \pgfpathcircle{\pgfpoint{-0.5cm}{-0.25cm}}{0.11cm}\pgfpathmoveto{\pgfpoint{-0.577cm}{-0.327cm}}\pgfpathlineto{\pgfpoint{-0.423cm}{-0.173cm}}
+  }
+  \foregroundpath{
+    
+    \pgfusepath{fill}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{terminalthreecon}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpointorigin}
+  \anchor{north}{\pgfpoint{0cm}{0.75cm}}
+  \anchor{south}{\pgfpoint{0cm}{-0.75cm}}
+  \anchor{east}{\pgfpoint{0.95cm}{0cm}}
+  \anchor{west}{\pgfpoint{-0.95cm}{0cm}}
+  \anchor{pin 1}{\pgfpoint{1.35cm}{0.5cm}}
+  \anchor{bpin 1}{\pgfpoint{0.95cm}{0.5cm}}
+  \anchor{pin 2}{\pgfpoint{1.35cm}{0cm}}
+  \anchor{bpin 2}{\pgfpoint{0.95cm}{0cm}}
+  \anchor{pin 3}{\pgfpoint{1.35cm}{-0.5cm}}
+  \anchor{bpin 3}{\pgfpoint{0.95cm}{-0.5cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-0.95cm}{-0.75cm}}{\pgfpoint{0.95cm}{0.75cm}}
+    \pgfpathmoveto{\pgfpoint{0.95cm}{0.5cm}}\pgfpathlineto{\pgfpoint{1.35cm}{0.5cm}}
+    \pgfpathmoveto{\pgfpoint{0.95cm}{0cm}}\pgfpathlineto{\pgfpoint{1.35cm}{0cm}}
+    \pgfpathmoveto{\pgfpoint{0.95cm}{-0.5cm}}\pgfpathlineto{\pgfpoint{1.35cm}{-0.5cm}}
+    \pgfpathcircle{\pgfpoint{-0.5cm}{0.5cm}}{0.11cm}\pgfpathmoveto{\pgfpoint{-0.577cm}{0.423cm}}\pgfpathlineto{\pgfpoint{-0.423cm}{0.577cm}}
+    \pgfpathcircle{\pgfpoint{-0.5cm}{0cm}}{0.11cm}\pgfpathmoveto{\pgfpoint{-0.577cm}{-0.077cm}}\pgfpathlineto{\pgfpoint{-0.423cm}{0.077cm}}
+    \pgfpathcircle{\pgfpoint{-0.5cm}{-0.5cm}}{0.11cm}\pgfpathmoveto{\pgfpoint{-0.577cm}{-0.577cm}}\pgfpathlineto{\pgfpoint{-0.423cm}{-0.423cm}}
+  }
+  \foregroundpath{
+    
+    \pgfusepath{fill}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{terminalfourcon}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpointorigin}
+  \anchor{north}{\pgfpoint{0cm}{1cm}}
+  \anchor{south}{\pgfpoint{0cm}{-1cm}}
+  \anchor{east}{\pgfpoint{0.95cm}{0cm}}
+  \anchor{west}{\pgfpoint{-0.95cm}{0cm}}
+  \anchor{pin 1}{\pgfpoint{1.35cm}{0.75cm}}
+  \anchor{bpin 1}{\pgfpoint{0.95cm}{0.75cm}}
+  \anchor{pin 2}{\pgfpoint{1.35cm}{0.25cm}}
+  \anchor{bpin 2}{\pgfpoint{0.95cm}{0.25cm}}
+  \anchor{pin 3}{\pgfpoint{1.35cm}{-0.25cm}}
+  \anchor{bpin 3}{\pgfpoint{0.95cm}{-0.25cm}}
+  \anchor{pin 4}{\pgfpoint{1.35cm}{-0.75cm}}
+  \anchor{bpin 4}{\pgfpoint{0.95cm}{-0.75cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-0.95cm}{-1cm}}{\pgfpoint{0.95cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{0.95cm}{0.75cm}}\pgfpathlineto{\pgfpoint{1.35cm}{0.75cm}}
+    \pgfpathmoveto{\pgfpoint{0.95cm}{0.25cm}}\pgfpathlineto{\pgfpoint{1.35cm}{0.25cm}}
+    \pgfpathmoveto{\pgfpoint{0.95cm}{-0.25cm}}\pgfpathlineto{\pgfpoint{1.35cm}{-0.25cm}}
+    \pgfpathmoveto{\pgfpoint{0.95cm}{-0.75cm}}\pgfpathlineto{\pgfpoint{1.35cm}{-0.75cm}}
+    \pgfpathcircle{\pgfpoint{-0.5cm}{0.75cm}}{0.11cm}\pgfpathmoveto{\pgfpoint{-0.577cm}{0.673cm}}\pgfpathlineto{\pgfpoint{-0.423cm}{0.827cm}}
+    \pgfpathcircle{\pgfpoint{-0.5cm}{0.25cm}}{0.11cm}\pgfpathmoveto{\pgfpoint{-0.577cm}{0.173cm}}\pgfpathlineto{\pgfpoint{-0.423cm}{0.327cm}}
+    \pgfpathcircle{\pgfpoint{-0.5cm}{-0.25cm}}{0.11cm}\pgfpathmoveto{\pgfpoint{-0.577cm}{-0.327cm}}\pgfpathlineto{\pgfpoint{-0.423cm}{-0.173cm}}
+    \pgfpathcircle{\pgfpoint{-0.5cm}{-0.75cm}}{0.11cm}\pgfpathmoveto{\pgfpoint{-0.577cm}{-0.827cm}}\pgfpathlineto{\pgfpoint{-0.423cm}{-0.673cm}}
+  }
+  \foregroundpath{
+    
+    \pgfusepath{fill}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{usbacon}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpointorigin}
+  \anchor{north}{\pgfpoint{0cm}{1cm}}
+  \anchor{south}{\pgfpoint{0cm}{-1cm}}
+  \anchor{east}{\pgfpoint{0.95cm}{0cm}}
+  \anchor{west}{\pgfpoint{-0.95cm}{0cm}}
+  \anchor{pin 1}{\pgfpoint{1.35cm}{0.75cm}}
+  \anchor{bpin 1}{\pgfpoint{0.95cm}{0.75cm}}
+  \anchor{pin 2}{\pgfpoint{1.35cm}{0.25cm}}
+  \anchor{bpin 2}{\pgfpoint{0.95cm}{0.25cm}}
+  \anchor{pin 3}{\pgfpoint{1.35cm}{-0.25cm}}
+  \anchor{bpin 3}{\pgfpoint{0.95cm}{-0.25cm}}
+  \anchor{pin 4}{\pgfpoint{1.35cm}{-0.75cm}}
+  \anchor{bpin 4}{\pgfpoint{0.95cm}{-0.75cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-0.95cm}{-1cm}}{\pgfpoint{0.95cm}{1cm}}
+    \pgfpathmoveto{\pgfpoint{0.95cm}{0.75cm}}\pgfpathlineto{\pgfpoint{1.35cm}{0.75cm}}
+    \pgfpathmoveto{\pgfpoint{0.95cm}{0.25cm}}\pgfpathlineto{\pgfpoint{1.35cm}{0.25cm}}
+    \pgfpathmoveto{\pgfpoint{0.95cm}{-0.25cm}}\pgfpathlineto{\pgfpoint{1.35cm}{-0.25cm}}
+    \pgfpathmoveto{\pgfpoint{0.95cm}{-0.75cm}}\pgfpathlineto{\pgfpoint{1.35cm}{-0.75cm}}
+    \pgfpathrectanglecorners{\pgfpoint{-0.67cm}{-0.44cm}}{\pgfpoint{-0.33cm}{0.44cm}}
+  }
+  \foregroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-0.62cm}{-0.35cm}}{\pgfpoint{-0.51cm}{0.35cm}}
+    \pgfusepath{fill}
+  }
+}
+\makeatother
+\makeatletter
+\pgfdeclareshape{usbccon}{
+  \anchor{center}{\pgfpointorigin}
+  \anchor{text}{\pgfpointorigin}
+  \anchor{north}{\pgfpoint{0cm}{1.5cm}}
+  \anchor{south}{\pgfpoint{0cm}{-1.5cm}}
+  \anchor{east}{\pgfpoint{0.95cm}{0cm}}
+  \anchor{west}{\pgfpoint{-0.95cm}{0cm}}
+  \anchor{pin 1}{\pgfpoint{1.35cm}{1.25cm}}
+  \anchor{bpin 1}{\pgfpoint{0.95cm}{1.25cm}}
+  \anchor{pin 2}{\pgfpoint{1.35cm}{0.75cm}}
+  \anchor{bpin 2}{\pgfpoint{0.95cm}{0.75cm}}
+  \anchor{pin 3}{\pgfpoint{1.35cm}{0.25cm}}
+  \anchor{bpin 3}{\pgfpoint{0.95cm}{0.25cm}}
+  \anchor{pin 4}{\pgfpoint{1.35cm}{-0.25cm}}
+  \anchor{bpin 4}{\pgfpoint{0.95cm}{-0.25cm}}
+  \anchor{pin 5}{\pgfpoint{1.35cm}{-0.75cm}}
+  \anchor{bpin 5}{\pgfpoint{0.95cm}{-0.75cm}}
+  \anchor{pin 6}{\pgfpoint{1.35cm}{-1.25cm}}
+  \anchor{bpin 6}{\pgfpoint{0.95cm}{-1.25cm}}
+  \backgroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-0.95cm}{-1.5cm}}{\pgfpoint{0.95cm}{1.5cm}}
+    \pgfpathmoveto{\pgfpoint{0.95cm}{1.25cm}}\pgfpathlineto{\pgfpoint{1.35cm}{1.25cm}}
+    \pgfpathmoveto{\pgfpoint{0.95cm}{0.75cm}}\pgfpathlineto{\pgfpoint{1.35cm}{0.75cm}}
+    \pgfpathmoveto{\pgfpoint{0.95cm}{0.25cm}}\pgfpathlineto{\pgfpoint{1.35cm}{0.25cm}}
+    \pgfpathmoveto{\pgfpoint{0.95cm}{-0.25cm}}\pgfpathlineto{\pgfpoint{1.35cm}{-0.25cm}}
+    \pgfpathmoveto{\pgfpoint{0.95cm}{-0.75cm}}\pgfpathlineto{\pgfpoint{1.35cm}{-0.75cm}}
+    \pgfpathmoveto{\pgfpoint{0.95cm}{-1.25cm}}\pgfpathlineto{\pgfpoint{1.35cm}{-1.25cm}}
+    \pgfpathmoveto{\pgfpoint{-0.64cm}{-0.34cm}}
+    \pgfpathlineto{\pgfpoint{-0.64cm}{0.34cm}}
+    \pgfpatharc{180}{0}{0.14cm}
+    \pgfpathlineto{\pgfpoint{-0.36cm}{-0.34cm}}
+    \pgfpatharc{0}{-180}{0.14cm}
+    \pgfpathclose
+  }
+  \foregroundpath{
+    \pgfpathrectanglecorners{\pgfpoint{-0.535cm}{-0.26cm}}{\pgfpoint{-0.465cm}{0.26cm}}
+    \pgfusepath{fill}
+  }
+}
+\makeatother
+\begin{document}
+\begin{circuitikz}[american, line width=0.8pt]
+\ctikzset{bipoles/length=1.2cm}
+\coordinate (x2p25y2p5) at (2.5,-3);
+\coordinate (x5y2p5) at (8,-3);
+\coordinate (x7p75y2p5) at (13.5,-3);
+\coordinate (x10p5y2p5) at (19,-3);
+\coordinate (x13p5y2p5) at (25,-3);
+\node[usbacon, draw, font=\scriptsize] (part-J1) at (x2p25y2p5) {}; % line 4
+\node[anchor=south] at (part-J1.north) {$J_{1}$}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J1.bpin 1) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J1.bpin 2) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J1.bpin 3) {X}; % line 4
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J1.bpin 4) {X}; % line 4
+\node[usbccon, draw, font=\scriptsize] (part-J2) at (x5y2p5) {}; % line 5
+\node[anchor=south] at (part-J2.north) {$J_{2}$}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J2.bpin 1) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J2.bpin 2) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J2.bpin 3) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J2.bpin 4) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J2.bpin 5) {X}; % line 5
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J2.bpin 6) {X}; % line 5
+\node[terminaltwocon, draw, font=\scriptsize] (part-J3) at (x7p75y2p5) {}; % line 6
+\node[anchor=south] at (part-J3.north) {$J_{3}$}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J3.bpin 1) {X}; % line 6
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J3.bpin 2) {X}; % line 6
+\node[terminalthreecon, draw, font=\scriptsize] (part-J4) at (x10p5y2p5) {}; % line 7
+\node[anchor=south] at (part-J4.north) {$J_{4}$}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J4.bpin 1) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J4.bpin 2) {X}; % line 7
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J4.bpin 3) {X}; % line 7
+\node[terminalfourcon, draw, font=\scriptsize] (part-J5) at (x13p5y2p5) {}; % line 8
+\node[anchor=south] at (part-J5.north) {$J_{5}$}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J5.bpin 1) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J5.bpin 2) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J5.bpin 3) {X}; % line 8
+\node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-J5.bpin 4) {X}; % line 8
+\path (0.495,-1.654) rectangle (4.305,-0.666); % line 10
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (2.4,-1.16) {X}; % line 10
+\path (1.871,-5.254) rectangle (2.929,-4.266); % line 11
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (2.4,-4.76) {X}; % line 11
+\path (5.995,-1.154) rectangle (9.805,-0.166); % line 12
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (7.9,-0.66) {X}; % line 12
+\path (7.371,-5.754) rectangle (8.429,-4.766); % line 13
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (7.9,-5.26) {X}; % line 13
+\path (11.416,-2.134) rectangle (15.384,-1.146); % line 14
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (13.4,-1.64) {X}; % line 14
+\path (12.448,-4.754) rectangle (14.353,-3.766); % line 15
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (13.4,-4.26) {X}; % line 15
+\path (16.916,-1.654) rectangle (20.884,-0.666); % line 16
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (18.9,-1.16) {X}; % line 16
+\path (17.947,-4.754) rectangle (19.853,-3.766); % line 17
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (18.9,-4.26) {X}; % line 17
+\path (22.916,-1.654) rectangle (26.884,-0.666); % line 18
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (24.9,-1.16) {X}; % line 18
+\path (23.947,-5.254) rectangle (25.853,-4.266); % line 19
+\node[anchor=west, inner sep=0, circuitnotemark, font=\normalsize] at (24.9,-4.76) {X}; % line 19
+\node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
+\path (circuittitle.south west) rectangle ++(8.717,0.853);
+\node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};
+\path (circuitstamp.north east) rectangle ++(-5.08,-0.593);
+\end{circuitikz}
+\end{document}
