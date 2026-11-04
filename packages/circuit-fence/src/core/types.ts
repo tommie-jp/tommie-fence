@@ -184,6 +184,12 @@ export type MultiTerminalPart = {
    * ほかの多端子部品のピンは種類で決まる (parts.ts の表)。
    */
   readonly pinNames?: readonly string[];
+  /**
+   * マップ形式に書かれた型番 (`model:`) と、`pins:` `label:` を書き足したか。
+   * **書き戻すときに型番のまま組むため** — 型番を落として表のピンを `pins:` に並べると、
+   * 同じ名前のピンが 2 本ある型番 (`AE-PHONE-JACK-DIP` の `GND`) は読み直せない。
+   */
+  readonly model?: { readonly name: string; readonly pins: boolean; readonly label: boolean };
 };
 
 export type PartSpec = TwoTerminalPart | OneTerminalPart | MultiTerminalPart;

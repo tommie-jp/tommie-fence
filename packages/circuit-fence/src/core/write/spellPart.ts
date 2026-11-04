@@ -78,12 +78,17 @@ const FIELD_INDENT = '  ';
 export function spellPartBlock(part: PartSpec): readonly string[] {
   if (!isMapForm(part)) return [spellPart(part)];
   const turn = turnWords(part.turn);
+  // 型番で書いた部品は型番のまま。ピンと札は書き足したときだけ書く (表から出た物は書かない)。
+  const model = part.model;
+  const hasLabel = model === undefined ? part.value !== null : model.label;
+  const hasPins = model === undefined || model.pins;
   return [
     `${part.id}:`,
     `${FIELD_INDENT}type: ${part.type}`,
     `${FIELD_INDENT}at: ${part.spelling[0] ?? ''}`,
-    ...(part.value === null ? [] : [`${FIELD_INDENT}label: ${yamlScalar(part.value)}`]),
-    `${FIELD_INDENT}pins: [${part.pinNames.join(', ')}]`,
+    ...(model === undefined ? [] : [`${FIELD_INDENT}model: ${yamlScalar(model.name)}`]),
+    ...(!hasLabel || part.value === null ? [] : [`${FIELD_INDENT}label: ${yamlScalar(part.value)}`]),
+    ...(hasPins ? [`${FIELD_INDENT}pins: [${part.pinNames.join(', ')}]`] : []),
     ...(turn.length === 0 ? [] : [`${FIELD_INDENT}turn: ${turn.join(' ')}`]),
   ];
 }

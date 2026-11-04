@@ -115,10 +115,12 @@ export function parseDevicePart(
   const turn = readTurn(id, type, fields.get('turn'));
   if (!turn.ok) return turn;
 
+  const modelName = modelField === undefined ? null : textOf(modelField.value)?.trim() ?? null;
   return ok({
     kind: 'multi-terminal', id, type, at: at.value, value: label,
     orientation: null, turn: turn.value, line, pinNames: pins.value,
     spelling: [atToken], written: type,
+    ...(modelName === null ? {} : { model: { name: modelName, pins: pinsField !== undefined, label: written.value !== null } }),
   });
 }
 

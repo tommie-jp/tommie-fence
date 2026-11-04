@@ -89,3 +89,36 @@ describe('spellPart の端子の向き', () => {
     expect(doc.parts.map((part) => spellPart(part))).toEqual(['CLK: port 1,1 in', 'Q: port 3,1 out', 'D: port 5,1']);
   });
 });
+
+describe('spellPartBlock の型番 (`model:`)', () => {
+  const blockOf = (fence: string): readonly string[] => {
+    const part = parseFence(fence).doc.parts[0];
+    if (part === undefined) throw new Error('部品を読めませんでした');
+    return spellPartBlock(part);
+  };
+
+  test('型番で書いた機器は型番のまま組み直す (ピンと札を書き足さない)', () => {
+    expect(blockOf('parts:\n  M1:\n    type: device\n    at: 2,3\n    model: HC-SR04\n')).toEqual([
+      'M1:', '  type: device', '  at: 2,3', '  model: HC-SR04',
+    ]);
+  });
+
+  test('同じ名前のピンが 2 本ある型番も、組み直して読み直せる', () => {
+    const rebuilt = ['parts:', ...blockOf('parts:\n  M1:\n    type: device\n    at: 2,3\n    model: AE-PHONE-JACK-DIP\n').map((line) => `  ${line}`), ''].join('\n');
+    const again = parseFence(rebuilt);
+    expect(again.errors).toEqual([]);
+    expect(again.doc.parts[0]?.kind === 'multi-terminal' ? again.doc.parts[0].pinNames : null).toEqual(['R', 'GND', 'GND', 'L']);
+  });
+
+  test('書いたピンと札は残す', () => {
+    expect(blockOf('parts:\n  M2:\n    type: device\n    at: 2,3\n    model: MBC2596-01\n    label: 降圧\n    pins: [IN+, IN-]\n')).toEqual([
+      'M2:', '  type: device', '  at: 2,3', '  model: MBC2596-01', '  label: 降圧', '  pins: [IN+, IN-]',
+    ]);
+  });
+
+  test('ic3 の型番も型番のまま', () => {
+    expect(blockOf('parts:\n  U1:\n    type: ic3\n    at: 2,3\n    model: LM35\n')).toEqual([
+      'U1:', '  type: ic3', '  at: 2,3', '  model: LM35',
+    ]);
+  });
+});
