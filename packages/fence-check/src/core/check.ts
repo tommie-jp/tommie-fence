@@ -77,21 +77,42 @@ function overlaps(parts: readonly SceneBody[], min: number, make: Make): Finding
   return found;
 }
 
-/** その部品の足で終わる区間か (自分の足へ来る線は胴に触れてよい)。 */
-const endsAtPin = (segment: Segment, body: SceneBody): boolean =>
-  body.pins.some((pin) => isSamePoint(pin, segment.from) || isSamePoint(pin, segment.to));
+/** 足から縁までの勘定に足す遊び (px)。丸めと線の太さのぶん。 */
+const EDGE_SLACK = 2;
+
+/** 胴より十分長い距離 (px)。足から向きに沿って伸ばし、縁で切るのに使う。 */
+const FAR = 1e5;
+
+/** 足から `toward` の向き (と、その逆) に伸ばした線が胴を出るまでの長さ。 */
+function exitLength(pin: ScenePoint, toward: ScenePoint, rect: SceneBody['rect'], sign: 1 | -1): number {
+  const dx = toward.x - pin.x;
+  const dy = toward.y - pin.y;
+  const length = Math.hypot(dx, dy);
+  if (length === 0) return 0;
+  const far = { x: pin.x + (sign * dx * FAR) / length, y: pin.y + (sign * dy * FAR) / length };
+  return lengthInside({ from: pin, to: far }, rect);
+}
 
 /**
- * 自分の足で終わる区間が胴の中を通ってよい長さ (px)。足は胴の縁か少し内側にある
- * (DIP の樹脂は足の列を 5 px 包む)。**これを超えた分は胴を横切っている** —
- * 箱の左の辺のピンから右へ引いた線が箱を貫く形 (52 の docs/149、機器の箱)。
+ * 区間が胴の中を通る長さ。**自分の足で終わる区間は、足から近いほうの縁へ出るなら許す** —
+ * 足は胴の縁か内側にある (DIP の樹脂は足の列を包み、ユニバーサル基板の IC と SMA は
+ * 足の上に胴が載る)。進む向きの先の縁が、逆向きの縁より遠ければ、線は胴を渡っている。
+ * そのときは逆向きの縁までの長さ (足が胴に埋まっている分) を超えた分を数える。
+ * 縁にある足から箱の中へ進む線 (箱の左の辺のピンから右へ箱を貫く線) は全部数える
+ * (52 の docs/149)。
  */
-const PIN_INSET = 10;
-
-/** 区間が胴の中を通る長さ。自分の足で終わる区間は、足から縁までの分を差し引く。 */
 const insideLength = (segment: Segment, body: SceneBody): number => {
   const length = lengthInside(segment, body.rect);
-  return endsAtPin(segment, body) ? Math.max(0, length - PIN_INSET) : length;
+  const atPin = (point: ScenePoint): boolean => body.pins.some((one) => isSamePoint(one, point));
+  // 両端とも自分の足 (胴の下で足どうしをつなぐ線) は、線がまるごと胴に隠れる。
+  if (atPin(segment.from) && atPin(segment.to)) return length;
+  const pin = body.pins.find((one) => isSamePoint(one, segment.from) || isSamePoint(one, segment.to));
+  if (pin === undefined || length === 0) return length;
+  const other = isSamePoint(pin, segment.from) ? segment.to : segment.from;
+  const ahead = exitLength(pin, other, body.rect, 1);
+  const behind = exitLength(pin, other, body.rect, -1);
+  if (ahead <= behind + EDGE_SLACK) return 0;
+  return Math.max(0, length - behind - EDGE_SLACK);
 };
 
 /** 2. 線が部品の胴を通る。線と部品の組ごとに、通った長さの合計で 1 件。 */

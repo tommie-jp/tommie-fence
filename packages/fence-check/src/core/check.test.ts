@@ -45,13 +45,32 @@ describe('2. wires through bodies', () => {
     // 箱の左の辺のピンから右へ引いた線 (52 の docs/149、Analog Discovery の箱)。
     const pin = { x: -20, y: 0 };
     const found = checkScene(scene({ parts: [body('AD', 0, 0, 40, 60, [pin])], wires: [wire('wire#1', [[-20, 0], [100, 0]])] }));
-    expect(found).toEqual([expect.objectContaining({ kind: 'wire-part', b: 'AD', amount: 30 })]);
+    expect(found).toEqual([expect.objectContaining({ kind: 'wire-part', b: 'AD', amount: 38 })]);
   });
 
-  test('a pin a little inside its body (a DIP) is not a crossing', () => {
-    const pin = { x: 0, y: 25 };
-    const found = checkScene(scene({ parts: [body('U1', 0, 0, 80, 60, [pin])], wires: [wire('wire#1', [[0, 25], [0, 60]])] }));
+  test('an end pin of a DIP may leave by the near side even when another side is nearer', () => {
+    // 縦に置いた DIP の 8 番 (右上)。いちばん近いのは右の辺だが、上へ出る線は胴を渡らない。
+    const pin = { x: 30, y: -25 };
+    const found = checkScene(scene({ parts: [body('U1', 0, 0, 70, 80, [pin])], wires: [wire('wire#1', [[30, -25], [30, -100]])] }));
     expect(found).toEqual([]);
+  });
+
+  test('a pin under its body may leave by the nearest edge (an IC or SMA on a perfboard)', () => {
+    const pin = { x: 0, y: 10 };
+    const found = checkScene(scene({ parts: [body('U1', 0, 0, 80, 60, [pin])], wires: [wire('wire#1', [[0, 10], [0, 60]])] }));
+    expect(found).toEqual([]);
+  });
+
+  test('a pin under its body that runs across the body is reported', () => {
+    const pin = { x: 0, y: 10 };
+    const found = checkScene(scene({ parts: [body('U1', 0, 0, 80, 60, [pin])], wires: [wire('wire#1', [[0, 10], [0, -60]])] }));
+    expect(found).toEqual([expect.objectContaining({ kind: 'wire-part', b: 'U1', amount: 18 })]);
+  });
+
+  test('a wire between two pins under the same body is reported (it is hidden)', () => {
+    const pins = [{ x: -30, y: -5 }, { x: -30, y: 15 }];
+    const found = checkScene(scene({ parts: [body('U1', 0, 0, 70, 80, pins)], wires: [wire('wire#1', [[-30, -5], [-30, 15]])] }));
+    expect(found).toEqual([expect.objectContaining({ kind: 'wire-part', b: 'U1' })]);
   });
 
   test('does not count a lead against its own body', () => {
