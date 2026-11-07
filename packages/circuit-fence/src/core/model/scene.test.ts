@@ -52,9 +52,9 @@ describe('pin positions asked of TeX (52 docs/148)', () => {
 
   test('the probe asks for every pin a wire reaches and the outline of each multi-terminal part', () => {
     const probe = pinProbe(source);
-    expect(probe?.keys).toEqual(['part-Q1.collector', 'part-Q1|ne', 'part-Q1|sw']);
+    expect(probe?.keys).toEqual(['part-Q1.collector', 'part-Q1|east', 'part-Q1|north', 'part-Q1|west', 'part-Q1|south']);
     expect(probe?.tex).toContain('\\pgfpointanchor{part-Q1}{collector}\\typeout{FCPIN|0|');
-    expect(probe?.tex).toContain('\\pgfpointanchor{part-Q1}{north east}');
+    expect(probe?.tex).toContain('\\pgfpointanchor{part-Q1}{north}');
     // 問い合わせは図の終わりの内側に置く (ノードが見える所)。
     expect(probe!.tex.indexOf('FCPIN')).toBeLessThan(probe!.tex.lastIndexOf('\\end{circuitikz}'));
   });
@@ -75,8 +75,10 @@ describe('pin positions asked of TeX (52 docs/148)', () => {
   test('with the probed points, pin wires are checked and the part gets a body', () => {
     const probed = new Map([
       ['part-Q1.collector', { x: 151.18, y: 126.23 }],
-      ['part-Q1|ne', { x: 170, y: 120 }],
-      ['part-Q1|sw', { x: 130, y: 180 }],
+      ['part-Q1|east', { x: 170, y: 150 }],
+      ['part-Q1|north', { x: 150, y: 120 }],
+      ['part-Q1|west', { x: 130, y: 150 }],
+      ['part-Q1|south', { x: 150, y: 180 }],
     ]);
     const [scene] = scenesOfCircuit(source, probed);
     expect(scene?.skipped).toBe(0);

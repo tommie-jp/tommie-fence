@@ -38,8 +38,16 @@ const LINE_ONLY = new Set(['short']);
 /** TeX に問い合わせた座標 (px)。鍵は `pinProbe` の `keys`。 */
 export type ProbedPoints = ReadonlyMap<string, ScenePoint>;
 
-/** 多端子部品の胴を問い合わせる鍵。ノードの外形の対角 2 点。 */
-const bodyKeys = (id: string): readonly [string, string] => [`${nodeNameOf(id)}|ne`, `${nodeNameOf(id)}|sw`];
+/**
+ * 多端子部品の胴を問い合わせるアンカー。**四辺の 4 つはどの記号にもある** — circuitikz の記号も、
+ * この拡張が宣言する記号 (`shapes.ts` の `edgeAnchors`) も持つ。`north east` は自前の記号に無く
+ * 問い合わせた TeX がそこで止まり、角度のアンカーは縁を宣言しない自前の記号で中心に落ちた
+ * (52 の docs/149)。回した部品では向きが入れ替わるので、4 点の端から箱を組む。
+ */
+const BODY_ANGLES = ['east', 'north', 'west', 'south'] as const;
+
+/** 多端子部品の胴を問い合わせる鍵。四辺の真ん中の点。 */
+const bodyKeys = (id: string): readonly string[] => BODY_ANGLES.map((angle) => `${nodeNameOf(id)}|${angle}`);
 
 function circuitOf(input: string): { readonly circuit: Circuit; readonly pitch: number } | null {
   const { doc } = parseFence(normalizeNewlines(input));
@@ -74,9 +82,9 @@ export function pinProbe(input: string): { readonly tex: string; readonly keys: 
   }
   for (const part of read.circuit.parts) {
     if (part.kind !== 'multi-terminal') continue;
-    const [ne, sw] = bodyKeys(part.id);
-    queries.set(ne, { node: nodeNameOf(part.id), anchor: 'north east' });
-    queries.set(sw, { node: nodeNameOf(part.id), anchor: 'south west' });
+    bodyKeys(part.id).forEach((key, index) => {
+      queries.set(key, { node: nodeNameOf(part.id), anchor: BODY_ANGLES[index]! });
+    });
   }
   if (queries.size === 0) return null;
   const { tex } = compileCircuit(input);
@@ -190,7 +198,7 @@ function bentPoints(
 const cornerPoint = (from: ScenePoint, to: ScenePoint, operator: string): ScenePoint =>
   operator === '-|' ? { x: to.x, y: from.y } : { x: from.x, y: to.y };
 
-/** 多端子部品の胴 (TikZ のノードの外形)。外形の分からない部品は足さない。 */
+/** 多端子部品の胴 (TikZ のノードの外形の上下左右の縁)。外形の分からない部品は足さない。 */
 function multiTerminalBodies(
   circuit: Circuit,
   probed: ProbedPoints,
@@ -198,16 +206,16 @@ function multiTerminalBodies(
 ): SceneBody[] {
   return circuit.parts.flatMap((part): SceneBody[] => {
     if (part.kind !== 'multi-terminal') return [];
-    const [neKey, swKey] = bodyKeys(part.id);
-    const ne = probed.get(neKey);
-    const sw = probed.get(swKey);
-    if (ne === undefined || sw === undefined) return [];
-    const width = Math.abs(ne.x - sw.x);
-    const height = Math.abs(ne.y - sw.y);
+    const edges = bodyKeys(part.id).map((key) => probed.get(key));
+    if (edges.some((point) => point === undefined)) return [];
+    const xs = edges.map((point) => point!.x);
+    const ys = edges.map((point) => point!.y);
+    const width = Math.max(...xs) - Math.min(...xs);
+    const height = Math.max(...ys) - Math.min(...ys);
     if (width === 0 || height === 0) return [];
     return [{
       id: part.id,
-      rect: { cx: (ne.x + sw.x) / 2, cy: (ne.y + sw.y) / 2, width, height, angle: 0 },
+      rect: { cx: (Math.max(...xs) + Math.min(...xs)) / 2, cy: (Math.max(...ys) + Math.min(...ys)) / 2, width, height, angle: 0 },
       pins: pinsOf.get(part.id) ?? [],
       line: part.line,
     }];
