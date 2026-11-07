@@ -12,4 +12,6 @@ await esbuild.build({
   platform: 'node',
   target: 'node20',
   logLevel: 'warning',
+  // TeX のエンジンは WASM とフォントを実ファイルで持ち歩くので束ねない (circuit-fence と同じ)。
+  external: ['node-tikzjax'],
 });

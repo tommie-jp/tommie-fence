@@ -66,6 +66,18 @@ describe('3. crossings and four-way junctions', () => {
     expect(kinds(found)).toEqual(['junction4']);
   });
 
+  test('a ladder node (two straight arms and two diagonals) is not a cross', () => {
+    // コッククロフト・ウォルトンの梯子の節点 (52 の docs/149 で、よく見る定型として外した)。
+    const found = checkScene(scene({
+      fence: 'circuit',
+      wires: [
+        wire('C1', [[-10, 0], [0, 0]]), wire('C3', [[0, 0], [10, 0]]),
+        wire('D1', [[-10, 10], [0, 0]]), wire('D2', [[0, 0], [10, 10]]),
+      ],
+    }));
+    expect(found).toEqual([]);
+  });
+
   test('a T on a schematic is fine', () => {
     const found = checkScene(scene({ fence: 'circuit', wires: [wire('wire#1', [[-10, 0], [10, 0]]), wire('wire#2', [[0, 0], [0, 10]])] }));
     expect(found).toEqual([]);

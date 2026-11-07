@@ -10,7 +10,7 @@ import type { Segment } from './geometry.ts';
  * - `overlap` — 部品どうしの胴の重なり
  * - `wire-part` — 線が部品の胴を通る (自分の足へ来る区間は除く)
  * - `crossing` — 線どうしが途中で十字に交わる
- * - `junction4` — 4 方向から線が集まる交点 (circuit だけ。つながりの黒丸に頼る形)
+ * - `junction4` — 上下左右の 4 本が 1 点でつながる十字 (circuit だけ。つながりの黒丸に頼る形)
  * - `caption` — 名札が部品・線・ほかの名札に重なる
  */
 export const KINDS = ['overlap', 'wire-part', 'crossing', 'junction4', 'caption'] as const;
@@ -115,9 +115,17 @@ function crossings(wires: readonly SceneWire[], make: Make): Finding[] {
   return found;
 }
 
+/** 十字の 4 方向 (度。y は下が +)。 */
+const CROSS = [0, 90, 180, 270] as const;
+
 /**
- * 3'. 4 方向の交点 (circuit)。線の端が集まる点で、出ていく向きが 4 つ以上。
+ * 3'. 4 方向の交点 (circuit)。線の端が集まる点で、**上下左右の 4 方向がそろう十字**。
  * 途中を通り抜ける線は 2 方向に数える (T 字に通した線にもう 1 本足すと十字になる)。
+ *
+ * 数えるのは十字だけ (52 の docs/149)。readable-schematic #7 が十字を避ける理由は、
+ * つながっているかが黒丸の有無だけで決まる (黒丸を見落とすと「交差しているだけ」と読める)
+ * から。コッククロフト・ウォルトンの梯子のように斜めの線が集まる形は、斜めの線が
+ * 点を突き抜けないので交差とは読めない。よく見る定型でもあるので数えない。
  */
 function junctions(wires: readonly SceneWire[], make: Make): Finding[] {
   const all = wires.flatMap((wire) => segmentsOf(wire.points).map((segment) => ({ wire, segment })));
@@ -142,7 +150,7 @@ function junctions(wires: readonly SceneWire[], make: Make): Finding[] {
       names.add(wire.id);
       line = laterLine(line, wire.line);
     }
-    if (headings.size >= 4) {
+    if (CROSS.every((heading) => headings.has(heading))) {
       const [a = '', b = '', ...rest] = [...names];
       found.push(make('junction4', a, [b, ...rest].join('+'), 1, line, point));
     }

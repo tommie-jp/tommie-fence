@@ -3,12 +3,12 @@ import { parseArgs } from './args.ts';
 
 describe('parseArgs', () => {
   test('defaults to all three fences, text, no top', () => {
-    expect(parseArgs(['book'])).toEqual({ ok: true, value: { targets: ['book'], json: false, only: ['circuit', 'breadboard', 'perfboard'], min: null, top: 0 } });
+    expect(parseArgs(['book'])).toEqual({ ok: true, value: { targets: ['book'], json: false, only: ['circuit', 'breadboard', 'perfboard'], min: null, top: 0, tex: false } });
   });
 
   test('reads every option', () => {
-    const parsed = parseArgs(['--json', 'a.md', '--only', 'circuit,perfboard', '--min', '2.5', '--top', '20', 'b']);
-    expect(parsed).toEqual({ ok: true, value: { targets: ['a.md', 'b'], json: true, only: ['circuit', 'perfboard'], min: 2.5, top: 20 } });
+    const parsed = parseArgs(['--json', 'a.md', '--only', 'circuit,perfboard', '--min', '2.5', '--top', '20', '--tex', 'b']);
+    expect(parsed).toEqual({ ok: true, value: { targets: ['a.md', 'b'], json: true, only: ['circuit', 'perfboard'], min: 2.5, top: 20, tex: true } });
   });
 
   test.each([

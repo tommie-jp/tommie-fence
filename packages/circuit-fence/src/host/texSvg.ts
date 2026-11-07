@@ -69,3 +69,12 @@ export async function renderTex(tex: string): Promise<RenderOutcome> {
     return { ok: false, kind: 'tex-log', log: await logOf(tex2svg, tex), preambleLines };
   }
 }
+
+/**
+ * TeX を回して**ログだけ**を返す (成功しても落ちても)。fence-check がピンの座標を
+ * `\typeout` で書かせて読むのに使う (52 の docs/148)。図は捨てる。
+ */
+export async function texConsole(tex: string): Promise<string> {
+  const { tex2svg } = await moduleOf();
+  return logOf(tex2svg, tex);
+}

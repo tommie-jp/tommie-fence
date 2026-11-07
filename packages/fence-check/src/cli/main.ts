@@ -2,7 +2,8 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { extractBreadboardFences, scenesOfBreadboard } from 'breadboard-fence/src/core';
-import { extractCircuitFences, scenesOfCircuit } from 'circuit-fence/src/core';
+import { extractCircuitFences, pinProbe, readPinProbe, scenesOfCircuit } from 'circuit-fence/src/core';
+import { texConsole } from 'circuit-fence/tex';
 import { extractPerfboardFences, scenesOfPerfboard } from 'perfboard-fence/src/core';
 import type { SceneFence } from 'fence-kit';
 import {
@@ -40,13 +41,29 @@ function markdownFiles(target: string): string[] {
     });
 }
 
-function main(argv: readonly string[]): number {
+/**
+ * circuit のフェンスの幾何を起こす関数。`--tex` なら TeX にピンと胴の座標を問い合わせてから
+ * 起こす (1 個 1 秒ほど)。問い合わせるものが無いフェンスは TeX を回さない。
+ */
+async function makersFor(fence: FenceInput, tex: boolean): Promise<SceneMakers> {
+  if (!tex || fence.fence !== 'circuit') return MAKERS;
+  const probe = pinProbe(fence.source);
+  if (probe === null) return MAKERS;
+  const pins = readPinProbe(await texConsole(probe.tex), probe.keys);
+  return { ...MAKERS, circuit: (source) => scenesOfCircuit(source, pins) };
+}
+
+/** 長く回るときの進み具合。標準エラーへ出す (標準出力の JSON を汚さない)。 */
+const PROGRESS_EVERY = 50;
+
+async function main(argv: readonly string[]): Promise<number> {
   const parsed = parseArgs(argv);
   if (!parsed.ok) {
     console.error(`${parsed.message}\n\n${USAGE}`);
     return 2;
   }
-  const { targets, json, only, min, top } = parsed.value;
+  const { targets, json, only, min, top, tex } = parsed.value;
+  let done = 0;
   const options = min === null ? {} : { min };
   const figures: FigureResult[] = [];
   for (const target of targets) {
@@ -63,7 +80,11 @@ function main(argv: readonly string[]): number {
       const fences: FenceInput[] = only.flatMap((fence) =>
         EXTRACT[fence](text).map((block) => ({ fence, source: block.source, line: block.line })));
       fences.sort((a, b) => a.line - b.line);
-      for (const fence of fences) figures.push(...checkFence(shown, fence, MAKERS, options));
+      for (const fence of fences) {
+        figures.push(...checkFence(shown, fence, await makersFor(fence, tex), options));
+        done += 1;
+        if (tex && done % PROGRESS_EVERY === 0) console.error(`… ${done} fences`);
+      }
     }
   }
 
@@ -89,4 +110,10 @@ function main(argv: readonly string[]): number {
   return 0;
 }
 
-process.exitCode = main(process.argv.slice(2));
+main(process.argv.slice(2)).then(
+  (code) => { process.exitCode = code; },
+  (error: unknown) => {
+    console.error(error instanceof Error ? error.stack ?? error.message : String(error));
+    process.exitCode = 1;
+  },
+);
