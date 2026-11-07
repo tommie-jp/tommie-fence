@@ -12,6 +12,8 @@
  * 配る 2 つ (`fence-kit/shell` と `fence-kit/map.web.js`) だけ (52 の docs/59)。
  */
 export { normalizeNewlines } from './newlines.ts';
+export { sceneRectOf, shrinkRect } from './scene.ts';
+export type { Scene, SceneBody, SceneCaption, SceneFence, ScenePoint, SceneRect, SceneWire } from './scene.ts';
 export { applyExpectations, markExpected, markInfo, readExpectations } from './expect.ts';
 export type { ExpectKit, ExpectLists, ExpectProblem, ExpectRead, Expectation, Said } from './expect.ts';
 export { SHEETS_ADVISED, SHEET_TOP_KEYS, hasSheets, mergeNetlists, renderSheets, splitSheets, stackSheets } from './sheets.ts';

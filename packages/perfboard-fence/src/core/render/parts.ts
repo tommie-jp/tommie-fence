@@ -940,9 +940,11 @@ export const renderParts = (
   taken: readonly Rect[] = [],
   // **名札が避ける線** (基板の上の配線)。胴はここで足す。
   lines: readonly Obstacle[] = [],
+  // 置いた名札を知らせる先 (fence-check の幾何。52 の docs/148)。
+  record?: (owner: string, box: Rect) => void,
 ): string => {
   // **名札の逃がしは書かれた順に決まる** (`captions.ts`)。
-  const room = captionRoom(theme, taken, [...lines, ...parts.flatMap((part) => bodyObstacle(part, layout))], layout.board);
+  const room = captionRoom(theme, taken, [...lines, ...parts.flatMap((part) => bodyObstacle(part, layout))], layout.board, record);
   return parts
     .map((part) => {
       const drawn = renderOne(part, layout, theme, roomOf(room, part.id));

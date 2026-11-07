@@ -82,6 +82,32 @@ export function captionTextBandOf(
   return padHalo(band(baseline.x, y, width, theme), theme);
 }
 
+/** 字が基準線から下へ出る深さ (字の大きさに対する比)。 */
+const NAME_DESCENT = 0.2;
+
+/**
+ * 名札の**字形そのもの**の箱 (縁取りも行送りも含めない)。fence-check の幾何に使う
+ * (52 の docs/148)。配線よけの帯 (`captionBandOf`) は行送りのぶん上に余裕を持たせて
+ * あるので、そのまま比べると、離して置いた自分の胴にも食い込んで見える。
+ */
+export function captionGlyphBoxOf(
+  part: PlacedPart,
+  layout: Layout,
+  theme: RenderTheme,
+  drop = 0,
+): Rect | null {
+  const size = theme.metrics.textSize;
+  const chosen = explicitCaptionSpot(part, layout, theme);
+  if (chosen !== null && chosen.vertical === true) {
+    const thick = size * (NAME_CAP + NAME_DESCENT);
+    return { x: chosen.x - thick / 2, y: chosen.y - chosen.width / 2, width: thick, height: chosen.width };
+  }
+  const spot = chosen ?? captionSpotOf(part, layout, theme, drop);
+  if (spot === null) return null;
+  const width = chosen === null ? captionWidth(part, theme) : chosen.width;
+  return { x: spot.x - width / 2, y: spot.y - size * NAME_CAP, width, height: size * (NAME_CAP + NAME_DESCENT) };
+}
+
 /**
  * **縁取りのぶん広げる。** 縁取りは字の外へはみ出して穴の端を削るので、
  * 字の幅だけで穴を選ぶと、縁取りに削られた穴の欠片が字の脇に残る。

@@ -175,4 +175,5 @@ export type { MigrateResult } from './migrate.ts';
 // **殻へ渡す口。** 掴んで動かす editor はこの 1 つを受け取って動く
 // (52 の docs/19 — 拡張は 1 つ、コアは 3 つのまま)。
 export { createCircuitEditor } from './edit/fenceEditor.ts';
+export { scenesOfCircuit } from './model/scene.ts';
 export type { LookSource } from './edit/fenceEditor.ts';

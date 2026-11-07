@@ -1,4 +1,5 @@
-import { applyExpectations, element, hasSheets, normalizeNewlines, num, renderSheets, resolveLang } from 'fence-kit';
+import { applyExpectations, element, hasSheets, normalizeNewlines, num, renderSheets, resolveLang, splitSheets } from 'fence-kit';
+import { perfboardScene } from './render/scene.ts';
 import { attachSourceText } from './errors.ts';
 import { createLayout } from './model/layout.ts';
 import { parseFence } from './parser/parseFence.ts';
@@ -35,9 +36,9 @@ import { renderDocument } from './render/document.ts';
 import { renderErrorBanner } from './render/errorHtml.ts';
 import { resolveStyle, themeForBoard } from './render/theme.ts';
 import type {
-  Address, Board, FenceError, PartSpec, PointSpec, ResolvedNote, RoutedWire,
+  Address, Board, FenceError, PartSpec, PointSpec, Rect, ResolvedNote, RoutedWire,
 } from './types.ts';
-import type { Lang, Net, SheetExtras } from 'fence-kit';
+import type { Lang, Net, Scene, SheetExtras } from 'fence-kit';
 
 /** 行の無いものを先に、あとは行の順に。同じ行なら見つけた順を保つ。 */
 const byLine = (errors: readonly FenceError[]): FenceError[] =>
@@ -148,7 +149,7 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
   const source = normalizeNewlines(input);
   if (!hasSheets(source)) {
     // 枚の中でだけ使うもの (節点の座標) は外へ返さない。
-    const { anchors: _anchors, look: _look, ...one } = renderOneSheet(input, options);
+    const { anchors: _anchors, look: _look, scene: _scene, ...one } = renderOneSheet(input, options);
     return one;
   }
   return renderSheets(
@@ -166,7 +167,18 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
   );
 }
 
-function renderOneSheet(input: string, options: RenderOptions): RenderResult & SheetExtras {
+/**
+ * 図の幾何 (fence-check が見る形。52 の docs/148)。**`sheets:` の図は枚ごとに 1 つ**。
+ * 描くのと同じ道を通して組むので、描画を直せば検査も一緒に動く。
+ */
+export function scenesOfPerfboard(input: string): readonly Scene[] {
+  const source = normalizeNewlines(input);
+  if (!hasSheets(source)) return [renderOneSheet(source, { stamp: false }).scene];
+  return splitSheets(source, { shared: ['lang'] }).sheets
+    .map((sheet) => ({ ...renderOneSheet(sheet.text, { stamp: false }).scene, sheet: sheet.name }));
+}
+
+function renderOneSheet(input: string, options: RenderOptions): RenderResult & SheetExtras & { readonly scene: Scene } {
   // 外から来た字は、読む前に改行を揃える。行数は変わらないので行番号はそのまま。
   const source = normalizeNewlines(input);
   const parsed = parseFence(source);
@@ -405,6 +417,8 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
     })),
   ]);
 
+  // 描いた名札の帯 (fence-check の幾何)。`renderParts` が置き場を決めるたびに知らせてくる。
+  const captionLog: { owner: string; box: Rect }[] = [];
   // 配線は基板の上、部品の下。線が部品の胴を隠すと、何が載っているか読めなくなる。
   const drawn = renderTitle(title, layout, THEME)
       + renderPlate(board, layout, PLATE)
@@ -429,7 +443,7 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
           const from = devicePin.get(wire.device)?.get(wire.pin);
           return from === undefined ? [] : [wireObstacle(from, layout.point(wire.hole))];
         }),
-      ])
+      ], (owner, box) => { captionLog.push({ owner, box }); })
       // ピンへ来る線は胴の上にも重ね、ピンの真ん中まで線を見せる (USB-C のパッドも同じ)。
       + renderLeadWires(placement.parts, wiring.wires, layout, PLATE, hops.slice(0, wiring.wires.length))
       // 半田付けした穴を部品と配線の上にもう一度。半田面と同じく、部品面の図でも
@@ -528,6 +542,14 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
   }));
   return {
     svg, netlist,
+    scene: perfboardScene({
+      parts: placement.parts,
+      devices: placedDevices.placed,
+      wires: wiring.wires,
+      deviceWires: wiring.deviceWires,
+      captions: captionLog,
+      layout,
+    }),
     errors: at(errors), notices: at(notices), erc: at(ercAt),
     errorHtml: renderErrorBanner(shown),
     anchors,

@@ -1,0 +1,178 @@
+import type { Scene, SceneBody, SceneWire, ScenePoint } from 'fence-kit';
+import {
+  crossingOf, headingOf, isInside, isSamePoint, lengthInside, penetration, segmentsOf,
+} from './geometry.ts';
+import type { Segment } from './geometry.ts';
+
+/**
+ * 検査の項目 (52 の docs/148 の順)。
+ *
+ * - `overlap` — 部品どうしの胴の重なり
+ * - `wire-part` — 線が部品の胴を通る (自分の足へ来る区間は除く)
+ * - `crossing` — 線どうしが途中で十字に交わる
+ * - `junction4` — 4 方向から線が集まる交点 (circuit だけ。つながりの黒丸に頼る形)
+ * - `caption` — 名札が部品・線・ほかの名札に重なる
+ */
+export const KINDS = ['overlap', 'wire-part', 'crossing', 'junction4', 'caption'] as const;
+export type Kind = (typeof KINDS)[number];
+
+export type Finding = {
+  readonly kind: Kind;
+  /** 相手の名前 (部品 ID・`wire#N`・`caption:ID`・`ID(body)`)。 */
+  readonly a: string;
+  readonly b: string;
+  /** 重なりの深さ・通った長さ (px)。交点は 1 件 = 1。 */
+  readonly amount: number;
+  readonly unit: 'px' | 'point';
+  /** フェンスの中の行 (後に書いたほう)。分からなければ null。 */
+  readonly line: number | null;
+  /** `uncertain` は座標が近似の図 (circuit) で出したもの。 */
+  readonly grade: 'sure' | 'uncertain';
+  readonly at: ScenePoint;
+};
+
+export type CheckOptions = {
+  /** これより浅い重なり・短い横切りは数えない (px)。丸めの揺れを拾わないため。 */
+  readonly min?: number;
+};
+
+/** 既定の下限 (px)。字の縁取りや線の太さより小さい食い込みは見て分からない。 */
+export const DEFAULT_MIN = 1;
+
+const laterLine = (a: number | null, b: number | null): number | null =>
+  a === null ? b : b === null ? a : Math.max(a, b);
+
+const round = (value: number): number => Math.round(value * 10) / 10;
+
+export function checkScene(scene: Scene, options: CheckOptions = {}): readonly Finding[] {
+  const min = options.min ?? DEFAULT_MIN;
+  const grade = scene.approximate ? 'uncertain' : 'sure';
+  const make = (kind: Kind, a: string, b: string, amount: number, line: number | null, at: ScenePoint): Finding => ({
+    kind, a, b, amount: kind === 'crossing' || kind === 'junction4' ? 1 : round(amount),
+    unit: kind === 'crossing' || kind === 'junction4' ? 'point' : 'px',
+    line, grade, at,
+  });
+  return [
+    ...overlaps(scene.parts, min, make),
+    ...wireParts(scene.parts, scene.wires, min, make),
+    ...crossings(scene.wires, make),
+    ...(scene.fence === 'circuit' ? junctions(scene.wires, make) : []),
+    ...captions(scene, min, make),
+  ];
+}
+
+type Make = (kind: Kind, a: string, b: string, amount: number, line: number | null, at: ScenePoint) => Finding;
+
+const centerOf = (body: SceneBody): ScenePoint => ({ x: body.rect.cx, y: body.rect.cy });
+
+/** 1. 部品どうしの胴の重なり。組ごとに 1 件。 */
+function overlaps(parts: readonly SceneBody[], min: number, make: Make): Finding[] {
+  const found: Finding[] = [];
+  parts.forEach((one, index) => {
+    for (const other of parts.slice(index + 1)) {
+      const depth = penetration(one.rect, other.rect);
+      if (depth >= min) found.push(make('overlap', one.id, other.id, depth, laterLine(one.line, other.line), centerOf(other)));
+    }
+  });
+  return found;
+}
+
+/** その部品の足で終わる区間か (自分の足へ来る線は胴に触れてよい)。 */
+const endsAtPin = (segment: Segment, body: SceneBody): boolean =>
+  body.pins.some((pin) => isSamePoint(pin, segment.from) || isSamePoint(pin, segment.to));
+
+/** 2. 線が部品の胴を通る。線と部品の組ごとに、通った長さの合計で 1 件。 */
+function wireParts(parts: readonly SceneBody[], wires: readonly SceneWire[], min: number, make: Make): Finding[] {
+  const found: Finding[] = [];
+  for (const wire of wires) {
+    const segments = segmentsOf(wire.points);
+    for (const body of parts) {
+      if (body.id === wire.id) continue;
+      const length = segments
+        .filter((segment) => !endsAtPin(segment, body))
+        .reduce((sum, segment) => sum + lengthInside(segment, body.rect), 0);
+      if (length >= min) found.push(make('wire-part', wire.id, body.id, length, laterLine(wire.line, body.line), centerOf(body)));
+    }
+  }
+  return found;
+}
+
+/** 3. 線どうしの十字。点ごとに 1 件。 */
+function crossings(wires: readonly SceneWire[], make: Make): Finding[] {
+  const found: Finding[] = [];
+  const cut = wires.map((wire) => segmentsOf(wire.points));
+  wires.forEach((one, index) => {
+    wires.slice(index + 1).forEach((other, offset) => {
+      const theirs = cut[index + 1 + offset]!;
+      for (const mine of cut[index]!) {
+        for (const segment of theirs) {
+          const point = crossingOf(mine, segment);
+          if (point !== null) found.push(make('crossing', one.id, other.id, 1, laterLine(one.line, other.line), point));
+        }
+      }
+    });
+  });
+  return found;
+}
+
+/**
+ * 3'. 4 方向の交点 (circuit)。線の端が集まる点で、出ていく向きが 4 つ以上。
+ * 途中を通り抜ける線は 2 方向に数える (T 字に通した線にもう 1 本足すと十字になる)。
+ */
+function junctions(wires: readonly SceneWire[], make: Make): Finding[] {
+  const all = wires.flatMap((wire) => segmentsOf(wire.points).map((segment) => ({ wire, segment })));
+  const ends: { point: ScenePoint; wire: SceneWire }[] = all.flatMap(({ wire, segment }) => [
+    { point: segment.from, wire }, { point: segment.to, wire },
+  ]);
+  const seen: ScenePoint[] = [];
+  const found: Finding[] = [];
+  for (const { point } of ends) {
+    if (seen.some((one) => isSamePoint(one, point))) continue;
+    seen.push(point);
+    const headings = new Set<number>();
+    const names = new Set<string>();
+    let line: number | null = null;
+    for (const { wire, segment } of all) {
+      if (isSamePoint(segment.from, point)) headings.add(headingOf(point, segment.to));
+      else if (isSamePoint(segment.to, point)) headings.add(headingOf(point, segment.from));
+      else if (isInside(point, segment)) {
+        headings.add(headingOf(point, segment.to));
+        headings.add(headingOf(point, segment.from));
+      } else continue;
+      names.add(wire.id);
+      line = laterLine(line, wire.line);
+    }
+    if (headings.size >= 4) {
+      const [a = '', b = '', ...rest] = [...names];
+      found.push(make('junction4', a, [b, ...rest].join('+'), 1, line, point));
+    }
+  }
+  return found;
+}
+
+/** 4. 名札と部品・線・ほかの名札の衝突。 */
+function captions(scene: Scene, min: number, make: Make): Finding[] {
+  const found: Finding[] = [];
+  const lineOf = new Map(scene.parts.map((body) => [body.id, body.line]));
+  scene.captions.forEach((caption, index) => {
+    const name = `caption:${caption.owner}`;
+    const line = lineOf.get(caption.owner) ?? null;
+    const at = { x: caption.rect.cx, y: caption.rect.cy };
+    for (const body of scene.parts) {
+      const depth = penetration(caption.rect, body.rect);
+      const other = body.id === caption.owner ? `${body.id}(body)` : body.id;
+      if (depth >= min) found.push(make('caption', name, other, depth, laterLine(line, body.line), at));
+    }
+    for (const other of scene.captions.slice(index + 1)) {
+      const depth = penetration(caption.rect, other.rect);
+      if (depth >= min) {
+        found.push(make('caption', name, `caption:${other.owner}`, depth, laterLine(line, lineOf.get(other.owner) ?? null), at));
+      }
+    }
+    for (const wire of scene.wires) {
+      const length = segmentsOf(wire.points).reduce((sum, segment) => sum + lengthInside(segment, caption.rect), 0);
+      if (length >= min) found.push(make('caption', name, wire.id, length, laterLine(line, wire.line), at));
+    }
+  });
+  return found;
+}

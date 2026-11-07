@@ -1,0 +1,36 @@
+{
+  "name": "fence-check",
+  "description": "circuit / breadboard / perfboard の図の崩れ (重なり・横切り・十字・名札の衝突) を数える",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "exports": {
+    ".": "./src/core/index.ts",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fence-check": "./dist/cli.cjs"
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage",
+    "check": "npm run typecheck && npm run test"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@vitest/coverage-v8": "^4.1.11",
+    "breadboard-fence": "*",
+    "circuit-fence": "*",
+    "esbuild": "^0.28.2",
+    "fence-kit": "*",
+    "perfboard-fence": "*",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
+  }
+}

@@ -55,6 +55,8 @@ export function captionRoom(
   taken: readonly Rect[] = [],
   obstacles: readonly Obstacle[] = [],
   bounds: Rect | null = null,
+  /** 置いた名札を知らせる先 (fence-check の幾何。52 の docs/148)。描く図は変わらない。 */
+  record?: (owner: string, box: Rect) => void,
 ): CaptionRoom {
   const placed: Rect[] = [...taken];
   const step = theme.metrics.textSize * LINE;
@@ -78,13 +80,17 @@ export function captionRoom(
         ?? drops.find((baseline) => labelFree(at(baseline)))
         ?? below + LIMIT * step;
       placed.push(at(chosen));
+      record?.(owner, at(chosen));
       return chosen;
     },
     blocked: (box, owner) => !shapeFree(box, owner),
     pick(candidates, owner) {
       const index = Math.max(0, candidates.findIndex((box) => free(box, owner)));
       const chosen = candidates[index];
-      if (chosen !== undefined) placed.push(chosen);
+      if (chosen !== undefined) {
+        placed.push(chosen);
+        record?.(owner, chosen);
+      }
       return index;
     },
     drop(x, baseline, width) {

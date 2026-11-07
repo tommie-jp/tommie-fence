@@ -55,6 +55,9 @@
 - `packages/playground` — 9 つのフェンスをブラウザだけで試す静的なページ
   (GitHub Pages)。**拡張ではない** ので `.vsix` の対象から外れ、`check` には乗る。
   約束は [packages/playground/CLAUDE.md](packages/playground/CLAUDE.md)
+- `packages/fence-check` — circuit / breadboard / perfboard の図の崩れ (胴の重なり・線が胴を
+  通る・線の十字と 4 方向の交点・名札の衝突) を数える CLI (52 の docs/148)。**自分では描かない** —
+  各コアの `scenesOf*` が返す幾何 (fence-kit の `Scene`) を見るだけ。Release の対象ではない
 - `.claude/skills/tommie-fence` — Claude Code がフェンスを書くときに読む手引き
   (9 つの文法と早見表の所在、`check` → `render` → PNG で確かめる順、フェンスどうしで
   取り違えやすい書き方)。**文法は写さず所在を指す**。取り違えやすい書き方の表は

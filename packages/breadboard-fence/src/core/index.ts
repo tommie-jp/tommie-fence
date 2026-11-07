@@ -1,5 +1,6 @@
-import { applyExpectations, hasSheets, keptSourceLines, renderSheets, resolveLang } from 'fence-kit';
-import type { Lang, SheetExtras, SheetPoint } from 'fence-kit';
+import { applyExpectations, hasSheets, keptSourceLines, renderSheets, resolveLang, splitSheets } from 'fence-kit';
+import type { Lang, Scene, SheetExtras, SheetPoint } from 'fence-kit';
+import { breadboardScene } from './render/scene.ts';
 import { toroidNotices } from './parts/toroidNotices.ts';
 import { attachSourceText, fail, fenceError, notice, ok, safeToken, shiftErrors } from './errors.ts';
 import { normalizeNewlines } from './newlines.ts';
@@ -151,7 +152,7 @@ export function renderBreadboard(input: string, options: RenderOptions = {}): Re
   const source = normalizeNewlines(input);
   if (!hasSheets(source)) {
     // 枚の中でだけ使うもの (節点の座標) は外へ返さない。
-    const { anchors: _anchors, look: _look, ...one } = renderOneSheet(input, options);
+    const { anchors: _anchors, look: _look, scene: _scene, ...one } = renderOneSheet(input, options);
     return one;
   }
   return renderSheets(
@@ -169,7 +170,18 @@ export function renderBreadboard(input: string, options: RenderOptions = {}): Re
   );
 }
 
-function renderOneSheet(input: string, options: RenderOptions): RenderResult & SheetExtras {
+/**
+ * 図の幾何 (fence-check が見る形。52 の docs/148)。**`sheets:` の図は枚ごとに 1 つ**。
+ * 描くのと同じ道を通して組むので、描画を直せば検査も一緒に動く。
+ */
+export function scenesOfBreadboard(input: string): readonly Scene[] {
+  const source = normalizeNewlines(input);
+  if (!hasSheets(source)) return [renderOneSheet(source, { stamp: false }).scene];
+  return splitSheets(source, { shared: ['lang'] }).sheets
+    .map((sheet) => ({ ...renderOneSheet(sheet.text, { stamp: false }).scene, sheet: sheet.name }));
+}
+
+function renderOneSheet(input: string, options: RenderOptions): RenderResult & SheetExtras & { readonly scene: Scene } {
   // 外から来た字は、読む前に改行を揃える。行数は変わらないので行番号はそのまま。
   const source = normalizeNewlines(input);
   const parsed = parseFence(source);
@@ -276,6 +288,7 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
   return {
     svg,
     netlist,
+    scene: breadboardScene({ parts, devices: placements, wires: rendered, layout, theme: style.theme, drops }),
     ...report(errors, source, style.debug, options.offset ?? 0),
     anchors: sheetAnchors(parsed.doc.points, board, layout, titleHeight(parsed.doc.title, style.theme)),
     look: {
