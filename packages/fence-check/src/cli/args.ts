@@ -11,7 +11,16 @@ export const USAGE = `使い方: fence-check <Markdown またはディレクト�
   --tex    circuit のフェンスを TeX で回し、多端子部品のピンと胴の位置を問い合わせる
            (遅い。1 個 1 秒ほど。書かなければピンへの線は検査せずに数える)
 
-終了コードは件数に依らず 0 (崩れは「読みにくい」で「読めない」ではない)。引数の誤りは 2。`;
+  --baseline <json>
+           基準 (前に --json で書き出したもの) に無い件だけを出す。確かな件が 1 件でもあれば
+           終了コード 1。近似の件 (?) は出すだけ
+  --allow <json>
+           わざと残す件の一覧 { "allow": [{ file, title, sheet, kind, a, b, reason }] }。
+           ここにある件は基準に無くても赤くしない。reason は必須
+  --write  直って消えた件を基準から消して書き戻す (--baseline のときだけ。基準は増えない)
+
+終了コードは --baseline のときだけ件で決まる (新しい確かな件があれば 1)。それ以外は件数に依らず 0
+(崩れは「読みにくい」で「読めない」ではない)。引数とファイルの誤りは 2。`;
 
 export type Args = {
   readonly targets: readonly string[];
@@ -21,6 +30,12 @@ export type Args = {
   readonly top: number;
   /** circuit のピンの座標を TeX に問い合わせるか。 */
   readonly tex: boolean;
+  /** 基準のファイル。書かなければ基準と突き合わせない。 */
+  readonly baseline: string | null;
+  /** 許す一覧のファイル。 */
+  readonly allow: string | null;
+  /** 直った件を基準から消して書き戻すか。 */
+  readonly write: boolean;
 };
 
 export type ArgsResult = { readonly ok: true; readonly value: Args } | { readonly ok: false; readonly message: string };
@@ -34,6 +49,9 @@ export function parseArgs(argv: readonly string[]): ArgsResult {
   let only: readonly SceneFence[] = FENCES;
   let min: number | null = null;
   let top = 0;
+  let baseline: string | null = null;
+  let allow: string | null = null;
+  let write = false;
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index]!;
     if (arg === '--json') {
@@ -42,6 +60,18 @@ export function parseArgs(argv: readonly string[]): ArgsResult {
     }
     if (arg === '--tex') {
       tex = true;
+      continue;
+    }
+    if (arg === '--write') {
+      write = true;
+      continue;
+    }
+    if (arg === '--baseline' || arg === '--allow') {
+      const value = argv[index + 1];
+      if (value === undefined || value.startsWith('--')) return { ok: false, message: `${arg} の後に値がありません` };
+      index += 1;
+      if (arg === '--baseline') baseline = value;
+      else allow = value;
       continue;
     }
     if (arg === '--only' || arg === '--min' || arg === '--top') {
@@ -67,5 +97,8 @@ export function parseArgs(argv: readonly string[]): ArgsResult {
     targets.push(arg);
   }
   if (targets.length === 0) return { ok: false, message: '検査する Markdown かディレクトリを 1 つ以上書きます' };
-  return { ok: true, value: { targets, json, only, min, top, tex } };
+  if (baseline === null && (write || allow !== null)) {
+    return { ok: false, message: `${write ? '--write' : '--allow'} は --baseline と一緒に書きます` };
+  }
+  return { ok: true, value: { targets, json, only, min, top, tex, baseline, allow, write } };
 }

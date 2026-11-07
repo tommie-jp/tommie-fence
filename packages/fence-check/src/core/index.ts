@@ -11,3 +11,7 @@ export { checkFence, titleOf } from './figures.ts';
 export type { FenceInput, SceneMakers } from './figures.ts';
 export { formatRow, formatSummary, formatTop, rowsOf, summarize, topFigures } from './report.ts';
 export type { FigureResult, FindingRow, Summary } from './report.ts';
+export {
+  diffBaseline, formatBaselineSummary, formatFindingsJson, keyOf, readAllowList, readBaselineRows, shrunkBaseline,
+} from './baseline.ts';
+export type { AllowEntry, BaselineDiff, ReadResult } from './baseline.ts';
