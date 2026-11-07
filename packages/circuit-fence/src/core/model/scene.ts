@@ -1,8 +1,9 @@
+import { sceneWireNames } from 'fence-kit';
 import type { Scene, SceneBody, ScenePoint, SceneWire } from 'fence-kit';
 import { compileCircuit } from '../index.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { normalizeNewlines } from '../newlines.ts';
-import { cellOf, nodeNameOf, texNameOfEndpoint } from '../types.ts';
+import { cellOf, nameOfEndpoint, nodeNameOf, texNameOfEndpoint } from '../types.ts';
 import type { Endpoint } from '../types.ts';
 import { DEFAULT_PITCH, cornerOf } from './address.ts';
 import type { Address } from './address.ts';
@@ -152,6 +153,8 @@ export function scenesOfCircuit(input: string, probed: ProbedPoints | null = nul
   let skipped = 0;
   const wires: SceneWire[] = [];
   const pinsOf = new Map<string, ScenePoint[]>();
+  // 名前は描けなかった線も含めて付ける (`--tex` の有無で名前がずれないように)。
+  const names = sceneWireNames(circuit.wires.map((wire) => [nameOfEndpoint(wire.from), nameOfEndpoint(wire.to)] as const));
   circuit.wires.forEach((wire, index) => {
     const from = pointOf(wire.from);
     const to = pointOf(wire.to);
@@ -162,7 +165,7 @@ export function scenesOfCircuit(input: string, probed: ProbedPoints | null = nul
     for (const [end, point] of [[wire.from, from], [wire.to, to]] as const) {
       if (end.kind === 'pin') pinsOf.set(end.part, [...(pinsOf.get(end.part) ?? []), point]);
     }
-    wires.push({ id: `wire#${index + 1}`, points: bentPoints(wire.from, wire.to, from, to, wire.operator), line: wire.line });
+    wires.push({ id: names[index] ?? `wire#${index + 1}`, points: bentPoints(wire.from, wire.to, from, to, wire.operator), line: wire.line });
   });
 
   if (probed !== null) parts.push(...multiTerminalBodies(circuit, probed, pinsOf, at));

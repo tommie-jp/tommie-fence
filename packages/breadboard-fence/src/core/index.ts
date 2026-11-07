@@ -67,6 +67,10 @@ type Endpoint =
   | { readonly kind: 'hole'; readonly address: Address; readonly viaPin: boolean }
   | { readonly kind: 'device'; readonly partId: string; readonly pin: string };
 
+/** 線の端を字にする (fence-check の線の名前。穴は番地、機器はピン)。 */
+const endText = (end: Endpoint): string =>
+  end.kind === 'hole' ? formatAddress(end.address) : `${end.partId}.${end.pin}`;
+
 type ResolvedWire = {
   readonly from: Endpoint;
   readonly to: Endpoint;
@@ -236,7 +240,9 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
   const drawable = wires.flatMap((wire) => {
     const from = pointOf(wire.from, layout.point, placements);
     const to = pointOf(wire.to, layout.point, placements);
-    return from && to ? [{ from, to, hints: wire.hints, color: wire.color, line: wire.line }] : [];
+    return from && to
+      ? [{ from, to, hints: wire.hints, color: wire.color, line: wire.line, ends: [endText(wire.from), endText(wire.to)] as const }]
+      : [];
   });
   const drops = captionDrops(parts, layout, style.theme);
   const obstacles = [
@@ -288,7 +294,9 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
   return {
     svg,
     netlist,
-    scene: breadboardScene({ parts, devices: placements, wires: rendered, layout, theme: style.theme, drops }),
+    scene: breadboardScene({
+      parts, devices: placements, wires: rendered, wireEnds: drawable.map((wire) => wire.ends), layout, theme: style.theme, drops,
+    }),
     ...report(errors, source, style.debug, options.offset ?? 0),
     anchors: sheetAnchors(parsed.doc.points, board, layout, titleHeight(parsed.doc.title, style.theme)),
     look: {

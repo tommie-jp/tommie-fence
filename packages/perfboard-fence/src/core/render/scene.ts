@@ -1,8 +1,8 @@
-import { sceneRectOf } from 'fence-kit';
+import { sceneRectOf, sceneWireNames } from 'fence-kit';
 import type { Scene, SceneBody, SceneCaption, SceneWire } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
 import { bodyRect } from '../placement/geometry.ts';
-import type { PlacedPart, Point, Rect, RoutedWire } from '../types.ts';
+import type { Address, PlacedPart, Point, Rect, RoutedWire } from '../types.ts';
 import type { DeviceWire } from '../wiring/wiring.ts';
 import type { PlacedDevice } from './devices.ts';
 
@@ -18,10 +18,12 @@ export type SceneInput = {
   readonly deviceWires: readonly DeviceWire[];
   readonly captions: readonly { readonly owner: string; readonly box: Rect }[];
   readonly layout: Layout;
+  /** 番地を基板の綴りで書く (線の名前 `wire(c7-c9)` に使う)。 */
+  readonly spell: (address: Address) => string;
 };
 
 export function perfboardScene(input: SceneInput, sheet: string | null = null): Scene {
-  const { parts, devices, wires, deviceWires, captions, layout } = input;
+  const { parts, devices, wires, deviceWires, captions, layout, spell } = input;
   const bodies: SceneBody[] = parts.flatMap((part) => {
     const rect = part.pins.length === 0 ? null : bodyRect(part, layout);
     return rect === null ? [] : [{
@@ -38,16 +40,20 @@ export function perfboardScene(input: SceneInput, sheet: string | null = null): 
     line: one.device.line ?? null,
   }));
   const pinOf = new Map(devices.map((one) => [one.device.id, one.pins]));
+  const names = sceneWireNames([
+    ...wires.map((wire) => [spell(wire.from), spell(wire.to)] as const),
+    ...deviceWires.map((wire) => [`${wire.device}.${wire.pin}`, spell(wire.hole)] as const),
+  ]);
   const lines: SceneWire[] = [
     ...wires.map((wire, index) => ({
-      id: `wire#${index + 1}`,
+      id: names[index] ?? `wire#${index + 1}`,
       points: [layout.point(wire.from), layout.point(wire.to)],
       line: wire.line,
     })),
     ...deviceWires.flatMap((wire, index): SceneWire[] => {
       const from: Point | undefined = pinOf.get(wire.device)?.get(wire.pin);
       return from === undefined ? [] : [{
-        id: `${wire.device}.${wire.pin}#${index + 1}`,
+        id: names[wires.length + index] ?? `${wire.device}.${wire.pin}#${index + 1}`,
         points: [from, layout.point(wire.hole)],
         line: wire.line,
       }];

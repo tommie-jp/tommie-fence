@@ -18,7 +18,7 @@ export type Kind = (typeof KINDS)[number];
 
 export type Finding = {
   readonly kind: Kind;
-  /** 相手の名前 (部品 ID・`wire#N`・`caption:ID`・`ID(body)`)。 */
+  /** 相手の名前 (部品 ID・`wire(c12-f9)`・`caption:ID`・`ID(body)`)。線は両端で名付ける (docs/150)。 */
   readonly a: string;
   readonly b: string;
   /** 重なりの深さ・通った長さ (px)。交点は 1 件 = 1。 */

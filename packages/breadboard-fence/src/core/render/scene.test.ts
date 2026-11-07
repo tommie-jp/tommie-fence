@@ -21,7 +21,7 @@ describe('the scene that fence-check reads (52 docs/148)', () => {
     expect(scene?.parts.map((part) => part.id)).toEqual(['R1', 'D1']);
     expect(scene?.captions.map((caption) => caption.owner)).toEqual(['R1', 'D1']);
     expect(scene?.wires).toHaveLength(1);
-    expect(scene?.wires[0]?.id).toBe('wire#1');
+    expect(scene?.wires[0]?.id).toBe('wire(-t3-a3)');
     expect(scene?.wires[0]?.points.length).toBeGreaterThanOrEqual(2);
   });
 

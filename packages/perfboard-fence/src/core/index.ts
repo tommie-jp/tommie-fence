@@ -549,6 +549,7 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
       deviceWires: wiring.deviceWires,
       captions: captionLog,
       layout,
+      spell: (address) => formatAddress(address, board),
     }),
     errors: at(errors), notices: at(notices), erc: at(ercAt),
     errorHtml: renderErrorBanner(shown),

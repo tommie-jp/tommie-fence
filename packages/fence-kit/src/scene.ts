@@ -63,6 +63,21 @@ export type Scene = {
   readonly skipped: number;
 };
 
+/**
+ * 線の名前を書かれた両端で付ける (`wire(c12-f9)`)。両端が同じ線の 2 本めからは `#2` `#3`。
+ * fence-check はこの名前を件の鍵に使う (52 の docs/150) — 並び順 (`wire#N`) だと線を 1 本足すと
+ * 後ろの全部の名前がずれるが、両端なら動かした線の名前しか変わらない。
+ */
+export function sceneWireNames(ends: readonly (readonly [string, string])[]): readonly string[] {
+  const seen = new Map<string, number>();
+  return ends.map(([from, to]) => {
+    const base = `wire(${from}-${to})`;
+    const count = (seen.get(base) ?? 0) + 1;
+    seen.set(base, count);
+    return count === 1 ? base : `${base}#${count}`;
+  });
+}
+
 /** 軸に沿った矩形 (左上・幅・高さ) を SceneRect にする。 */
 export const sceneRectOf = (box: { readonly x: number; readonly y: number; readonly width: number; readonly height: number }): SceneRect => ({
   cx: box.x + box.width / 2,

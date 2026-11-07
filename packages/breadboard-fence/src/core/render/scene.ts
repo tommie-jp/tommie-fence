@@ -1,4 +1,4 @@
-import { bodySize, sceneRectOf } from 'fence-kit';
+import { bodySize, sceneRectOf, sceneWireNames } from 'fence-kit';
 import type { Scene, SceneBody, SceneCaption, SceneRect, SceneWire } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Point } from '../types.ts';
@@ -21,13 +21,15 @@ export type SceneInput = {
   readonly parts: readonly PlacedPart[];
   readonly devices: ReadonlyMap<string, DevicePlacement>;
   readonly wires: readonly RenderedWire[];
+  /** `wires` と同じ並びの、書かれた両端 (番地か `機器.ピン`)。線の名前になる。 */
+  readonly wireEnds: readonly (readonly [string, string])[];
   readonly layout: Layout;
   readonly theme: RenderTheme;
   readonly drops: ReadonlyMap<string, number>;
 };
 
 export function breadboardScene(input: SceneInput, sheet: string | null = null): Scene {
-  const { parts, devices, wires, layout, theme, drops } = input;
+  const { parts, devices, wires, wireEnds, layout, theme, drops } = input;
   const bodies: SceneBody[] = parts.flatMap((part) => {
     const rect = bodyOf(part, layout);
     return rect === null ? [] : [{ id: part.id, rect, pins: pinPoints(part, layout) ?? [], line: part.line }];
@@ -44,8 +46,9 @@ export function breadboardScene(input: SceneInput, sheet: string | null = null):
     const box = captionGlyphBoxOf(part, layout, theme, drops.get(part.id) ?? 0);
     return box === null ? [] : [{ owner: part.id, rect: sceneRectOf(box) }];
   });
+  const names = sceneWireNames(wireEnds);
   const lines: SceneWire[] = wires.map((wire, index) => ({
-    id: `wire#${index + 1}`,
+    id: names[index] ?? `wire#${index + 1}`,
     points: wire.points,
     line: wire.line === 0 ? null : wire.line,
   }));

@@ -15,7 +15,7 @@ describe('the scene that fence-check reads (52 docs/148)', () => {
     expect(scene?.approximate).toBe(true);
     expect(scene?.parts.map((part) => part.id)).toEqual(['V1', 'R1']);
     expect(scene?.wires.filter((wire) => wire.lead === true).map((wire) => wire.id)).toEqual(['V1', 'R1']);
-    const bent = scene?.wires.find((wire) => wire.id === 'wire#1');
+    const bent = scene?.wires.find((wire) => wire.id === 'wire(3,1-1,3)');
     expect(bent?.points).toHaveLength(3);
   });
 
@@ -82,7 +82,7 @@ describe('pin positions asked of TeX (52 docs/148)', () => {
     ]);
     const [scene] = scenesOfCircuit(source, probed);
     expect(scene?.skipped).toBe(0);
-    expect(scene?.wires.find((wire) => wire.id === 'wire#1')?.points).toEqual([
+    expect(scene?.wires.find((wire) => wire.id === 'wire(3,1-Q1.collector)')?.points).toEqual([
       { x: expect.closeTo(151.18, 1), y: 0 }, { x: 151.18, y: 126.23 },
     ]);
     const body = scene?.parts.find((part) => part.id === 'Q1');
@@ -94,6 +94,6 @@ describe('pin positions asked of TeX (52 docs/148)', () => {
   test('a bent wire to a pin turns where TikZ turns it', () => {
     const bent = fence('parts:', '  Q1: npn 3,3', '  R1: resistor 1,1 2,1 1k', 'wires:', '  - 2,1 -| Q1.C');
     const [scene] = scenesOfCircuit(bent, new Map([['part-Q1.collector', { x: 150, y: 120 }]]));
-    expect(scene?.wires.find((wire) => wire.id === 'wire#1')?.points).toHaveLength(3);
+    expect(scene?.wires.find((wire) => wire.id === 'wire(2,1-Q1.collector)')?.points).toHaveLength(3);
   });
 });
