@@ -73,6 +73,15 @@ describe('2. wires through bodies', () => {
     expect(found).toEqual([expect.objectContaining({ kind: 'wire-part', b: 'U1' })]);
   });
 
+  test('a wire from a pin to the point the part was placed at is not hidden wiring', () => {
+    // SMA のピンから、置いた番地 (記号の中心) へ引く短い線 (03-nanovna の治具)。
+    const found = checkScene(scene({
+      parts: [{ ...body('J2', 0, 0, 30, 30, [{ x: -12, y: 0 }]), joins: [{ x: 0, y: 0 }] }],
+      wires: [wire('wire#2', [[-12, 0], [0, 0]]), wire('wire#1', [[-200, 0], [0, 0]])],
+    }));
+    expect(found).toEqual([]);
+  });
+
   test('does not count a lead against its own body', () => {
     const found = checkScene(scene({ parts: [body('R1', 0, 0, 40, 10)], wires: [{ ...wire('R1', [[-50, 0], [50, 0]]), lead: true }] }));
     expect(found).toEqual([]);

@@ -106,7 +106,10 @@ const insideLength = (segment: Segment, body: SceneBody): number => {
   const atPin = (point: ScenePoint): boolean => body.pins.some((one) => isSamePoint(one, point));
   // 両端とも自分の足 (胴の下で足どうしをつなぐ線) は、線がまるごと胴に隠れる。
   if (atPin(segment.from) && atPin(segment.to)) return length;
-  const pin = body.pins.find((one) => isSamePoint(one, segment.from) || isSamePoint(one, segment.to));
+  // ピンでなくても線が来てよい点 (記号を置いた番地) を**先に**見る。記号の中心なので、
+  // そこで終わる線はどちらへ出ても許す (ピンから中心へ引く短い線も、中心から見れば同じ)。
+  const pin = [...(body.joins ?? []), ...body.pins]
+    .find((one) => isSamePoint(one, segment.from) || isSamePoint(one, segment.to));
   if (pin === undefined || length === 0) return length;
   const other = isSamePoint(pin, segment.from) ? segment.to : segment.from;
   const ahead = exitLength(pin, other, body.rect, 1);

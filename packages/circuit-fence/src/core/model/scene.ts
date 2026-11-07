@@ -165,7 +165,7 @@ export function scenesOfCircuit(input: string, probed: ProbedPoints | null = nul
     wires.push({ id: `wire#${index + 1}`, points: bentPoints(wire.from, wire.to, from, to, wire.operator), line: wire.line });
   });
 
-  if (probed !== null) parts.push(...multiTerminalBodies(circuit, probed, pinsOf));
+  if (probed !== null) parts.push(...multiTerminalBodies(circuit, probed, pinsOf, at));
 
   return [{
     fence: 'circuit',
@@ -203,6 +203,7 @@ function multiTerminalBodies(
   circuit: Circuit,
   probed: ProbedPoints,
   pinsOf: ReadonlyMap<string, readonly ScenePoint[]>,
+  at: (address: Address) => ScenePoint,
 ): SceneBody[] {
   return circuit.parts.flatMap((part): SceneBody[] => {
     if (part.kind !== 'multi-terminal') return [];
@@ -217,6 +218,8 @@ function multiTerminalBodies(
       id: part.id,
       rect: { cx: (Math.max(...xs) + Math.min(...xs)) / 2, cy: (Math.max(...ys) + Math.min(...ys)) / 2, width, height, angle: 0 },
       pins: pinsOf.get(part.id) ?? [],
+      // **置いた番地にも線が来てよい** — SMA の中心へ番地で引く線 (03-nanovna の治具)。
+      joins: [at(part.at)],
       line: part.line,
     }];
   });

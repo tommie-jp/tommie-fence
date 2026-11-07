@@ -88,6 +88,7 @@ describe('pin positions asked of TeX (52 docs/148)', () => {
     const body = scene?.parts.find((part) => part.id === 'Q1');
     expect(body?.rect).toMatchObject({ cx: 150, cy: 150, width: 40, height: 60 });
     expect(body?.pins).toEqual([{ x: 151.18, y: 126.23 }]);
+    expect(body?.joins).toEqual([{ x: expect.closeTo(151.18, 1), y: expect.closeTo(151.18, 1) }]);
   });
 
   test('a bent wire to a pin turns where TikZ turns it', () => {

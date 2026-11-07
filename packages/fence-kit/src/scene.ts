@@ -25,6 +25,11 @@ export type SceneBody = {
   readonly id: string;
   readonly rect: SceneRect;
   readonly pins: readonly ScenePoint[];
+  /**
+   * ピンではないが線が来てよい点 (circuit の記号を置いた番地。SMA の中心へ番地で引く線)。
+   * 「両端とも自分のピン = 胴の下に隠れた線」の判定には数えない。
+   */
+  readonly joins?: readonly ScenePoint[];
   /** フェンスの中の行 (1 始まり)。分からなければ null。 */
   readonly line: number | null;
 };
