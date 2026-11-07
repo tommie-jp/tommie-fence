@@ -41,6 +41,19 @@ describe('2. wires through bodies', () => {
     expect(found).toEqual([]);
   });
 
+  test('a wire leaving a pin straight back through its own box is reported', () => {
+    // 箱の左の辺のピンから右へ引いた線 (52 の docs/149、Analog Discovery の箱)。
+    const pin = { x: -20, y: 0 };
+    const found = checkScene(scene({ parts: [body('AD', 0, 0, 40, 60, [pin])], wires: [wire('wire#1', [[-20, 0], [100, 0]])] }));
+    expect(found).toEqual([expect.objectContaining({ kind: 'wire-part', b: 'AD', amount: 30 })]);
+  });
+
+  test('a pin a little inside its body (a DIP) is not a crossing', () => {
+    const pin = { x: 0, y: 25 };
+    const found = checkScene(scene({ parts: [body('U1', 0, 0, 80, 60, [pin])], wires: [wire('wire#1', [[0, 25], [0, 60]])] }));
+    expect(found).toEqual([]);
+  });
+
   test('does not count a lead against its own body', () => {
     const found = checkScene(scene({ parts: [body('R1', 0, 0, 40, 10)], wires: [{ ...wire('R1', [[-50, 0], [50, 0]]), lead: true }] }));
     expect(found).toEqual([]);

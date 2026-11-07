@@ -81,6 +81,19 @@ function overlaps(parts: readonly SceneBody[], min: number, make: Make): Finding
 const endsAtPin = (segment: Segment, body: SceneBody): boolean =>
   body.pins.some((pin) => isSamePoint(pin, segment.from) || isSamePoint(pin, segment.to));
 
+/**
+ * 自分の足で終わる区間が胴の中を通ってよい長さ (px)。足は胴の縁か少し内側にある
+ * (DIP の樹脂は足の列を 5 px 包む)。**これを超えた分は胴を横切っている** —
+ * 箱の左の辺のピンから右へ引いた線が箱を貫く形 (52 の docs/149、機器の箱)。
+ */
+const PIN_INSET = 10;
+
+/** 区間が胴の中を通る長さ。自分の足で終わる区間は、足から縁までの分を差し引く。 */
+const insideLength = (segment: Segment, body: SceneBody): number => {
+  const length = lengthInside(segment, body.rect);
+  return endsAtPin(segment, body) ? Math.max(0, length - PIN_INSET) : length;
+};
+
 /** 2. 線が部品の胴を通る。線と部品の組ごとに、通った長さの合計で 1 件。 */
 function wireParts(parts: readonly SceneBody[], wires: readonly SceneWire[], min: number, make: Make): Finding[] {
   const found: Finding[] = [];
@@ -88,9 +101,7 @@ function wireParts(parts: readonly SceneBody[], wires: readonly SceneWire[], min
     const segments = segmentsOf(wire.points);
     for (const body of parts) {
       if (body.id === wire.id) continue;
-      const length = segments
-        .filter((segment) => !endsAtPin(segment, body))
-        .reduce((sum, segment) => sum + lengthInside(segment, body.rect), 0);
+      const length = segments.reduce((sum, segment) => sum + insideLength(segment, body), 0);
       if (length >= min) found.push(make('wire-part', wire.id, body.id, length, laterLine(wire.line, body.line), centerOf(body)));
     }
   }
