@@ -15,6 +15,10 @@ reader trips over but a parser never sees:
    i.e. the box sits on the far side from the holes it goes to. Put the box on the side of its holes.
    One finding per wire; when the same box also has wires that stay on its side, the box serves both
    halves and the finding is `?` (split the box in two, or move an end — a person decides)
+7. `wire-overlap` — two wires run on top of each other: parallel, at most 2 px apart, for 10 px or more
+   (the amount is the shared length). One line hides the other, which `crossing` cannot see.
+   Wires that share an end are left out (they meet at the same hole or node, so they are one net).
+   Lanes the breadboard router lays side by side are 4 px apart and read as two wires, so they are fine
 
 It draws nothing itself. Each fence's core returns the geometry it drew with
 (`scenesOfCircuit` / `scenesOfBreadboard` / `scenesOfPerfboard`, type `Scene` in fence-kit),

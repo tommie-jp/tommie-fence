@@ -134,6 +134,41 @@ describe('3. crossings and four-way junctions', () => {
   });
 });
 
+describe("9. wires that run on top of each other (wire-overlap)", () => {
+  // ほかの項目 (ブレッドボードの wire-pin など) は見ない。
+  const overlapsOf = (over: Partial<Scene>) => checkScene(scene(over)).filter((one) => one.kind === 'wire-overlap');
+  test('two parallel wires 2 px apart over 30 px are one finding with the shared length', () => {
+    const found = overlapsOf({ wires: [wire('wire#1', [[0, 0], [60, 0]]), wire('wire#2', [[20, 2], [50, 2]])] });
+    expect(found).toEqual([expect.objectContaining({ kind: 'wire-overlap', a: 'wire#1', b: 'wire#2', amount: 30, unit: 'px' })]);
+  });
+
+  test('lines 4 px apart (the lanes the router lays side by side) are separate lines', () => {
+    expect(overlapsOf({ wires: [wire('wire#1', [[0, 0], [60, 0]]), wire('wire#2', [[0, 4], [60, 4]])] })).toEqual([]);
+  });
+
+  test('a short overlap (under 10 px) is not counted', () => {
+    expect(overlapsOf({ wires: [wire('wire#1', [[0, 0], [60, 0]]), wire('wire#2', [[55, 1], [90, 1]])] })).toEqual([]);
+  });
+
+  test('wires that meet at an end are the same node and are not counted', () => {
+    // 同じ穴・同じ節点へ集まる線 (同じネット) は重なって見えてよい。
+    const found = overlapsOf({ wires: [wire('wire#1', [[0, 0], [0, 60]]), wire('wire#2', [[0, 20], [0, 60]])] });
+    expect(found).toEqual([]);
+  });
+
+  test('a wire laid along a lead of a part is counted (schematics)', () => {
+    const found = checkScene(scene({
+      fence: 'circuit',
+      wires: [{ ...wire('R1', [[0, 0], [80, 0]]), lead: true }, wire('wire#3', [[10, 1], [70, 1]])],
+    }));
+    expect(found).toEqual([expect.objectContaining({ kind: 'wire-overlap', a: 'R1', b: 'wire#3', amount: 60 })]);
+  });
+
+  test('crossing wires are not parallel', () => {
+    expect(overlapsOf({ wires: [wire('wire#1', [[0, 0], [60, 0]]), wire('wire#2', [[30, -30], [30, 30]])] })).toEqual([]);
+  });
+});
+
 describe('4. captions', () => {
   const caption = (owner: string, cx: number, cy: number, width = 30, height = 10) =>
     ({ owner, rect: { cx, cy, width, height, angle: 0 } });

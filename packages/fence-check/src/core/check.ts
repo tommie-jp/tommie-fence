@@ -16,7 +16,7 @@ import type { Segment } from './geometry.ts';
  *   perf は裸の線で同じネットのピンをなぞるのが普通なので、`Scene` にネットが載るまで見ない)
  * - `device-side` — 板の外の機器の箱から出た線が、板の真ん中の溝をまたぐ (bread。docs/151)
  */
-export const KINDS = ['overlap', 'wire-part', 'crossing', 'junction4', 'caption', 'wire-pin', 'device-side'] as const;
+export const KINDS = ['overlap', 'wire-part', 'crossing', 'junction4', 'caption', 'wire-pin', 'device-side', 'wire-overlap'] as const;
 export type Kind = (typeof KINDS)[number];
 
 export type Finding = {
@@ -63,7 +63,75 @@ export function checkScene(scene: Scene, options: CheckOptions = {}): readonly F
     ...captions(scene, min, make),
     ...(scene.fence === 'breadboard' ? wirePins(scene, make) : []),
     ...deviceSides(scene, make),
+    ...wireOverlaps(scene.wires, make),
   ];
+}
+
+/** 平行と見なす向きの差 (度)。 */
+const PARALLEL_DEGREES = 2;
+/**
+ * 重なって見える線どうしの間 (px)。**2 px まで** — ブレッドボードの道順は並べて走らせる線を
+ * 4 px ずらして置き、色で 2 本と読める (教科書で数えると、平行に並ぶ組の間は 0 px か 4 px に分かれた)。
+ * 0〜2 px は線が線を隠す。
+ */
+const OVERLAP_GAP = 2;
+/** 数える重なりの長さの下限 (px)。端が少し触れるだけの並びは数えない。 */
+const OVERLAP_MIN = 10;
+
+/** 線 (折れ線) の両端。 */
+const endsOfWire = (wire: SceneWire): readonly ScenePoint[] => [wire.points[0]!, wire.points[wire.points.length - 1]!];
+
+/** 2 区間が平行に並んで重なる長さ (px)。平行でない・離れている・重ならないなら 0。 */
+function parallelOverlap(one: Segment, other: Segment): number {
+  const dx = one.to.x - one.from.x;
+  const dy = one.to.y - one.from.y;
+  const length = Math.hypot(dx, dy);
+  const ox = other.to.x - other.from.x;
+  const oy = other.to.y - other.from.y;
+  const otherLength = Math.hypot(ox, oy);
+  if (length === 0 || otherLength === 0) return 0;
+  const sin = Math.abs(dx * oy - dy * ox) / (length * otherLength);
+  if (sin > Math.sin((PARALLEL_DEGREES * Math.PI) / 180)) return 0;
+  const ux = dx / length;
+  const uy = dy / length;
+  // もう一方の両端の、この区間の直線からの距離と、直線に沿った位置。
+  const across = (point: ScenePoint): number => Math.abs((point.x - one.from.x) * uy - (point.y - one.from.y) * ux);
+  const along = (point: ScenePoint): number => (point.x - one.from.x) * ux + (point.y - one.from.y) * uy;
+  if (Math.max(across(other.from), across(other.to)) > OVERLAP_GAP) return 0;
+  const [low, high] = [along(other.from), along(other.to)].sort((a, b) => a - b) as [number, number];
+  return Math.max(0, Math.min(length, high) - Math.max(0, low));
+}
+
+/**
+ * 9. 平行に重なる線 (docs/150 の #9)。**線が線を隠す** — 十字 (`crossing`) は点で交わる所しか
+ * 数えないので、2 本が同じ道を並んで走ると見落とす (52 の docs/149 §8.3、アダプタの図)。
+ * 線の組ごとに、重なった長さの合計で 1 件。**端を共有する線の組は数えない** — 同じ穴・同じ節点へ
+ * 集まる線は同じネットで、重なって見えてよい (束ねた GND の線など)。
+ */
+function wireOverlaps(wires: readonly SceneWire[], make: Make): Finding[] {
+  const found: Finding[] = [];
+  const cut = wires.map((wire) => segmentsOf(wire.points));
+  wires.forEach((one, index) => {
+    wires.slice(index + 1).forEach((other, offset) => {
+      const shareEnd = endsOfWire(one).some((end) => endsOfWire(other).some((theirs) => isSamePoint(end, theirs)));
+      if (shareEnd) return;
+      let total = 0;
+      let at: ScenePoint | null = null;
+      for (const mine of cut[index]!) {
+        for (const theirs of cut[index + 1 + offset]!) {
+          const shared = parallelOverlap(mine, theirs);
+          if (shared > 0) {
+            total += shared;
+            at ??= { x: (theirs.from.x + theirs.to.x) / 2, y: (theirs.from.y + theirs.to.y) / 2 };
+          }
+        }
+      }
+      if (total >= OVERLAP_MIN && at !== null) {
+        found.push(make('wire-overlap', one.id, other.id, total, laterLine(one.line, other.line), at));
+      }
+    });
+  });
+  return found;
 }
 
 /** 量を点の数で数える項目。 */
