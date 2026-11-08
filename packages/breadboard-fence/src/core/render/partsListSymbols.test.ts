@@ -27,6 +27,16 @@ describe('parts-list: symbols', () => {
     expect(list.match(/class="bf-parts-icon"/g)).toHaveLength(2);
   });
 
+  test('a microcontroller board is left out and does not stretch the rows', () => {
+    const withBoard = renderBreadboard(fence('board: full', 'parts:', '  R1: resistor a30 a35 10k', '  R2: resistor b30 b35 10k', '  U1: pico2 @ h3'));
+    const without = renderBreadboard(fence('board: full', 'parts:', '  R1: resistor a30 a35 10k', '  R2: resistor b30 b35 10k'));
+    expect(withBoard.errors).toEqual([]);
+    expect(listOf(withBoard.svg).match(/class="bf-parts-icon"/g)).toHaveLength(2);
+    const height = (svg: string) => Number(/viewBox="0 0 [\d.]+ ([\d.]+)"/.exec(svg)?.[1]);
+    // 表の行が 1 つ増えるだけ。行の送りが Pico 2 の高さで広がらない。
+    expect(height(withBoard.svg) - height(without.svg)).toBeLessThan(60);
+  });
+
   test('the drawing carries the value (the resistor bands of 10k)', () => {
     const symbols = listOf(renderBreadboard(source('symbols')).svg);
     const other = listOf(renderBreadboard(source('symbols').replace('10k', '220')).svg);

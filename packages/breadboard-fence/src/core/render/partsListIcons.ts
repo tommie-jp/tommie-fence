@@ -164,11 +164,11 @@ const poleText = (pole: Pole, theme: RenderTheme): string =>
   });
 
 /**
- * 表に置く絵。描かない種類 (機器と DIP — DIP は型番の欄で足り、絵は幅を取りすぎる) と、
- * 番地の決まらない部品は null。
+ * 表に置く絵。描かない種類 (機器と DIP と、Pico などのマイコンボード — 型番の欄で足り、絵は幅を
+ * 取りすぎる。ボードは 1 つで全部の行の送りを広げてしまう) と、番地の決まらない部品は null。
  */
 export function partsIcon(part: PlacedPart, layout: Layout, theme: RenderTheme): PartsIcon | null {
-  if (part.kind === 'device' || part.kind === 'dip') return null;
+  if (part.kind === 'device' || part.kind === 'dip' || part.kind === 'board') return null;
   const flat = lieFlat(part, layout);
   const poles = polePlaces(flat, layout, theme);
   const box = boxOf(flat, layout, theme, poles);
