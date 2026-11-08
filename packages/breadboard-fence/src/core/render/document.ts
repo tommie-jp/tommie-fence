@@ -11,6 +11,9 @@ import { renderHits } from './hits.ts';
 import { renderPart } from './parts.ts';
 import { CAPTION_CLASS, uprightBodyRectOf } from './partCommon.ts';
 import { partsListHeight, renderPartsList } from './partsList.ts';
+import type { RenderTheme } from './theme.ts';
+import { sheetCaptionText } from './sheetPartsList.ts';
+import type { SheetCaption, SheetPartsList } from './sheetPartsList.ts';
 import { element, num, roundedPath, svgText } from './svg.ts';
 import type { RenderStyle } from './theme.ts';
 import { renderTitle, titleHeight } from './title.ts';
@@ -51,11 +54,54 @@ export type DocumentInput = {
   /** `- source` が図に書き出すフェンスの中身 (囲みつき)。 */
   readonly sourceLines: readonly string[];
   readonly partsList: PartsListMode;
+  /** `sheets:` の図の部品表 (枚をまたいで 1 つにまとめる)。**書かなければ 1 枚の図の描き方。** */
+  readonly sheetList?: SheetPartsList;
   /** 図の中の固定の字の言語。書かなければ ja。 */
   readonly lang?: Lang;
   /** 掴むための層。**null なら今までどおりの図**。 */
   readonly edit?: EditLayer | null;
 };
+
+/** 部品表の 1 枚ぶん。`caption` は `sheets:` の図でだけ付く。 */
+type ListPlate = {
+  readonly caption: SheetCaption | null;
+  readonly parts: readonly PlacedPart[];
+  readonly board: Board;
+  readonly mode: PartsListMode;
+  readonly layout: Layout;
+  readonly height: number;
+};
+
+/** 見出しの帯の高さ (字の大きさに対する比)。 */
+const PLATE_CAPTION_RATIO = 1.8;
+
+/** 図の下に並べる表。1 枚の図はその図の表、`sheets:` の図は最後の枚に全部の枚の表を分けて並べる。 */
+function listPlates(input: DocumentInput, layout: Layout): readonly ListPlate[] {
+  const { theme } = input.style;
+  const sheet = input.sheetList;
+  if (sheet?.hold === true) return [];
+  const listings = [
+    ...(sheet?.earlier ?? []),
+    { caption: sheet?.caption ?? null, parts: input.partsList === 'none' ? [] : input.parts, board: input.board, layout, mode: input.partsList },
+  ];
+  return listings.flatMap((one) => {
+    const body = partsListHeight(one.parts, theme, one.board, one.mode, one.layout);
+    if (body === 0) return [];
+    return [{ ...one, height: body + (one.caption === null ? 0 : theme.metrics.textSize * PLATE_CAPTION_RATIO) }];
+  });
+}
+
+function renderPlates(plates: readonly ListPlate[], x: number, top: number, width: number, theme: RenderTheme, lang: Lang): string {
+  const size = theme.metrics.textSize;
+  let y = top;
+  return plates.map((plate) => {
+    const band = plate.caption === null ? 0 : size * PLATE_CAPTION_RATIO;
+    const caption = plate.caption === null ? '' : svgText(x, y + size * 1.2, sheetCaptionText(plate.caption, lang), { 'font-size': num(size), 'font-weight': 700, fill: theme.palette.partText, anchor: 'start' });
+    const drawn = caption + renderPartsList(plate.parts, x, y + band, width, theme, plate.board, lang, plate.mode, plate.layout);
+    y += plate.height;
+    return drawn;
+  }).join('');
+}
 
 /**
  * 完結した 1 枚の SVG にまとめる。外部リソースもスクリプトも参照しないので、
@@ -64,8 +110,8 @@ export type DocumentInput = {
 export function renderDocument(input: DocumentInput): string {
   const { layout, style } = input;
   const { theme } = style;
-  const listed = input.partsList === 'none' ? [] : input.parts;
-  const list = partsListHeight(listed, theme, input.board, input.partsList, layout);
+  const plates = listPlates(input, layout);
+  const list = plates.reduce((sum, plate) => sum + plate.height, 0);
   const head = titleHeight(input.title, theme);
   // 注釈の字は基板の下へはみ出すことがある (`- source` はフェンス全体を書き出す)。
   // 切らずに画布のほうを伸ばす。横は基板の幅で `…` に切る (render/notes.ts)。
@@ -140,7 +186,7 @@ export function renderDocument(input: DocumentInput): string {
       }),
     // 注釈は基板・部品・配線の上に重ねる。回路の一員ではないので最後に置く。
     renderNotes(input.notes, layout, theme, input.sourceLines, edit !== null),
-    renderPartsList(listed, layout.board.x, figure, layout.board.width, theme, input.board, input.lang ?? 'ja', input.partsList, layout),
+    renderPlates(plates, layout.board.x, figure, layout.board.width, theme, input.lang ?? 'ja'),
     renderOutsideNotes(input.notes, layout.board.x, figure + list, layout.board.width, theme, input.sourceLines),
     // 掴む層は**いちばん上**。下に敷くと、部品や配線が押しを先に取ってしまう。
     edit === null ? '' : renderHits(input.board, layout, edit.used, edit.names),

@@ -60,3 +60,49 @@ describe('breadboard sheets:', () => {
     expect(renderBreadboard('board: half\nparts:\n  R1: resistor a3 a10 1k').svg).not.toContain('<svg x=');
   });
 });
+
+describe('sheets: the parts lists come after the last sheet, one per sheet', () => {
+  const two = (first = '', second = '') => [
+    'board: full',
+    'sheets:',
+    '  - name: A',
+    ...(first === '' ? [] : [`    ${first}`]),
+    '    parts:',
+    '      R1: resistor a5 a10 1k',
+    '  - name: B',
+    ...(second === '' ? [] : [`    ${second}`]),
+    '    parts:',
+    '      R2: resistor a5 a10 2k',
+  ].join('\n');
+  // 字は縁取りと本体の 2 回書かれる。
+  const headings = (svg: string) => (svg.match(/>部品</g)?.length ?? 0) / 2;
+
+  test('each sheet keeps its own table, captioned, in the order of the sheets', () => {
+    const { svg, errors } = renderBreadboard(two());
+    expect(errors).toEqual([]);
+    expect(headings(svg)).toBe(2);
+    // 枚の題にも同じ字が出るので、表のある末尾から見る。
+    const last = (text: string) => svg.lastIndexOf(text);
+    expect(last('>A (1枚め)<')).toBeLessThan(last('>R1<'));
+    expect(last('>R1<')).toBeLessThan(last('>B (2枚め)<'));
+    expect(last('>B (2枚め)<')).toBeLessThan(last('>R2<'));
+  });
+
+  test('no table sits between the figures: all of them are in the last sheet', () => {
+    const { svg } = renderBreadboard(two());
+    const lastSheet = svg.lastIndexOf('<svg');
+    expect(svg.indexOf('>部品<')).toBeGreaterThan(lastSheet);
+  });
+
+  test('parts-list: none on a sheet leaves out that table only', () => {
+    expect(headings(renderBreadboard(two('parts-list: none')).svg)).toBe(1);
+    const lastNone = renderBreadboard(two('', 'parts-list: none')).svg;
+    expect(headings(lastNone)).toBe(1);
+    expect(lastNone).toContain('>R1<');
+    expect(headings(renderBreadboard(two('parts-list: none', 'parts-list: none')).svg)).toBe(0);
+  });
+
+  test('a single figure has no caption', () => {
+    expect(renderBreadboard('board: half\nparts:\n  R1: resistor a5 a10 1k').svg).not.toContain('枚め');
+  });
+});

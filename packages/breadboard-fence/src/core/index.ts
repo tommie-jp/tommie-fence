@@ -7,6 +7,7 @@ import { normalizeNewlines } from './newlines.ts';
 import { LIMITS } from './limits.ts';
 import { formatAddress, isCrossing, parseAddress } from './model/address.ts';
 import { createBoard, devicePinStrip, isOnBoard, offBoardReason, stripOf } from './model/board.ts';
+import type { SheetListing, SheetPartsList } from './render/sheetPartsList.ts';
 import { createLayout } from './model/layout.ts';
 import type { Layout } from './model/layout.ts';
 import { computeNets } from './model/nets.ts';
@@ -159,10 +160,25 @@ export function renderBreadboard(input: string, options: RenderOptions = {}): Re
     const { anchors: _anchors, look: _look, scene: _scene, ...one } = renderOneSheet(input, options);
     return one;
   }
+  const sheets = splitSheets(source, { shared: ['lang'] }).sheets;
+  // 部品表は最後の枚の下に枚ごとに並べる。前の枚の部品は描きながら受け渡す。
+  let drawnSheets = 0;
+  let earlier: readonly SheetListing[] = [];
   return renderSheets(
     source,
     options,
-    (text, inner) => renderOneSheet(text, { ...inner, ...(options.lang === undefined ? {} : { lang: options.lang }) }),
+    (text, inner) => {
+      const name = sheets[drawnSheets]?.name ?? '';
+      drawnSheets += 1;
+      // 名前を書かなかった枚は splitSheets が `1枚め` `sheet1` を入れる。
+      const caption = { name: /^(\d+枚め|sheet\d+)$/.test(name) ? null : name, number: drawnSheets };
+      return renderOneSheet(text, {
+        ...inner,
+        ...(options.lang === undefined ? {} : { lang: options.lang }),
+        sheetList: { hold: drawnSheets < sheets.length, earlier, caption },
+        onListed: (listing) => { earlier = listing.mode === 'none' ? earlier : [...earlier, { ...listing, caption }]; },
+      });
+    },
     {
       makeError: (message, line, isNotice) => attachSourceText(
         [isNotice ? notice(message, line) : fenceError(message, line)], source,
@@ -185,7 +201,12 @@ export function scenesOfBreadboard(input: string): readonly Scene[] {
     .map((sheet) => ({ ...renderOneSheet(sheet.text, { stamp: false }).scene, sheet: sheet.name }));
 }
 
-function renderOneSheet(input: string, options: RenderOptions): RenderResult & SheetExtras & { readonly scene: Scene } {
+type OneSheetOptions = RenderOptions & {
+  readonly sheetList?: SheetPartsList;
+  readonly onListed?: (listing: Omit<SheetListing, 'caption'>) => void;
+};
+
+function renderOneSheet(input: string, options: OneSheetOptions): RenderResult & SheetExtras & { readonly scene: Scene } {
   // 外から来た字は、読む前に改行を揃える。行数は変わらないので行番号はそのまま。
   const source = normalizeNewlines(input);
   const parsed = parseFence(source);
@@ -277,7 +298,10 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
     names: pointStrips(parsed.doc.points, board),
   });
 
+  options.onListed?.({ parts, board, layout, mode: parsed.doc.partsList });
+
   const svg = renderDocument({
+    ...(options.sheetList === undefined ? {} : { sheetList: options.sheetList }),
     edit: options.edit === true ? editLayer(parsed.doc.parts, wires, parsed.doc.points) : null,
     title: parsed.doc.title,
     board,
