@@ -179,7 +179,8 @@ describe('parseFence', () => {
     const { doc, errors } = parseFence(led);
 
     expect(errors).toEqual([]);
-    expect(doc?.partsList).toBe('below');
+    // 既定は部品の絵を並べる表 (`symbols`)。帯の色の四角の表は `below` で残る。
+    expect(doc?.partsList).toBe('symbols');
   });
 
   test('reads the parts list being turned off', () => {
@@ -194,7 +195,7 @@ describe('parseFence', () => {
 
     expect(errors).toHaveLength(1);
     expect(errors[0]?.line).toBe(2);
-    expect(doc?.partsList).toBe('below');
+    expect(doc?.partsList).toBe('symbols');
   });
 
   test('an unreadable later parts list keeps the earlier value', () => {

@@ -23,8 +23,8 @@ const HEIGHT = 26;
 /** 2 ピンを描くときのピンの間隔。実物の既定の間隔に近く、帯が全部見える長さ。 */
 const SPAN = 40;
 
-const partOf = (type: string, variant: string | null, value: string | null): BodyPart =>
-  ({ type, variant, value, pins: [{ name: '' }, { name: '' }] });
+const partOf = (type: string, variant: string | null, value: string | null, pins: readonly string[] | null): BodyPart =>
+  ({ type, variant, value, pins: (pins ?? ['', '']).map((name) => ({ name })) });
 
 /**
  * その種類の絵 (SVG 1 つ)。描き方を知らない種類は null
@@ -39,12 +39,17 @@ export function partIcon(
      * コンデンサの刷り込みは値で決まる。パレットは値を持たないので渡さない。
      */
     readonly value?: string | null;
+    /**
+     * ピンの名前 (`['-', '+']`)。**部品表に図と同じ絵を出すとき**に渡す — コンデンサは
+     * `-` のピンがあると電解の姿になり、帯の側も名前の並びで決まる (`bodies.ts`)。
+     */
+    readonly pins?: readonly string[] | null;
     readonly ink?: BodyInk;
     readonly plate?: string;
     readonly chip?: string;
   } = {},
 ): string | null {
-  const part = partOf(type, options.variant ?? null, options.value ?? null);
+  const part = partOf(type, options.variant ?? null, options.value ?? null, options.pins ?? null);
   const ink = options.ink;
 
   if (hasBody(type)) {

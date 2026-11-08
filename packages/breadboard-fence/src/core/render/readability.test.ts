@@ -67,7 +67,9 @@ describe('part captions sit on a clean patch of board', () => {
 
   test('a caption is drawn above every part body, even ones written later', () => {
     // 水晶発振の図で `Rd 330` が後に書いた水晶の缶の下に消えていた。
+    // 基板の上の図を見る。部品表の絵 (`<g transform=…>`) を数えないよう、表を出さない。
     const { svg } = fence(
+      'parts-list: none',
       'parts:',
       '  Rd: resistor h6 h15 330',
       '  X1: crystal/hc49 i5 i15',

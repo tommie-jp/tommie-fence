@@ -122,6 +122,7 @@ const STUB_IN = 2;
 const NUMBER_IN = 9.5;
 const NUMBER_MIDDLE = 2.5;
 const NUMBER_FONT = 6.5;
+
 /** 切り欠きの半径。 */
 const NOTCH = 4.5;
 
@@ -150,6 +151,12 @@ export type DipOptions = {
   /** 字の倍率 (テーマの字の大きさ / 既定)。 */
   readonly scale: number;
   readonly ink: ChipInk;
+  /**
+   * ピン番号を**外側 (ピンの側) へ寄せる量** (番号の字の高さに対する比)。既定 0。
+   * ブレッドボードは字の高さ 1 つぶん寄せ、真ん中の型番との間を空ける (実機で頼まれた)。
+   * ユニバーサル基板はピンの外側にパッドの丸があり、寄せると番号が丸に重なるので寄せない。
+   */
+  readonly numberOut?: number;
   /**
    * 胴の外形。書かなければ DIP の外形 (`dipBox`)。**ピンの並びより胴が長い部品**
    * (4 桁の 7 セグ) が渡す — 当たり判定も同じ外形を使う (`namedChipBox`)。
@@ -220,7 +227,8 @@ export function dipChip(options: DipOptions): string {
     : points.map(() => 0);
   const numbers = points
     .map((point, index) => {
-      const step = inward(point) * (NUMBER_IN + (tiers[index] ?? 0) * (scale * NUMBER_FONT + STAGGER_GAP));
+      const out = (options.numberOut ?? 0) * scale * NUMBER_FONT;
+      const step = inward(point) * (NUMBER_IN - out + (tiers[index] ?? 0) * (scale * NUMBER_FONT + STAGGER_GAP));
       return svgText(
         point.x + (alongX ? 0 : step),
         point.y + (alongX ? step + NUMBER_MIDDLE : NUMBER_MIDDLE),

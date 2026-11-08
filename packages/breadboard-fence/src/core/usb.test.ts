@@ -64,16 +64,18 @@ describe('置き方', () => {
 });
 
 describe('図', () => {
+  // ここでは基板の上の図を見る。部品表 (既定で部品の絵が並ぶ) の絵の矩形を数えないよう、表を出さない。
+  const figure = (...lines: string[]): string => fence('parts-list: none', ...lines);
   test('draws the breakout with the pin names printed on it', () => {
-    const { svg } = renderBreadboard(fence('parts:', '  J1: usb-c c10 c11 c12 c13'));
+    const { svg } = renderBreadboard(figure('parts:', '  J1: usb-c c10 c11 c12 c13'));
     expect(svg).toContain('>V<');
     expect(svg).toContain('>GND<');
     expect(svg).toContain('>J1<');
   });
 
   test('faces away from the ravine', () => {
-    const top = renderBreadboard(fence('parts:', '  J1: usb-c c10 c11 c12 c13')).svg;
-    const bottom = renderBreadboard(fence('parts:', '  J1: usb-c h10 h11 h12 h13')).svg;
+    const top = renderBreadboard(figure('parts:', '  J1: usb-c c10 c11 c12 c13')).svg;
+    const bottom = renderBreadboard(figure('parts:', '  J1: usb-c h10 h11 h12 h13')).svg;
     // Type-C の名前はパッドの後ろに刷るので、向きは金物の位置で見る。
     // パッドも同じ色なので、最後に描く金物の胴を読む。
     const nameY = (svg: string): number =>
@@ -88,7 +90,7 @@ describe('図', () => {
 
   test('widens the canvas sideways too, when the pins run down a column', () => {
     // 溝をまたいで縦に書くと、差し込み口は左右を向く。
-    const { svg } = renderBreadboard(fence('parts:', '  J1: usb-a e1 f1'));
+    const { svg } = renderBreadboard(figure('parts:', '  J1: usb-a e1 f1'));
     const xs = [...svg.matchAll(/<rect x="([-\d.]+)"/g)].map((match) => Number(match[1]));
     expect(Math.min(...xs)).toBeGreaterThanOrEqual(0);
   });
@@ -96,6 +98,7 @@ describe('図', () => {
   test('keeps the connector out of the band for off-board devices', () => {
     const { svg } = renderBreadboard([
       'board:', '  size: half', '  rails: none',
+      'parts-list: none',
       'parts:',
       '  AD:', '    type: device', '    at: top', '    pins: [W1, GND]',
       '  J1: usb-a/male a3 a4',
@@ -112,8 +115,8 @@ describe('図', () => {
   });
 
   test('widens the canvas when the connector hangs off the board, instead of cutting it', () => {
-    const inside = renderBreadboard(fence('parts:', '  J1: usb-c e10 e11 e12 e13')).svg;
-    const edge = renderBreadboard(fence('parts:', '  J1: usb-a/male a10 a11')).svg;
+    const inside = renderBreadboard(figure('parts:', '  J1: usb-c e10 e11 e12 e13')).svg;
+    const edge = renderBreadboard(figure('parts:', '  J1: usb-a/male a10 a11')).svg;
     const heightOf = (svg: string): number => Number(/viewBox="[-\d.]+ [-\d.]+ [-\d.]+ ([-\d.]+)"/.exec(svg)?.[1]);
 
     expect(heightOf(edge)).toBeGreaterThan(heightOf(inside));

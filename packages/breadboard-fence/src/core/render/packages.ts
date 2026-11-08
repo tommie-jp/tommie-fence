@@ -41,6 +41,9 @@ const stub = (point: Point, fill: string, dy = -3): string =>
  * (実機で「全ての部品の見た目を breadboard と perfboard で共通にする」)。
  * ここに残るのは基板の話 — ピンの点と、切り欠きを向ける先。
  */
+/** DIP のピン番号を外へ寄せる量 (番号の字の高さに対する比)。1/2 を 2 回 (実機で頼まれた)。 */
+const DIP_NUMBER_OUT = 1;
+
 export function renderDip(part: PlacedPart, layout: Layout, theme: RenderTheme): string {
   const points = pinPoints(part, layout);
   if (!points || points.length === 0) return '';
@@ -65,6 +68,8 @@ export function renderDip(part: PlacedPart, layout: Layout, theme: RenderTheme):
     caption: caption(part),
     scale: textScale(theme),
     ink: chipInk(theme),
+    // ピン番号を字の高さ 1 つぶん外 (ピンの側) へ寄せ、真ん中の型番との間を空ける (実機で頼まれた)。
+    numberOut: DIP_NUMBER_OUT,
     // 幅広 (600 mil) は胴が 6 ピッチ奥行きなので、名前は胴の中に刷る (ピンの外は配線の通り道)。
     ...(isWideDip(part.variant) ? { namesInside: true } : {}),
   };

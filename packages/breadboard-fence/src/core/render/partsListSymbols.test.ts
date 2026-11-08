@@ -24,7 +24,7 @@ describe('parts-list: symbols', () => {
     expect(list).toContain('>記号<');
     expect(list).not.toContain('色・記号');
     // 抵抗とコンデンサの 2 つぶんの絵。DIP は絵を持たないので欄は空。
-    expect(list.match(/class="cf-icon"/g)).toHaveLength(2);
+    expect(list.match(/class="bf-parts-icon"/g)).toHaveLength(2);
   });
 
   test('the drawing carries the value (the resistor bands of 10k)', () => {
@@ -33,15 +33,39 @@ describe('parts-list: symbols', () => {
     expect(symbols).not.toEqual(other);
   });
 
-  test('the default keeps the colour swatches and the 色・記号 heading', () => {
-    const list = listOf(renderBreadboard(source(null)).svg);
+  test('the drawings are the default; below keeps the colour swatches and the 色・記号 heading', () => {
+    expect(listOf(renderBreadboard(source(null)).svg)).toContain('>記号<');
+    const list = listOf(renderBreadboard(source('below')).svg);
     expect(list).toContain('色・記号');
-    expect(list).not.toContain('class="cf-icon"');
+    expect(list).not.toContain('bf-parts-icon');
   });
 
-  test('rows are taller so the drawings fit', () => {
-    const height = (svg: string) => Number(/viewBox="[^"]* [^"]* [^"]* ([\d.]+)"/.exec(svg)?.[1]);
-    expect(height(renderBreadboard(source('symbols')).svg)).toBeGreaterThan(height(renderBreadboard(source(null)).svg));
+  test('rows keep half the text height between them; drawings are two rows tall and interleaved', () => {
+    const { svg } = renderBreadboard(source('symbols'));
+    const placed = [...svg.matchAll(/class="bf-parts-icon" transform="translate\(([\d.]+) ([\d.]+)\) scale\(([\d.]+)\)/g)]
+      .map((m) => ({ x: Number(m[1]), y: Number(m[2]), scale: Number(m[3]) }));
+    expect(placed).toHaveLength(2);
+    const [first, second] = placed;
+    // 行の送りは字の 1.5 倍 (行間が字の 1/2)。絵は 2 行ぶん (上下の隙間 1 px ずつを引く)。
+    const line = 12.5 * 1.5;
+    expect(26 * first!.scale).toBeCloseTo(2 * line - 2, 0);
+    // 次の行の絵は横にずらす。
+    expect(second!.x).toBeGreaterThan(first!.x);
+  });
+
+  test('odd rows below the heading get a lighter band; even rows keep the plate', () => {
+    // 帯は字より先に書くので、図全体で数える。
+    const { svg } = renderBreadboard(source('symbols'));
+    // 見出しの下は 基板・C1・R1・U1 の 4 行。奇数行 (基板・R1) の 2 本だけ帯が付く。
+    expect(svg.match(/fill="#ffffff" fill-opacity="0.45"/g)).toHaveLength(2);
+    expect(renderBreadboard(source('below')).svg).not.toContain('fill-opacity="0.45"');
+  });
+
+  test('a capacitor written with polarity is drawn as the electrolytic, as in the figure', () => {
+    const polar = renderBreadboard(fence('board: half', 'parts:', '  C1: capacitor b5(-) b12(+) 10uF')).svg;
+    const plain = renderBreadboard(fence('board: half', 'parts:', '  C1: capacitor b5 b12 10uF')).svg;
+    const icon = (svg: string) => /<g class="bf-parts-icon"[\s\S]*?<\/g>/.exec(svg)?.[0];
+    expect(icon(polar)).not.toEqual(icon(plain));
   });
 
   test('a misspelt mode names all three words', () => {

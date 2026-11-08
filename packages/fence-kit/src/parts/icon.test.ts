@@ -66,3 +66,9 @@ describe('the value is drawn when given (parts list)', () => {
   });
 });
 
+describe('pin names reach the drawing (parts list)', () => {
+  test('a capacitor with a minus pin is drawn as the electrolytic, as in the figure', () => {
+    expect(partIcon('capacitor', { pins: ['-', '+'] })).not.toEqual(partIcon('capacitor'));
+  });
+});
+

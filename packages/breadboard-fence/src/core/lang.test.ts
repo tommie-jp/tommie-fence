@@ -22,7 +22,7 @@ describe('lang: en', () => {
     const shown = textsOf(svg);
 
     expect(errors).toEqual([]);
-    expect(shown).toEqual(expect.arrayContaining(['Part', 'Type', 'Value', 'Color / mark', 'Board', 'half (400 holes)']));
+    expect(shown).toEqual(expect.arrayContaining(['Part', 'Type', 'Value', 'Symbol', 'Board', 'half (400 holes)']));
     expect(shown).toContain('CD4081 (2-input AND ×4)');
     expect(shown.filter((text) => JAPANESE.test(text))).toEqual([]);
   });

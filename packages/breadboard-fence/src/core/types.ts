@@ -82,7 +82,7 @@ export type Board = BoardSpec & { readonly columns: number };
 export const PARTS_LIST_MODES = ['below', 'symbols', 'none'] as const;
 export type PartsListMode = (typeof PARTS_LIST_MODES)[number];
 
-export const DEFAULT_PARTS_LIST: PartsListMode = 'below';
+export const DEFAULT_PARTS_LIST: PartsListMode = 'symbols';
 
 /** 導通グループの識別子。`top:5` / `bottom:5` / `rail:+t` / `pin:AD2.W1`。 */
 export type StripId = string;
