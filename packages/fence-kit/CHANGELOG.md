@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.36.0] - 2026-11-08
+
 ### Added
 
 - **`partIcon` に値 (`value`) を渡せる。** 部品表に図と同じ絵を出すとき (breadboard の `parts-list: symbols`) に、
