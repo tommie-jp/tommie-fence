@@ -18,7 +18,7 @@ import { renderTitle } from './render/title.ts';
 import { noteBands, noteOverhang, renderNotes } from './render/notes.ts';
 import { hatchDefs } from './render/hatch.ts';
 import { legendColors, legendSize, paintedColors, renderLegend } from './render/legend.ts';
-import { boardRow, partsListSize, partsListing, renderPartsList } from './render/partsList.ts';
+import { boardRow, partsIcons, partsListSize, partsListing, renderPartsList } from './render/partsList.ts';
 import { renderSourceListing, sourceBandSize, sourceListing } from './render/sourceListing.ts';
 import { backSideLayout, renderBackSide } from './render/backSide.ts';
 import { deviceOverhang, layoutDevices, renderDevices } from './render/devices.ts';
@@ -207,6 +207,8 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
   // 基板に載せる前の部品から作る — 載せられなかった部品も、揃えるものには変わりない。
   const listNotes = parsed.doc.notes.filter((note) => note.kind === 'parts');
   const listed = listNotes.length > 0 ? partsListing(parsed.doc.parts, devices, boardRow(board, parsed.doc.boardName, lang), lang) : [];
+  // 記号の欄に置く部品の絵 (図と同じ関数で描く。breadboard の部品表と同じ形)。
+  const listIcons = listNotes.length > 0 ? partsIcons(parsed.doc.parts) : new Map<string, string>();
   // **白黒の図では色を網と線の型に移す** (`render/hatch.ts`)。移した先が何色かは
   // 図の中では言えないので、使った色の凡例を基板のすぐ下に出す。
   // 色つきのテーマでは見たままなので、帯そのものを出さない。
@@ -261,7 +263,7 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
     deviceTop: devices.some((device) => device.where === null && device.at === 'top'),
     deviceBottom: devices.some((device) => device.where === null && device.at === 'bottom'),
     source: listing.length > 0 ? sourceBandSize(listing, THEME) : null,
-    list: listed.length > 0 ? partsListSize(listed, THEME) : null,
+    list: listed.length > 0 ? partsListSize(listed, THEME, listIcons) : null,
     legend: painted.length > 0 ? legendSize(painted, THEME, bare.board.width, lang) : null,
     back: back === null ? null : { height: back.height },
     labelRight: style.labels.sides.includes('right'),
@@ -466,7 +468,7 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
         : renderLegend(painted, layout.legendBand, THEME, bare.board.width, lang))
       + (layout.listBand === null
         ? ''
-        : renderPartsList(listed, layout.listBand, THEME, listNotes[0]?.color ?? null))
+        : renderPartsList(listed, layout.listBand, THEME, listNotes[0]?.color ?? null, listIcons, lang))
       + (layout.sourceBand === null
         ? ''
         : renderSourceListing(listing, layout.sourceBand, THEME, sourceNotes[0]?.color ?? null))

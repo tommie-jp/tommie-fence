@@ -1,10 +1,10 @@
-import { bandColor, lookupNamedChip, partKind, partsMark, valueWithRole } from 'fence-kit';
+import { PARTS_SYMBOL_HEADING_BY_LANG, bandColor, lookupNamedChip, partIcon, partKind, partsMark, valueWithRole } from 'fence-kit';
 import type { Lang, PartsMark } from 'fence-kit';
 import { colorValue } from '../color.ts';
 import { SOCKET_LOOK } from '../parts/types.ts';
 import type { Band } from '../model/layout.ts';
 import type { Board, DeviceSpec } from '../types.ts';
-import { monoBandHeight, monoBaseline, monoText, monoWidth } from './monoBand.ts';
+import { monoText, monoWidth } from './monoBand.ts';
 import { textLabels } from './textLabels.ts';
 import type { Theme } from './theme.ts';
 
@@ -119,43 +119,141 @@ function columns(rows: readonly PartsRow[], size: number): readonly { x: number;
   });
 }
 
+/**
+ * 部品の絵 (記号の欄)。**図と同じ関数 (fence-kit の `partIcon`) で、値と姿も渡して描く** —
+ * 抵抗の帯の色やコンデンサの刷り込みが図と同じになる。絵を持たない種類 (DIP・機器) は入れない
+ * (欄が空になる)。ID で引く (表は名前の順に並べ直すので、並びでは合わせない)。
+ */
+export function partsIcons(parts: readonly ListedPart[]): ReadonlyMap<string, string> {
+  return new Map(parts.flatMap((part) => {
+    const icon = partIcon(part.type, { variant: part.variant, value: part.value });
+    return icon === null ? [] : [[part.id, icon] as const];
+  }));
+}
+
+/** 部品表の帯の上下の余白 (px)。等幅の帯 (`monoBand.ts`) と同じ。 */
+const LIST_PAD = 8;
+/**
+ * 行の送り (字の大きさに対する比)。**行と行の間を字の高さの 1/2** にする (breadboard の部品表と同じ。
+ * 実機で頼まれた)。
+ */
+const LIST_LEADING = 1.5;
+/** fence-kit の `partIcon` の絵の縦幅 (px)。 */
+const ICON_HEIGHT = 26;
+/** 絵は 2 行ぶんの高さで描き、1 行ごとに左右の列を交互に使う (breadboard と同じ)。 */
+const ICON_ROWS = 2;
+/** 同じ列の上下の絵との間に残す隙間 (px)。 */
+const ICON_CLEARANCE = 1;
+/** 左右の 2 列の間 (字の大きさに対する比)。 */
+const ICON_COLUMN_GAP = 0.5;
+/** 字の頭からベースラインまで (字の大きさに対する比)。等幅の帯と同じ。 */
+const CAP = 0.8;
+/**
+ * 偶数行に敷く地 (字の色を透かす)。**奇数行が少し薄く見える**ようにする。部品表は基板の外の
+ * 白い地に置くので、白をさらに薄くはできない。偶数行のほうを少しだけ沈める。
+ */
+const STRIPE_OPACITY = 0.06;
+
+const lineOf = (size: number): number => size * LIST_LEADING;
+const iconHeightOf = (size: number): number => ICON_ROWS * lineOf(size) - ICON_CLEARANCE * 2;
+const iconScaleOf = (size: number): number => iconHeightOf(size) / ICON_HEIGHT;
+const iconWidthOf = (icon: string): number => Number(/width="([\d.]+)"/.exec(icon)?.[1] ?? 0);
+
+/** 帯の中の n 行目のベースライン。 */
+const baselineOf = (band: Band, size: number, index: number): number =>
+  band.y + LIST_PAD + size * CAP + lineOf(size) * index;
+
+/** 絵の欄の幅 (左右 2 列ぶん)。いちばん幅のある絵で決める。 */
+function iconColumnWidth(rows: readonly PartsRow[], icons: ReadonlyMap<string, string>, size: number): number {
+  const widest = Math.max(0, ...rows.map((row) => {
+    const icon = icons.get(row[0]);
+    return icon === undefined ? 0 : iconWidthOf(icon) * iconScaleOf(size);
+  }));
+  return widest === 0 ? 0 : widest * 2 + ICON_COLUMN_GAP * size;
+}
+
 export function partsListSize(
   rows: readonly PartsRow[],
   theme: Theme,
+  icons: ReadonlyMap<string, string> = new Map(),
 ): { readonly width: number; readonly height: number } {
   if (rows.length === 0) return { width: 0, height: 0 };
 
   const size = theme.metrics.textSize;
   const last = columns(rows, size)[3];
+  const height = LIST_PAD * 2 + size + lineOf(size) * (rows.length - 1);
+  // 最後の行の絵は、字の行の真ん中から下へ絵の半分だけ伸びる。下の余白で足りなければ広げる。
+  const reach = iconHeightOf(size) / 2 - (size * CAP) / 2 - (LIST_PAD + size * (1 - CAP));
   return {
     // **切り上げる。** 端数のままだと、丸め誤差でいま測った当の行が `…` に切られる。
-    width: Math.ceil((last?.x ?? 0) + (last?.width ?? 0)),
-    height: monoBandHeight(rows.length, size),
+    width: Math.ceil((last?.x ?? 0) + Math.max(last?.width ?? 0, iconColumnWidth(rows, icons, size))),
+    height: height + (icons.size > 0 ? Math.max(0, reach + ICON_CLEARANCE) : 0),
   };
 }
 
+/**
+ * 絵 (`<svg viewBox=…>`) を、入れ子の `<svg>` でなく `<g>` にして置く (breadboard と同じ)。
+ * viewBox の原点のずれは translate に畳む。
+ */
+function iconGroup(icon: string, left: number, top: number, scale: number): string {
+  const box = /viewBox="([-\d.]+) ([-\d.]+) [-\d.]+ [-\d.]+"/.exec(icon);
+  const inner = icon.slice(icon.indexOf('>') + 1, icon.lastIndexOf('</svg>'));
+  const transform = `translate(${left.toFixed(2)} ${top.toFixed(2)}) scale(${scale.toFixed(4)}) `
+    + `translate(${(-Number(box?.[1] ?? 0)).toFixed(2)} ${(-Number(box?.[2] ?? 0)).toFixed(2)})`;
+  return `<g class="pf-parts-icon" transform="${transform}">${inner}</g>`;
+}
+
+/**
+ * 部品表を描く。**記号の欄は図と同じ部品の絵** (2 行ぶんの高さで、1 行ごとに左右交互)。見出しは `記号`。
+ * 絵の無い部品 (DIP・機器) は欄が空。`icons` を渡さなければ前の形 (帯の色の四角と記号の字) で描く。
+ */
 export function renderPartsList(
   rows: readonly PartsRow[],
   band: Band,
   theme: Theme,
   color: string | null,
+  icons: ReadonlyMap<string, string> = new Map(),
+  lang: Lang = 'ja',
 ): string {
   if (rows.length === 0) return '';
 
   const size = theme.metrics.textSize;
   const fill = (color === null ? null : colorValue(color)) ?? theme.palette.caption;
   const laid = columns(rows, size);
+  const symbols = icons.size > 0;
+  const line = lineOf(size);
+  const scale = iconScaleOf(size);
+  const markX = band.x + (laid[3]?.x ?? 0);
+  const widest = Math.max(0, ...[...icons.values()].map((icon) => iconWidthOf(icon) * scale));
+  const secondX = markX + widest + ICON_COLUMN_GAP * size;
+  const width = partsListSize(rows, theme, icons).width;
 
-  return rows
+  // 偶数行 (見出しの下を 1 行目と数える) に薄い地。奇数行が少し薄く見える。字と絵より先に敷く。
+  const stripes = symbols
+    ? rows.slice(1).map((_, offset) => offset + 1).filter((index) => index % 2 === 0).map((index) => {
+      const middle = baselineOf(band, size, index) - (size * CAP) / 2;
+      return `<rect x="${band.x.toFixed(2)}" y="${(middle - line / 2).toFixed(2)}" width="${width.toFixed(2)}" height="${line.toFixed(2)}" fill="${fill}" fill-opacity="${STRIPE_OPACITY}"/>`;
+    }).join('')
+    : '';
+
+  const cells = rows
     .map((row, index) => {
-      const y = monoBaseline(band, size, index);
+      const y = baselineOf(band, size, index);
       return row
         .map((cell, column) => {
           const x = band.x + (laid[column]?.x ?? 0);
+          if (symbols && column === 3) {
+            if (index === 0) return monoText(x, y, PARTS_SYMBOL_HEADING_BY_LANG[lang], { fill, size });
+            const icon = icons.get(row[0]);
+            if (icon === undefined) return '';
+            const top = y - (size * CAP) / 2 - (ICON_HEIGHT * scale) / 2;
+            return iconGroup(icon, index % 2 === 0 ? markX : secondX, top, scale);
+          }
           if (typeof cell !== 'string') return renderSwatches(x, y, cell, size, fill);
           return cell === '' ? '' : monoText(x, y, cell, { fill, size });
         })
         .join('');
     })
     .join('');
+  return stripes + cells;
 }

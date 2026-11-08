@@ -37,7 +37,7 @@ describe('lang: en', () => {
     const shown = textsOf(svg).join('\n');
 
     expect(errors).toEqual([]);
-    expect(textsOf(svg)).toEqual(expect.arrayContaining(['Part', 'Type', 'Value', 'Color / mark', 'Board', 'Color', 'Solder side (board flipped)']));
+    expect(textsOf(svg)).toEqual(expect.arrayContaining(['Part', 'Type', 'Value', 'Symbol', 'Board', 'Color', 'Solder side (board flipped)']));
     expect(shown).toContain('5x7cm (18×24 holes) 1.6mm FR-4');
     expect(shown).toContain('CD4081 (2-input AND ×4)');
     expect(shown).toMatch(/\bred\b/);
