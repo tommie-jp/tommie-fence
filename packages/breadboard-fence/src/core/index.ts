@@ -1,5 +1,5 @@
 import { applyExpectations, hasSheets, keptSourceLines, renderSheets, resolveLang, splitSheets } from 'fence-kit';
-import type { Lang, Scene, SheetExtras, SheetPoint } from 'fence-kit';
+import type { Lang, Scene, SceneEndKind, SheetExtras, SheetPoint } from 'fence-kit';
 import { breadboardScene } from './render/scene.ts';
 import { toroidNotices } from './parts/toroidNotices.ts';
 import { attachSourceText, fail, fenceError, notice, ok, safeToken, shiftErrors } from './errors.ts';
@@ -245,6 +245,8 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
         from, to, hints: wire.hints, color: wire.color, line: wire.line, ends: [endText(wire.from), endText(wire.to)] as const,
         // 線の始まりの導通グループ (fence-check がネットを引くのに使う)。
         strip: stripOfEndpoint(wire.from),
+        // 両端の種類 (fence-check の power-branch が、機器から入れる線とレールどうしの線を除く)。
+        endKinds: [endKindOf(wire.from), endKindOf(wire.to)] as const,
       }]
       : [];
   });
@@ -302,6 +304,10 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
       parts, devices: placements, wires: rendered, wireEnds: drawable.map((wire) => wire.ends), layout, theme: style.theme, drops,
       // 線のネット。同じネットの線どうしの重なりは数えない (fence-check の wire-overlap)。
       wireNets: drawable.map((wire) => netlist.find((net) => net.strips.includes(wire.strip))?.name ?? null),
+      wireEndKinds: drawable.map((wire) => wire.endKinds),
+      // 電源・GND のネット (レールにつながるネット) の線か。
+      wirePower: drawable.map((wire) =>
+        netlist.find((net) => net.strips.includes(wire.strip))?.strips.some((strip) => strip.startsWith('rail:')) ?? false),
     }),
     ...report(errors, source, style.debug, options.offset ?? 0),
     anchors: sheetAnchors(parsed.doc.points, board, layout, titleHeight(parsed.doc.title, style.theme)),
@@ -733,6 +739,10 @@ function nearbyPins(part: PlacedPart, wanted: string): string {
   if (numbered.length === 0) return '';
   return ` (ピンは ${numbered.map((pin) => safeToken(pin.name)).join(' / ')}。DIP の番号でも指せます)`;
 }
+
+/** 線の端の種類 (fence-check の Scene)。レールの穴・板の外の機器のピン・そのほかの穴。 */
+const endKindOf = (endpoint: Endpoint): SceneEndKind =>
+  endpoint.kind !== 'hole' ? 'device' : endpoint.address.kind === 'rail' ? 'rail' : 'hole';
 
 const stripOfEndpoint = (endpoint: Endpoint): StripId =>
   endpoint.kind === 'hole' ? stripOf(endpoint.address) : devicePinStrip(endpoint.partId, endpoint.pin);

@@ -183,6 +183,40 @@ describe("9. wires that run on top of each other (wire-overlap)", () => {
   });
 });
 
+describe('6. power and GND wires bend (power-branch)', () => {
+  const branchesOf = (over: Partial<Scene>) => checkScene(scene(over)).filter((one) => one.kind === 'power-branch');
+  const power = (id: string, points: [number, number][], ends: ['hole' | 'rail' | 'device', 'hole' | 'rail' | 'device']): SceneWire =>
+    ({ ...wire(id, points), net: '+t', power: true, ends });
+
+  test('a power wire from a hole to the rail with a bend is counted, by its bends', () => {
+    const found = branchesOf({ wires: [power('wire(a5-+t7)', [[0, 0], [0, -20], [40, -20], [40, -40]], ['hole', 'rail'])] });
+    // 縦・横・縦の 3 区間なので、折れ点は 2 つ。
+    expect(found).toEqual([expect.objectContaining({ kind: 'power-branch', a: 'wire(a5-+t7)', amount: 2, unit: 'point' })]);
+  });
+
+  test('a straight power wire down its own column is fine', () => {
+    expect(branchesOf({ wires: [power('wire(a5-+t5)', [[0, 0], [0, -40]], ['hole', 'rail'])] })).toEqual([]);
+  });
+
+  test('wires from an off-board supply and wires joining two rails may bend', () => {
+    expect(branchesOf({
+      wires: [
+        power('wire(PSU.+-+t2)', [[0, 0], [0, 20], [40, 20]], ['device', 'rail']),
+        power('wire(+t60-+b60)', [[0, 0], [20, 0], [20, 200]], ['rail', 'rail']),
+      ],
+    })).toEqual([]);
+  });
+
+  test('signal wires and scenes without nets are not looked at', () => {
+    expect(branchesOf({
+      wires: [
+        { ...wire('wire(a5-a20)', [[0, 0], [0, 20], [40, 20]]), net: 'N1', power: false, ends: ['hole', 'hole'] },
+        wire('wire(a3-+t9)', [[0, 0], [0, 20], [40, 20]]),
+      ],
+    })).toEqual([]);
+  });
+});
+
 describe('4. captions', () => {
   const caption = (owner: string, cx: number, cy: number, width = 30, height = 10) =>
     ({ owner, rect: { cx, cy, width, height, angle: 0 } });

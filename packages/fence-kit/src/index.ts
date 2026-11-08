@@ -13,7 +13,7 @@
  */
 export { normalizeNewlines } from './newlines.ts';
 export { sceneRectOf, sceneWireNames, shrinkRect } from './scene.ts';
-export type { Scene, SceneBody, SceneCaption, SceneFence, ScenePoint, SceneRect, SceneWire } from './scene.ts';
+export type { Scene, SceneBody, SceneCaption, SceneEndKind, SceneFence, ScenePoint, SceneRect, SceneWire } from './scene.ts';
 export { applyExpectations, markExpected, markInfo, readExpectations } from './expect.ts';
 export type { ExpectKit, ExpectLists, ExpectProblem, ExpectRead, Expectation, Said } from './expect.ts';
 export { SHEETS_ADVISED, SHEET_TOP_KEYS, hasSheets, mergeNetlists, renderSheets, splitSheets, stackSheets } from './sheets.ts';

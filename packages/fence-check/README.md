@@ -18,7 +18,11 @@ reader trips over but a parser never sees:
 7. `wire-overlap` — two wires run on top of each other: parallel, at most 2 px apart, for 10 px or more
    (the amount is the shared length). One line hides the other, which `crossing` cannot see.
    Wires that share an end are left out (they meet at the same hole or node, so they are one net).
-   Lanes the breadboard router lays side by side are 4 px apart and read as two wires, so they are fine
+   Lanes the breadboard router lays side by side are 4 px apart and read as two wires, so they are fine.
+   Wires on the same net (into the same strip of holes) are left out too, where the scene knows the nets
+8. `power-branch` — a power or GND wire between a hole and a rail bends (breadboard only; the amount is
+   the number of bends). Run it as one vertical line from the pin's column to the rail. Wires from an
+   off-board supply or instrument, and wires joining two rails, may bend
 
 It draws nothing itself. Each fence's core returns the geometry it drew with
 (`scenesOfCircuit` / `scenesOfBreadboard` / `scenesOfPerfboard`, type `Scene` in fence-kit),

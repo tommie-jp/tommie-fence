@@ -47,7 +47,17 @@ export type SceneWire = {
    * 重なって見えてよい** (同じ列へ集まる線など) ので、`wire-overlap` はネットが同じ組を数えない。
    */
   readonly net?: string | null;
+  /**
+   * 線の両端の種類 (分かる図だけ。ブレッドボード)。`rail` は電源レールの穴、`device` は板の外の機器のピン、
+   * `hole` はそのほかの穴。`power-branch` が「機器から入れる線・レールどうしを渡す線」を除くのに使う。
+   */
+  readonly ends?: readonly [SceneEndKind, SceneEndKind];
+  /** 電源・GND のネット (レールにつながるネット) の線か。分かる図だけ。 */
+  readonly power?: boolean;
 };
+
+/** 線の端の種類 (`SceneWire.ends`)。 */
+export type SceneEndKind = 'hole' | 'rail' | 'device';
 
 /** 名札 1 つ。**縁取りを含めない字の帯**。`owner` は持ち主の部品 ID。 */
 export type SceneCaption = {

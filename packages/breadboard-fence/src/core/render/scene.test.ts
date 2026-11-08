@@ -100,3 +100,26 @@ describe('wires carry their net (fence-check skips overlaps on the same net)', (
   });
 });
 
+describe('wires carry the kinds of their ends and whether they are on a power net', () => {
+  test('a wire to the rail is a power wire from a hole to a rail; a signal wire is not', () => {
+    const [scene] = scenesOfBreadboard([
+      'board: half',
+      'parts:',
+      '  R1: resistor c5 c10 1k',
+      '  PSU:',
+      '    type: device',
+      '    at: top',
+      '    pins: ["+", "-"]',
+      'wires:',
+      '  - a5 -- +t5 red',
+      '  - a10 -- a20',
+      '  - PSU.+ -- +t2 red',
+      '',
+    ].join('\n'));
+    const [toRail, signal, fromSupply] = scene!.wires;
+    expect(toRail).toMatchObject({ ends: ['hole', 'rail'], power: true });
+    expect(signal).toMatchObject({ ends: ['hole', 'hole'], power: false });
+    expect(fromSupply).toMatchObject({ ends: ['device', 'rail'], power: true });
+  });
+});
+

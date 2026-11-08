@@ -1,5 +1,5 @@
 import { bodySize, sceneRectOf, sceneWireNames } from 'fence-kit';
-import type { Scene, SceneBody, SceneCaption, SceneRect, SceneWire } from 'fence-kit';
+import type { Scene, SceneBody, SceneCaption, SceneEndKind, SceneRect, SceneWire } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Point } from '../types.ts';
 import { boardBodyRect } from './boardPart.ts';
@@ -25,6 +25,10 @@ export type SceneInput = {
   readonly wireEnds: readonly (readonly [string, string])[];
   /** `wires` と同じ並びの、線のネットの名前 (穴の導通から)。分からなければ null。 */
   readonly wireNets?: readonly (string | null)[];
+  /** `wires` と同じ並びの、両端の種類。 */
+  readonly wireEndKinds?: readonly (readonly [SceneEndKind, SceneEndKind])[];
+  /** `wires` と同じ並びの、電源・GND のネットの線か。 */
+  readonly wirePower?: readonly boolean[];
   readonly layout: Layout;
   readonly theme: RenderTheme;
   readonly drops: ReadonlyMap<string, number>;
@@ -55,6 +59,8 @@ export function breadboardScene(input: SceneInput, sheet: string | null = null):
     points: wire.points,
     line: wire.line === 0 ? null : wire.line,
     net: input.wireNets?.[index] ?? null,
+    ...(input.wireEndKinds?.[index] === undefined ? {} : { ends: input.wireEndKinds[index]! }),
+    ...(input.wirePower?.[index] === undefined ? {} : { power: input.wirePower[index]! }),
   }));
   return {
     fence: 'breadboard',

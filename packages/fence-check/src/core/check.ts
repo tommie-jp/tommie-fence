@@ -16,7 +16,7 @@ import type { Segment } from './geometry.ts';
  *   perf は裸の線で同じネットのピンをなぞるのが普通なので、`Scene` にネットが載るまで見ない)
  * - `device-side` — 板の外の機器の箱から出た線が、板の真ん中の溝をまたぐ (bread。docs/151)
  */
-export const KINDS = ['overlap', 'wire-part', 'crossing', 'junction4', 'caption', 'wire-pin', 'device-side', 'wire-overlap'] as const;
+export const KINDS = ['overlap', 'wire-part', 'crossing', 'junction4', 'caption', 'wire-pin', 'device-side', 'wire-overlap', 'power-branch'] as const;
 export type Kind = (typeof KINDS)[number];
 
 export type Finding = {
@@ -64,7 +64,30 @@ export function checkScene(scene: Scene, options: CheckOptions = {}): readonly F
     ...(scene.fence === 'breadboard' ? wirePins(scene, make) : []),
     ...deviceSides(scene, make),
     ...wireOverlaps(scene.wires, make),
+    ...(scene.fence === 'breadboard' ? powerBranches(scene.wires, make) : []),
   ];
+}
+
+/**
+ * 6. 電源・GND の線の曲がり (docs/150 の #6、breadboard-wiring #9「電源と GND の線は、足の列から
+ * レールまで縦 1 本で引く (列を変えない)」)。電源・GND のネットの線のうち、**穴とレールを結ぶ線**が
+ * 曲がっていれば 1 件、量は折れ点の数。
+ *
+ * 除くもの (#9 の除外と同じ): 板の外の機器から入れる線 (端が `device`)、レールどうしを渡す線
+ * (両端が `rail`)。ネットや端の種類が分からない図 (Scene に `power`・`ends` が無い) は見ない。
+ */
+function powerBranches(wires: readonly SceneWire[], make: Make): Finding[] {
+  return wires.flatMap((wire) => {
+    if (wire.power !== true || wire.ends === undefined) return [];
+    const [from, to] = wire.ends;
+    if (from === 'device' || to === 'device') return [];
+    if (from === 'rail' && to === 'rail') return [];
+    if (from !== 'rail' && to !== 'rail') return [];
+    const segments = segmentsOf(wire.points);
+    const bends = Math.max(0, segments.length - 1);
+    if (bends === 0) return [];
+    return [make('power-branch', wire.id, wire.net ?? 'power', bends, wire.line, segments[0]!.to)];
+  });
 }
 
 /** 平行と見なす向きの差 (度)。 */
@@ -138,7 +161,7 @@ function wireOverlaps(wires: readonly SceneWire[], make: Make): Finding[] {
 }
 
 /** 量を点の数で数える項目。 */
-const POINT_KINDS: ReadonlySet<Kind> = new Set<Kind>(['crossing', 'junction4', 'wire-pin', 'device-side']);
+const POINT_KINDS: ReadonlySet<Kind> = new Set<Kind>(['crossing', 'junction4', 'wire-pin', 'device-side', 'power-branch']);
 
 type Make = (kind: Kind, a: string, b: string, amount: number, line: number | null, at: ScenePoint, sure?: boolean) => Finding;
 
