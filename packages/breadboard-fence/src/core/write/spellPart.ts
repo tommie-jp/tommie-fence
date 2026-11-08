@@ -50,5 +50,6 @@ export function spellPart(part: PartSpec): string | null {
     // 名札と胴の置き場所は書かれた綴りのまま残す (書き戻しで落とさない)。
     ...(part.caption ? [`cap=${part.caption.written}`] : []),
     ...(part.shift ? [`shift=${part.shift}`] : []),
+    ...(part.current ? [`i=${part.current}`] : []),
   ].join(' ');
 }

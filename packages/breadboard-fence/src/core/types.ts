@@ -159,6 +159,8 @@ export type PartSpec = {
   readonly caption?: CaptionSpec | null;
   /** 胴を半穴ずらす向き (`shift=down`)。2 ピンの部品だけ。 */
   readonly shift?: BodyShift | null;
+  /** LED の想定電流 (`i=3mA`、書かれたまま)。図には出さず、部品表の値の欄に添える。 */
+  readonly current?: string | null;
   /**
    * `@` で書いた形か (`SW1: button @ e5`)。**書き戻すときに `@` を落とさない**
    * ために持つ (52 の docs/54 の段 1)。読んだ中身からは見分けられない —
@@ -354,5 +356,7 @@ export type PlacedPart = {
   readonly caption?: CaptionSpec | null;
   /** 胴を半穴ずらす向き (2 ピンだけ)。 */
   readonly shift?: BodyShift | null;
+  /** LED の想定電流 (`i=3mA`、書かれたまま)。図には出さず、部品表の値の欄に添える。 */
+  readonly current?: string | null;
   readonly line: number;
 };

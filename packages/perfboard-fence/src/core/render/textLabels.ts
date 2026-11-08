@@ -8,6 +8,8 @@ import type { Lang } from 'fence-kit';
  */
 export type TextLabels = {
   readonly headings: readonly [string, string, string, string];
+  /** 部品表の位置の欄の見出し。 */
+  readonly position: string;
   /** 部品表の基板の行の ID の欄。 */
   readonly board: string;
   /** 穴数 (`18×24 穴`)。 */
@@ -21,6 +23,7 @@ export type TextLabels = {
 const LABELS: Readonly<Record<Lang, TextLabels>> = {
   ja: {
     headings: PARTS_HEADINGS_BY_LANG.ja,
+    position: '位置',
     board: '基板',
     holes: (cols, rows) => `${cols}×${rows} 穴`,
     legend: '色',
@@ -28,6 +31,7 @@ const LABELS: Readonly<Record<Lang, TextLabels>> = {
   },
   en: {
     headings: PARTS_HEADINGS_BY_LANG.en,
+    position: 'Position',
     board: 'Board',
     holes: (cols, rows) => `${cols}×${rows} holes`,
     legend: 'Color',

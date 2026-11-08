@@ -134,7 +134,17 @@ export function parsePartLine(id: string, line: string, board: BoardExtent = ANY
   const after = rest.slice(holes.length);
   let turn: Turn = NO_TURN;
   const tail: string[] = [];
+  let current: string | null = null;
   for (const token of after) {
+    // `i=3mA` — LED の想定電流 (点灯時)。図には出さず、部品表の値の欄に添える (breadboard と同じ)。
+    if (token.startsWith('i=')) {
+      if (type !== 'led') return fail(`${safeToken(written)} に i= は書けません (LED だけに書けます)`, token);
+      if (current !== null) return fail(`${safeToken(written)} に i= が 2 回書かれています`, token);
+      const amount = token.slice(2);
+      if (!/^\d+(\.\d+)?(uA|µA|mA|A)$/.test(amount)) return fail(`i= は電流を単位つきで書きます (例: i=3mA。今は ${safeToken(amount)})`, token);
+      current = amount;
+      continue;
+    }
     const rotate = rotationOf(token);
     if (rotate !== null) {
       // **同じ種類を 2 回書いたら断る。** 後勝ちで黙ると、どちらのつもりか
@@ -188,6 +198,7 @@ export function parsePartLine(id: string, line: string, board: BoardExtent = ANY
     value: {
       id, type, variant: socket ? null : variant, written, holes, value: value === '' ? null : value, turn, color,
       ...(socket ? { socket: true } : {}),
+      ...(current === null ? {} : { current }),
     },
   };
 }

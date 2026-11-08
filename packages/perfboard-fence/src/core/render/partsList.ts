@@ -43,10 +43,24 @@ export type ListedPart = {
   readonly value: string | null;
   /** IC ソケットに挿した DIP。種類の欄に `/socket` を添える。 */
   readonly socket?: boolean;
+  /** 書かれたままの穴 (`b3`)。位置の欄に出す。 */
+  readonly holes?: readonly string[];
+  /** LED の想定電流 (`3mA`)。値の欄に添える。 */
+  readonly current?: string | null;
 };
 
 /** 部品表の 1 行ぶん。列に分けて持ち、幅を測ってから置き場所を決める。 */
-export type PartsRow = readonly [id: string, kind: string, value: string, mark: PartsMark];
+export type PartsRow = readonly [id: string, kind: string, value: string, mark: PartsMark, position?: string];
+
+/** これを超えるピンの部品は全部を並べず、最初のピンだけを出す (breadboard と同じ)。 */
+const LISTED_PINS = 3;
+
+/** 図の中の位置 (`b3,b7`)。穴を書かない部品は空。 */
+const positionOf = (holes: readonly string[]): string =>
+  (holes.length > LISTED_PINS ? holes.slice(0, 1) : holes).join(',');
+
+/** LED は値 (色) に想定電流を添える (`red 3mA`)。図の名札には出さない。 */
+const withCurrent = (text: string, current: string | null | undefined): string => (current ? `${text} ${current}`.trim() : text);
 
 
 /**
@@ -73,9 +87,12 @@ export function partsListing(
   lang: Lang = 'ja',
 ): readonly PartsRow[] {
   const rows: PartsRow[] = [
-    ...parts.map((part): PartsRow =>
-      [part.id, partKind(part.type, part.socket === true ? SOCKET_LOOK : part.variant, part.value, lang),
-        valueWithRole(part.value ?? lookupNamedChip(part.type, part.variant)?.name ?? '', lang), partsMark(part.type, part.variant, part.value)]),
+    ...parts.map((part): PartsRow => {
+      const row = [part.id, partKind(part.type, part.socket === true ? SOCKET_LOOK : part.variant, part.value, lang),
+        withCurrent(valueWithRole(part.value ?? lookupNamedChip(part.type, part.variant)?.name ?? '', lang), part.current),
+        partsMark(part.type, part.variant, part.value)] as const;
+      return part.holes === undefined ? row : [...row, positionOf(part.holes)];
+    }),
     // 機器は種類が 1 つしかないので、名札を値の欄に出す (`電池 3V`)。
     ...devices.map((device): PartsRow => [device.id, 'device', device.label, '']),
   ];
@@ -109,16 +126,17 @@ function renderSwatches(x: number, baseline: number, colors: readonly string[], 
     .join('');
 }
 
-/** 列ごとの幅と、帯の左から測った左端。 */
-function columns(rows: readonly PartsRow[], size: number): readonly { x: number; width: number }[] {
+/** 列ごとの幅と、帯の左から測った左端。**絵の欄では値の次に位置の欄を挟む** (`laid[4]` が位置)。 */
+function columns(rows: readonly PartsRow[], size: number, symbols = false): readonly { x: number; width: number }[] {
   const gap = monoWidth(GAP, size);
   let x = 0;
-  return [0, 1, 2, 3].map((column) => {
+  const laid: { x: number; width: number }[] = [];
+  for (const column of symbols ? [0, 1, 2, 4, 3] : [0, 1, 2, 3]) {
     const width = Math.max(...rows.map((row) => cellWidth(row[column] ?? '', size)));
-    const here = { x, width };
+    laid[column] = { x, width };
     x += width + gap;
-    return here;
-  });
+  }
+  return laid;
 }
 
 /**
@@ -183,7 +201,7 @@ export function partsListSize(
   if (rows.length === 0) return { width: 0, height: 0 };
 
   const size = theme.metrics.textSize;
-  const last = columns(rows, size)[3];
+  const last = columns(rows, size, icons.size > 0)[3];
   const height = LIST_PAD * 2 + size + lineOf(size, icons) * (rows.length - 1);
   // 最後の行の絵は、字の行の真ん中から下へ絵の半分だけ伸びる。下の余白で足りなければ広げる。
   const lastIcon = icons.get(rows[rows.length - 1]?.[0] ?? '');
@@ -215,8 +233,8 @@ export function renderPartsList(
 
   const size = theme.metrics.textSize;
   const fill = (color === null ? null : colorValue(color)) ?? theme.palette.caption;
-  const laid = columns(rows, size);
   const symbols = icons.size > 0;
+  const laid = columns(rows, size, symbols);
   const line = lineOf(size, icons);
   const markX = band.x + (laid[3]?.x ?? 0);
   const widest = Math.max(0, ...[...icons.values()].map((icon) => icon.width));
@@ -244,11 +262,16 @@ export function renderPartsList(
             const top = y - (size * CAP) / 2 - icon.height / 2;
             return iconGroup(icon, index % 2 === 0 ? markX : secondX, top);
           }
+          if (cell === undefined || (column === 4 && !symbols)) return '';
           if (typeof cell !== 'string') return renderSwatches(x, y, cell, size, fill);
           return cell === '' ? '' : monoText(x, y, cell, { fill, size });
         })
         .join('');
     })
     .join('');
-  return stripes + cells;
+  // 見出しの行は fence-kit の 4 欄なので、位置の見出しはここで足す。
+  const positionHeading = symbols && laid[4] !== undefined
+    ? monoText(band.x + laid[4].x, baselineOf(band, size, 0, line), textLabels(lang).position, { fill, size })
+    : '';
+  return stripes + cells + positionHeading;
 }

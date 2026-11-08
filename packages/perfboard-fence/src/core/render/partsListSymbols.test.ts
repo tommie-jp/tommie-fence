@@ -60,6 +60,20 @@ describe('the parts table draws the parts as in the figure', () => {
     expect(svg.match(/fill-opacity="0.06"/g)).toHaveLength(2);
   });
 
+  test('the position column lists the holes as written, and i= adds the LED current to the value', () => {
+    const { svg, errors } = renderPerfboard(fence('board: 5x7cm', 'parts:', '  D1: led a3 a7 red i=3mA', '  U1: dip8 c10 NE555', 'notes:', '  - parts'));
+    expect(errors).toEqual([]);
+    expect(svg).toContain('>位置<');
+    expect(svg).toContain('>a3,a7<');
+    expect(svg).toContain('>c10<');
+    expect(svg).toContain('>red 3mA<');
+  });
+
+  test('i= is refused on parts other than an LED and without a unit', () => {
+    expect(renderPerfboard(fence('board: 5x7cm', 'parts:', '  R1: resistor a3 a7 1k i=3mA')).errors[0]?.message).toContain('LED');
+    expect(renderPerfboard(fence('board: 5x7cm', 'parts:', '  D1: led a3 a7 red i=3')).errors[0]?.message).toContain('単位');
+  });
+
   test('without - parts there is no table', () => {
     expect(renderPerfboard(source.replace('notes:\n  - parts', '')).svg).not.toContain('pf-parts-icon');
   });

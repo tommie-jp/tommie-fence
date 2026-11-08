@@ -1,6 +1,7 @@
 import { PARTS_SYMBOL_HEADING_BY_LANG, bandColor, partKind, partsMark, valueWithRole } from 'fence-kit';
 import type { Lang, PartsMark } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
+import { formatAddress } from '../model/address.ts';
 import { partsLabels } from './labels.ts';
 import { partsIcon, partsIconsWithin } from './partsListIcons.ts';
 import type { PartsIcon } from './partsListIcons.ts';
@@ -81,6 +82,8 @@ type Row = {
   readonly type: string;
   readonly value: string;
   readonly mark: PartsMark;
+  /** 図の中の位置 (`b10,b15`。`parts-list: symbols` のときだけ)。番地の無い行は持たない。 */
+  readonly position?: string;
   /** 最後の欄に置く部品の絵 (`parts-list: symbols` のときだけ)。描けない種類は null。 */
   readonly icon?: PartsIcon | null;
 };
@@ -127,10 +130,22 @@ export function boardRow(board: Board, lang: Lang = 'ja'): Row {
  * IC には働きを添える (`CD4081 (2 入力 AND ×4)`)。型番だけだと、どの IC が何をするのか
  * 表から読めない。機器の名札には添えない。
  */
+/** LED は値 (色) に想定電流を添える (`red 3mA`)。図の名札には出さない。 */
+const withCurrent = (text: string, part: PlacedPart): string => (part.current ? `${text} ${part.current}`.trim() : text);
+
+/** これを超えるピンの部品は全部を並べず、1 番ピンの穴だけを出す。 */
+const LISTED_PINS = 3;
+
+/** 図の中の位置。穴番地を書いたままの綴りで並べる (`b10,b15`)。機器は基板の外なので空。 */
+function positionOf(part: PlacedPart): string {
+  const addresses = part.pins.flatMap((pin) => (pin.address ? [formatAddress(pin.address)] : []));
+  return (addresses.length > LISTED_PINS ? addresses.slice(0, 1) : addresses).join(',');
+}
+
 const rowsOf = (parts: readonly PlacedPart[], lang: Lang): readonly Row[] =>
   parts.map((part) => part.kind === 'device'
     ? { id: part.id, type: typeOf(part, lang), value: valueOf(part), mark: '' }
-    : { id: part.id, type: typeOf(part, lang), value: valueWithRole(valueOf(part), lang), mark: partsMark(part.type, part.variant, part.value) });
+    : { id: part.id, type: typeOf(part, lang), value: withCurrent(valueWithRole(valueOf(part), lang), part), mark: partsMark(part.type, part.variant, part.value) });
 
 const markWidth = (mark: PartsMark): number =>
   typeof mark === 'string'
@@ -233,12 +248,12 @@ export function renderPartsList(
   // 表から部品を探すので名前の順に並べる (数字は数として: R2 の次は R10)。上限で切る前に並べる。
   const shown = shownOf(parts);
   const icons = iconsOf(shown, layout, theme, mode);
-  const listed = rowsOf(shown, lang);
+  const listed = rowsOf(shown, lang).map((row, index) => (symbols ? { ...row, position: positionOf(shown[index]!) } : row));
   const hidden = parts.length - listed.length;
   // 先頭は見出し。基板は最初に用意する物なので、名前の順には入れず見出しのすぐ下に置く。上限の数にも数えない。
   const heading = headingRow(lang);
   const textRows: readonly Row[] = [
-    symbols ? { ...heading, mark: PARTS_SYMBOL_HEADING_BY_LANG[lang] } : heading,
+    symbols ? { ...heading, mark: PARTS_SYMBOL_HEADING_BY_LANG[lang], position: partsLabels(lang).position } : heading,
     ...(board === null ? [] : [boardRow(board, lang)]),
     ...listed,
   ];
@@ -271,7 +286,10 @@ export function renderPartsList(
 
   const valueX = typeX + (typeWidth + COLUMN_GAP) * textSize;
   const valueRoom = room(valueX);
-  const fullValueWidth = Math.min(widest(textRows.map((row) => row.value)), valueRoom);
+  // **絵の欄では、位置を持つ行 (部品) の値だけで幅を決める。** 機器のラベルや基板の行は長くても
+  // 右の欄が空なので、はみ出して書ける。
+  const fullValueWidth = Math.min(widest(textRows.filter((row) => !symbols || row.position).map((row) => row.value)), valueRoom);
+  const positionWidth = symbols ? widest(textRows.map((row) => row.position ?? '')) : 0;
 
   // 絵は行の偶奇で左右の列に分かれる。列の幅はそれぞれの列にある絵だけで測る。
   const listedFrom = textRows.length - listed.length;
@@ -281,21 +299,25 @@ export function renderPartsList(
       .map((icon) => icon?.width ?? 0));
     return [widthOn(0), widthOn(1)];
   };
-  const markRoomFor = (value: number): number => room(valueX + (value + COLUMN_GAP) * textSize);
+  const markRoomFor = (value: number, withPosition: boolean): number =>
+    room(valueX + (value + COLUMN_GAP + (withPosition ? positionWidth + COLUMN_GAP : 0)) * textSize);
   const iconsFitIn = (candidates: readonly (PartsIcon | null)[], markSpace: number): boolean => {
     const [left, right] = iconColumns(candidates);
     return (left + right) / textSize + ICON_COLUMN_GAP <= markSpace;
   };
-  const iconsAt = (value: number): readonly (PartsIcon | null)[] =>
-    partsIconsWithin(shown, layout as Layout, theme, (candidates) => iconsFitIn(candidates, markRoomFor(value)));
+  const iconsAt = (value: number, withPosition: boolean): readonly (PartsIcon | null)[] =>
+    partsIconsWithin(shown, layout as Layout, theme, (candidates) => iconsFitIn(candidates, markRoomFor(value, withPosition)));
   // リードを詰めても入らない図だけ、値の欄の長い説明を 1 字ぶんずつ切っていく。
-  const valueWidth = symbols
-    ? valueCandidates(fullValueWidth).find((value) => iconsFitIn(iconsAt(value), markRoomFor(value))) ?? fullValueWidth
-    : fullValueWidth;
+  const fittingValue = (withPosition: boolean): number | undefined =>
+    valueCandidates(fullValueWidth).find((value) => iconsFitIn(iconsAt(value, withPosition), markRoomFor(value, withPosition)));
+  // 絵と位置の両方は入らない狭い基板では、基板を見れば分かる位置のほうを諦める。
+  const showPosition = symbols && fittingValue(true) !== undefined;
+  const valueWidth = symbols ? fittingValue(showPosition) ?? fullValueWidth : fullValueWidth;
 
-  const markX = valueX + (valueWidth + COLUMN_GAP) * textSize;
+  const positionX = valueX + (valueWidth + COLUMN_GAP) * textSize;
+  const markX = showPosition ? positionX + (positionWidth + COLUMN_GAP) * textSize : positionX;
   const markRoom = room(markX);
-  const fitted = symbols ? iconsAt(valueWidth) : [];
+  const fitted = symbols ? iconsAt(valueWidth, showPosition) : [];
   const rows: readonly Row[] = textRows.map((row, index) =>
     symbols && index >= listedFrom ? { ...row, icon: fitted[index - listedFrom] ?? null } : row);
 
@@ -309,10 +331,22 @@ export function renderPartsList(
   const leftColumn = (widestIcon * 2) / textSize + ICON_COLUMN_GAP <= markRoom ? widestIcon : iconColumns(fitted)[0];
   const secondX = markX + leftColumn + ICON_COLUMN_GAP * textSize;
   const iconsFit = iconsFitIn(fitted, markRoom);
+  const iconLeft = (index: number): number => (index % 2 === 0 ? markX : secondX);
+  /**
+   * 値の字を書ける幅。部品の行は値の欄の幅まで。右の欄が空の行は基板の端まで書けるが、
+   * 上下の行の背の高い絵がこの行の字の高さまで来ていれば、その絵の手前まで。
+   */
+  const valueLimit = (index: number): number => {
+    if (!symbols || rows[index]?.position) return Math.min(valueRoom, symbols ? valueWidth : valueRoom);
+    const reaching = [index - 1, index + 1].flatMap((near) => {
+      const icon = rows[near]?.icon;
+      return icon && iconsFit && icon.height / 2 > line - textSize / 2 ? [iconLeft(near)] : [];
+    });
+    return Math.min(valueRoom, ...reaching.map((left) => (left - valueX) / textSize - ICON_COLUMN_GAP));
+  };
   const placeIcon = (icon: PartsIcon, index: number): string => {
     const top = baselineOf(index) - (textSize * CAP_RATIO) / 2 - icon.height / 2;
-    const left = index % 2 === 0 ? markX : secondX;
-    return iconGroup(icon, left, top);
+    return iconGroup(icon, iconLeft(index), top);
   };
   // 縁取りは図のキャプションと同じものを敷く。`style` の `text-color` は基板ではなく
   // この縁取りとの対比で読ませる指定なので、外すとリストだけが地に沈む。
@@ -337,7 +371,8 @@ export function renderPartsList(
       ...(typeRoom < MIN_COLUMN_WIDTH ? [] : [cell(typeX, baseline, fit(row.type, typeWidth), ink)]),
       ...(row.value === '' || valueRoom < MIN_COLUMN_WIDTH
         ? []
-        : [cell(valueX, baseline, fit(row.value, valueWidth), ink)]),
+        : [cell(valueX, baseline, fit(row.value, valueLimit(index)), ink)]),
+      ...(showPosition && row.position ? [cell(positionX, baseline, row.position, ink)] : []),
       ...(row.icon !== undefined
         ? (row.icon === null || !iconsFit ? [] : [placeIcon(row.icon, index)])
         : row.mark.length === 0 || markRoom < MIN_COLUMN_WIDTH || markWidth(row.mark) > markRoom

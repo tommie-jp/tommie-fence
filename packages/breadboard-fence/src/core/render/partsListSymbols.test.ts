@@ -127,6 +127,34 @@ describe('parts-list: symbols', () => {
     expect(film).not.toContain('>+</text>');
   });
 
+  test('the position column lists the holes as written; a DIP shows pin 1', () => {
+    const list = listOf(renderBreadboard(source('symbols')).svg);
+    expect(list).toContain('>位置<');
+    expect(list).toContain('>a5,a10<');
+    expect(list).toContain('>f20<');
+  });
+
+  test('i= adds the expected LED current to the value in the table only', () => {
+    const { svg, errors } = renderBreadboard(fence('board: half', 'parts:', '  D1: led a5 a8 red i=3mA'));
+    expect(errors).toEqual([]);
+    expect(listOf(svg)).toContain('>red 3mA<');
+    expect(svg).toContain('>D1 red<');
+  });
+
+  test('i= is refused on parts other than an LED and without a unit', () => {
+    expect(renderBreadboard(fence('board: half', 'parts:', '  R1: resistor a5 a8 1k i=3mA')).errors[0]?.message).toContain('LED');
+    expect(renderBreadboard(fence('board: half', 'parts:', '  D1: led a5 a8 red i=3')).errors[0]?.message).toContain('単位');
+  });
+
+  test('a long device label does not push the drawings out of a half board', () => {
+    const { svg } = renderBreadboard(fence(
+      'board: half', 'parts:', '  C1: capacitor/electrolytic h16(+) h19(-) 1000uF',
+      '  S1: slide-switch e15(1) e16(C) e17(2)',
+      '  PS:', '    type: device', '    at: top', '    label: Analog Discovery 3 (Supplies)', '    pins: [V+, GND]',
+    ));
+    expect(svg.match(/class="bf-parts-icon"/g)).toHaveLength(2);
+  });
+
   test('odd rows below the heading get a lighter band; even rows keep the plate', () => {
     // 帯は字より先に書くので、図全体で数える。
     const { svg } = renderBreadboard(source('symbols'));

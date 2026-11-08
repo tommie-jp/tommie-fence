@@ -32,5 +32,6 @@ export function spellPart(part: PartSpec): string {
     ...turnWords(part.turn),
     ...(part.value === null ? [] : [part.value]),
     ...(part.color == null ? [] : [part.color]),
+    ...(part.current ? [`i=${part.current}`] : []),
   ].join(' ');
 }

@@ -124,6 +124,8 @@ export type PartSpec = {
   /** 書かれたままの穴 (`b3`)。基板に載るかは placement が見る。 */
   readonly holes: readonly string[];
   readonly value: string | null;
+  /** LED の想定電流 (`i=3mA`、書かれたまま)。図には出さず、部品表の値の欄に添える。 */
+  readonly current?: string | null;
   /** 書かれた向き。**アンカー 1 つで置く形だけが持つ** (parts/orient.ts)。 */
   readonly turn: Turn;
   /** 部品の基板の色 (書かれたままの綴り。`blue`)。基板のある部品だけが持つ。 */

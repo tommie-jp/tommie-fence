@@ -31,6 +31,9 @@ const CAPTION_NUMBER = '(-?\\d+(?:\\.\\d+)?)';
 // 側だけ (`above`)、側とずらす量 (`above:1,0`、コロンは要る)、ずらす量だけ (`1,0` = 下)。
 const CAPTION_VALUE = new RegExp(`^(?:(above|below|left|right)(?::${CAPTION_NUMBER},${CAPTION_NUMBER})?|${CAPTION_NUMBER},${CAPTION_NUMBER})$`);
 const SHIFT_TAG = /^shift=(.*)$/;
+/** `i=3mA` — LED の想定電流 (点灯時)。図には出さず、部品表の値の欄に添える。 */
+const CURRENT_TAG = /^i=(.*)$/;
+const CURRENT_VALUE = /^\d+(\.\d+)?(uA|µA|mA|A)$/;
 const SHIFT_WORDS: readonly BodyShift[] = ['up', 'down', 'left', 'right'];
 /** ずらせる量の上限 (穴の数)。これより遠いと、どの部品の名札か分からなくなる。 */
 const CAPTION_REACH = 10;
@@ -150,6 +153,7 @@ export function parseCompactPart(
   let labelTagged = false;
   let caption: CaptionSpec | null = null;
   let shift: BodyShift | null = null;
+  let current: string | null = null;
 
   for (const token of rest) {
     const captionTag = CAPTION_TAG.exec(token);
@@ -168,6 +172,15 @@ export function parseCompactPart(
         return fail(`部品 ${safeToken(id)}: shift= は up / down / left / right です (今は ${safeToken(word)})`, line, token);
       }
       shift = word as BodyShift;
+      continue;
+    }
+    const currentTag = CURRENT_TAG.exec(token);
+    if (currentTag) {
+      if (type !== 'led') return fail(`部品 ${safeToken(id)}: i= は LED だけに書けます`, line, token);
+      if (current !== null) return fail(`部品 ${safeToken(id)}: i= が 2 回書かれています`, line, token);
+      const written = currentTag[1] ?? '';
+      if (!CURRENT_VALUE.test(written)) return fail(`部品 ${safeToken(id)}: i= は電流を単位つきで書きます (例: i=3mA。今は ${safeToken(written)})`, line, token);
+      current = written;
       continue;
     }
     const tagged = LABEL_TAG.exec(token);
@@ -214,6 +227,7 @@ export function parseCompactPart(
     labelTagged,
     ...(caption === null ? {} : { caption }),
     ...(shift === null ? {} : { shift }),
+    ...(current === null ? {} : { current }),
     value: value ? clampText(value, LIMITS.labelLength) : null,
     ...(plate.color === null ? {} : { color: plate.color }),
     notes: unusedNotes(value, label, sources),

@@ -8,6 +8,8 @@ import type { Lang } from 'fence-kit';
  */
 export type PartsLabels = {
   readonly headings: readonly [string, string, string, string];
+  /** 位置の欄の見出し (`parts-list: symbols`)。 */
+  readonly position: string;
   /** 基板の行の ID の欄。 */
   readonly board: string;
   /** 基板の行の値の欄: サイズと穴数 (`half (400 穴)`)。 */
@@ -21,6 +23,7 @@ export type PartsLabels = {
 const LABELS: Readonly<Record<Lang, PartsLabels>> = {
   ja: {
     headings: PARTS_HEADINGS_BY_LANG.ja,
+    position: '位置',
     board: '基板',
     boardSize: (size, holes) => `${size} (${holes} 穴)`,
     railsOn: ' レール有り',
@@ -29,6 +32,7 @@ const LABELS: Readonly<Record<Lang, PartsLabels>> = {
   },
   en: {
     headings: PARTS_HEADINGS_BY_LANG.en,
+    position: 'Position',
     board: 'Board',
     boardSize: (size, holes) => `${size} (${holes} holes)`,
     railsOn: ' with rails',
