@@ -7,6 +7,14 @@ reader trips over but a parser never sees:
 2. `wire-part` — a wire runs through a part body (wires that end on one of the part's pins are fine)
 3. `crossing` — two wires cross mid-way; `junction4` — four arms meet at one point (schematics only)
 4. `caption` — a part's caption overlaps a body (its own or another), a wire, or another caption
+5. `wire-pin` — a wire runs over a hole that holds something else: a pin of a part, or the end of another wire
+   (breadboard only; the amount is the number of holes). A wire routed half a hole aside is fine.
+   Perfboards are left out: a bare wire running along the pins of its own net is normal there,
+   and the scene does not carry nets yet
+6. `device-side` — a wire from an off-board device box crosses the ravine in the middle of the breadboard,
+   i.e. the box sits on the far side from the holes it goes to. Put the box on the side of its holes.
+   One finding per wire; when the same box also has wires that stay on its side, the box serves both
+   halves and the finding is `?` (split the box in two, or move an end — a person decides)
 
 It draws nothing itself. Each fence's core returns the geometry it drew with
 (`scenesOfCircuit` / `scenesOfBreadboard` / `scenesOfPerfboard`, type `Scene` in fence-kit),
@@ -27,7 +35,8 @@ One line per finding:
 - A wire is named by its two ends as written (`wire(d16-g16)`, `wire(3,1-Q1.collector)`, `wire(AD.1+-a3)`);
   a second wire with the same ends is `wire(d16-g16)#2`. Adding a wire does not rename the others.
   `caption:ID` is a caption; `ID(body)` is the caption's own part.
-- A trailing `?` marks a finding on a schematic: `circuit` is drawn by TeX, so positions come from the
+- A trailing `?` marks an uncertain finding — on a schematic, or a `device-side` box serving both halves.
+  On a schematic: `circuit` is drawn by TeX, so positions come from the
   address grid and two-terminal symbol sizes are estimated. Schematic captions are not checked yet.
 - Wires to pins of multi-terminal parts (`Q1.C`) have no grid position. Without `--tex` they are counted
   as `skipped wires`, not checked. With `--tex` each schematic that has such wires is run through TeX

@@ -1,6 +1,6 @@
 {
   "name": "fence-check",
-  "description": "circuit / breadboard / perfboard の図の崩れ (重なり・横切り・十字・名札の衝突) を数える",
+  "description": "circuit / breadboard / perfboard の図の崩れ (重なり・横切り・十字・名札の衝突・ピンの上の線・溝の向こうの機器) を数える",
   "version": "0.1.0",
   "license": "MIT",
   "private": true,

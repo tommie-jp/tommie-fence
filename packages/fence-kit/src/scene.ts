@@ -30,6 +30,8 @@ export type SceneBody = {
    * 「両端とも自分のピン = 胴の下に隠れた線」の判定には数えない。
    */
   readonly joins?: readonly ScenePoint[];
+  /** 板の外の機器の箱 (breadboard の `type: device`)。線の行き先が溝の向こうかを見る (52 の docs/151)。 */
+  readonly offBoard?: boolean;
   /** フェンスの中の行 (1 始まり)。分からなければ null。 */
   readonly line: number | null;
 };
@@ -61,6 +63,8 @@ export type Scene = {
   readonly approximate: boolean;
   /** 幾何に起こせなかったもの (circuit の多端子部品のピンへの線など)。数だけ報告する。 */
   readonly skipped: number;
+  /** 板の真ん中の溝の y (breadboard)。溝をまたぐ線を見るのに使う。無い図は書かない。 */
+  readonly ravines?: readonly number[];
 };
 
 /**

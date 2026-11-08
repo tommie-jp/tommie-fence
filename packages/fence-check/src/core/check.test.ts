@@ -76,6 +76,7 @@ describe('2. wires through bodies', () => {
   test('a wire from a pin to the point the part was placed at is not hidden wiring', () => {
     // SMA のピンから、置いた番地 (記号の中心) へ引く短い線 (03-nanovna の治具)。
     const found = checkScene(scene({
+      fence: 'perfboard',
       parts: [{ ...body('J2', 0, 0, 30, 30, [{ x: -12, y: 0 }]), joins: [{ x: 0, y: 0 }] }],
       wires: [wire('wire#2', [[-12, 0], [0, 0]]), wire('wire#1', [[-200, 0], [0, 0]])],
     }));
@@ -95,7 +96,8 @@ describe('3. crossings and four-way junctions', () => {
   });
 
   test('a T is not a crossing', () => {
-    const found = checkScene(scene({ wires: [wire('wire#1', [[-10, 0], [10, 0]]), wire('wire#2', [[0, 0], [0, 10]])] }));
+    // breadboard では T の字そのものが 1 つの穴に 2 本 (wire-pin) になるので、perf で見る。
+    const found = checkScene(scene({ fence: 'perfboard', wires: [wire('wire#1', [[-10, 0], [10, 0]]), wire('wire#2', [[0, 0], [0, 10]])] }));
     expect(found).toEqual([]);
   });
 
@@ -154,5 +156,86 @@ describe('4. captions', () => {
   test('a caption clear of everything is not reported', () => {
     const found = checkScene(scene({ parts: [body('R1', 0, 0, 30, 10)], captions: [caption('R1', 0, 20)] }));
     expect(found).toEqual([]);
+  });
+});
+
+describe('5. wires over pins and wire ends (52 docs/151)', () => {
+  const only = (found: readonly { kind: string }[], kind: string) => found.filter((one) => one.kind === kind);
+
+  test('a wire over a pin of another part is reported, one finding per part with the hole count', () => {
+    const r1 = body('R1', 30, 20, 40, 8, [{ x: 0, y: 20 }, { x: 60, y: 20 }]);
+    const r3 = body('R3', 100, 60, 20, 8, [{ x: 0, y: 60 }]);
+    const found = checkScene(scene({ parts: [r1, r3], wires: [wire('wire(SC.1+-a0)', [[0, 0], [0, 200]])] }));
+    expect(only(found, 'wire-pin')).toEqual([
+      expect.objectContaining({ a: 'wire(SC.1+-a0)', b: 'R1', amount: 1, unit: 'point' }),
+      expect.objectContaining({ a: 'wire(SC.1+-a0)', b: 'R3', amount: 1, unit: 'point' }),
+    ]);
+  });
+
+  test('a wire ending on a pin is fine', () => {
+    const r1 = body('R1', 30, 20, 40, 8, [{ x: 0, y: 20 }]);
+    const found = checkScene(scene({ parts: [r1], wires: [wire('w', [[0, 200], [0, 20]])] }));
+    expect(only(found, 'wire-pin')).toEqual([]);
+  });
+
+  test('a wire over the end of another wire is reported against that wire', () => {
+    const found = checkScene(scene({ wires: [wire('long', [[0, 0], [0, 200]]), wire('short', [[0, 100], [80, 100]])] }));
+    expect(only(found, 'wire-pin')).toEqual([expect.objectContaining({ a: 'long', b: 'short', amount: 1 })]);
+  });
+
+  test('a wire half a hole away from a pin is fine', () => {
+    const r1 = body('R1', 30, 20, 40, 8, [{ x: 10, y: 20 }]);
+    const found = checkScene(scene({ parts: [r1], wires: [wire('w', [[0, 0], [0, 200]])] }));
+    expect(only(found, 'wire-pin')).toEqual([]);
+  });
+
+  test.each(['circuit', 'perfboard'] as const)('%s is not checked (a wire may run through a junction or along a net)', (fence) => {
+    const r1 = body('R1', 30, 20, 40, 8, [{ x: 0, y: 20 }]);
+    const found = checkScene(scene({ fence, parts: [r1], wires: [wire('w', [[0, 0], [0, 200]])] }));
+    expect(only(found, 'wire-pin')).toEqual([]);
+  });
+});
+
+describe('6. a device box on the far side of the ravine (52 docs/151)', () => {
+  const only = (found: readonly { kind: string }[]) => found.filter((one) => one.kind === 'device-side');
+  const device = (pins: { x: number; y: number }[]): SceneBody => ({ ...body('SC', 0, -40, 100, 40, pins), offBoard: true });
+
+  test('a box above the board whose wires all go below the ravine is reported per wire', () => {
+    const found = checkScene(scene({
+      ravines: [100],
+      parts: [device([{ x: -20, y: -20 }, { x: 20, y: -20 }])],
+      wires: [wire('wire(SC.1+-f1)', [[-20, -20], [-20, 150]]), wire('wire(SC.1--f9)', [[20, -20], [20, 150]])],
+    }));
+    expect(only(found)).toEqual([
+      expect.objectContaining({ a: 'wire(SC.1+-f1)', b: 'SC', amount: 1, unit: 'point', grade: 'sure' }),
+      expect.objectContaining({ a: 'wire(SC.1--f9)', b: 'SC', grade: 'sure' }),
+    ]);
+  });
+
+  test('wires that stay on the near half are fine', () => {
+    const found = checkScene(scene({
+      ravines: [100],
+      parts: [device([{ x: -20, y: -20 }])],
+      wires: [wire('w', [[-20, -20], [-20, 50]])],
+    }));
+    expect(only(found)).toEqual([]);
+  });
+
+  test('a box with wires on both halves is reported as uncertain (split it or move an end)', () => {
+    const found = checkScene(scene({
+      ravines: [100],
+      parts: [device([{ x: -20, y: -20 }, { x: 20, y: -20 }])],
+      wires: [wire('near', [[-20, -20], [-20, 50]]), wire('far', [[20, -20], [20, 150]])],
+    }));
+    expect(only(found)).toEqual([expect.objectContaining({ a: 'far', b: 'SC', grade: 'uncertain' })]);
+  });
+
+  test('parts on the board are not devices', () => {
+    const found = checkScene(scene({
+      ravines: [100],
+      parts: [body('R1', 0, 50, 40, 8, [{ x: 0, y: 50 }])],
+      wires: [wire('w', [[0, 50], [0, 150]])],
+    }));
+    expect(only(found)).toEqual([]);
   });
 });

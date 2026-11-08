@@ -38,6 +38,7 @@ export function breadboardScene(input: SceneInput, sheet: string | null = null):
     id,
     rect: sceneRectOf(device.rect),
     pins: [...device.pins.values()],
+    offBoard: true,
     line: parts.find((part) => part.id === id)?.line ?? null,
   }));
   // 名札は**字形そのもの**で見る (配線よけの帯は行送りと縁取りのぶん広い)。
@@ -60,6 +61,7 @@ export function breadboardScene(input: SceneInput, sheet: string | null = null):
     captions,
     approximate: false,
     skipped: 0,
+    ravines: [layout.ravineY],
   };
 }
 

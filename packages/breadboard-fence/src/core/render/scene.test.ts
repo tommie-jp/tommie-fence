@@ -55,3 +55,28 @@ describe('the scene that fence-check reads (52 docs/148)', () => {
     expect(Object.keys(renderBreadboard(source))).not.toContain('scene');
   });
 });
+
+describe('what fence-check needs for wire-pin and device-side (52 docs/151)', () => {
+  const source = fence(
+    'board: half',
+    'parts:',
+    '  R1: resistor b5 b9 1k',
+    '  SC:',
+    '    type: device',
+    '    at: bottom',
+    '    pins: [1+]',
+    'wires:',
+    '  - SC.1+ -- a9 orange',
+  );
+
+  test('the ravine is in the scene, between rows e and j', () => {
+    const [scene] = scenesOfBreadboard(source);
+    expect(scene?.ravines).toHaveLength(1);
+  });
+
+  test('a device box is marked as off the board; parts on it are not', () => {
+    const [scene] = scenesOfBreadboard(source);
+    expect(scene?.parts.find((part) => part.id === 'SC')?.offBoard).toBe(true);
+    expect(scene?.parts.find((part) => part.id === 'R1')?.offBoard).toBeUndefined();
+  });
+});

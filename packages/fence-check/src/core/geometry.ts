@@ -15,6 +15,15 @@ export const segmentsOf = (points: readonly ScenePoint[]): readonly Segment[] =>
     .map((to, index) => ({ from: points[index]!, to }))
     .filter((segment) => !isSamePoint(segment.from, segment.to));
 
+/** 点から区間までのいちばん近い距離 (px)。 */
+export function distanceToSegment(point: ScenePoint, segment: Segment): number {
+  const dx = segment.to.x - segment.from.x;
+  const dy = segment.to.y - segment.from.y;
+  const span = dx * dx + dy * dy;
+  const t = span === 0 ? 0 : Math.max(0, Math.min(1, ((point.x - segment.from.x) * dx + (point.y - segment.from.y) * dy) / span));
+  return Math.hypot(point.x - (segment.from.x + t * dx), point.y - (segment.from.y + t * dy));
+}
+
 /** 長方形の 4 隅。 */
 export function corners(rect: SceneRect): readonly ScenePoint[] {
   const cos = Math.cos(rect.angle);
