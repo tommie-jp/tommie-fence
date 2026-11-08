@@ -102,6 +102,19 @@ describe('sheets: the parts lists come after the last sheet, one per sheet', () 
     expect(headings(renderBreadboard(two('parts-list: none', 'parts-list: none')).svg)).toBe(0);
   });
 
+  test('the tables share one row pitch, set by the tallest drawing of any sheet', () => {
+    const { svg } = renderBreadboard([
+      'board: full', 'sheets:',
+      '  - name: A', '    parts:', '      R1: resistor a5 a10 1k', '      R2: resistor b5 b10 1k', '      R3: resistor c5 c10 1k',
+      '  - name: B', '    parts:', '      B1: button @ e5', '      B2: button @ e9', '      B3: button @ e13',
+    ].join('\n'));
+    const tops = [...svg.matchAll(/class="bf-parts-icon" transform="translate\([\d.]+ ([\d.]+)\)"/g)].map((m) => Number(m[1]));
+    expect(tops).toHaveLength(6);
+    // 同じ大きさの絵が並ぶ枚の中で、行の送りを比べるには字の行を見る。
+    const rows = (id: string) => Number(new RegExp(`y="([\\d.]+)"[^>]*>${id}<`).exec(svg.slice(svg.lastIndexOf('>A (1枚め)<')))?.[1]);
+    expect(rows('R2') - rows('R1')).toBeCloseTo(rows('B2') - rows('B1'), 1);
+  });
+
   test('a single figure has no caption', () => {
     expect(renderBreadboard('board: half\nparts:\n  R1: resistor a5 a10 1k').svg).not.toContain('枚め');
   });

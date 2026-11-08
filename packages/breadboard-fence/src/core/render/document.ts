@@ -10,7 +10,7 @@ import type { ResolvedNote } from './notes.ts';
 import { renderHits } from './hits.ts';
 import { renderPart } from './parts.ts';
 import { CAPTION_CLASS, uprightBodyRectOf } from './partCommon.ts';
-import { partsListHeight, renderPartsList } from './partsList.ts';
+import { partsListHeight, partsListLine, renderPartsList } from './partsList.ts';
 import type { RenderTheme } from './theme.ts';
 import { sheetCaptionText } from './sheetPartsList.ts';
 import type { SheetCaption, SheetPartsList } from './sheetPartsList.ts';
@@ -70,6 +70,8 @@ type ListPlate = {
   readonly mode: PartsListMode;
   readonly layout: Layout;
   readonly height: number;
+  /** 行の送りの下限 (`sheets:` の表をそろえる)。 */
+  readonly line: number;
 };
 
 /** 見出しの帯の高さ (字の大きさに対する比)。 */
@@ -84,10 +86,12 @@ function listPlates(input: DocumentInput, layout: Layout): readonly ListPlate[] 
     ...(sheet?.earlier ?? []),
     { caption: sheet?.caption ?? null, parts: input.partsList === 'none' ? [] : input.parts, board: input.board, layout, mode: input.partsList },
   ];
+  const shown = listings.filter((one) => one.parts.length > 0 && one.mode === 'symbols');
+  const line = sheet === undefined ? 0 : Math.max(0, ...shown.map((one) => partsListLine(one.parts, theme, one.mode, one.layout)));
   return listings.flatMap((one) => {
-    const body = partsListHeight(one.parts, theme, one.board, one.mode, one.layout);
+    const body = partsListHeight(one.parts, theme, one.board, one.mode, one.layout, line);
     if (body === 0) return [];
-    return [{ ...one, height: body + (one.caption === null ? 0 : theme.metrics.textSize * PLATE_CAPTION_RATIO) }];
+    return [{ ...one, line, height: body + (one.caption === null ? 0 : theme.metrics.textSize * PLATE_CAPTION_RATIO) }];
   });
 }
 
@@ -97,7 +101,7 @@ function renderPlates(plates: readonly ListPlate[], x: number, top: number, widt
   return plates.map((plate) => {
     const band = plate.caption === null ? 0 : size * PLATE_CAPTION_RATIO;
     const caption = plate.caption === null ? '' : svgText(x, y + size * 1.2, sheetCaptionText(plate.caption, lang), { 'font-size': num(size), 'font-weight': 700, fill: theme.palette.partText, anchor: 'start' });
-    const drawn = caption + renderPartsList(plate.parts, x, y + band, width, theme, plate.board, lang, plate.mode, plate.layout);
+    const drawn = caption + renderPartsList(plate.parts, x, y + band, width, theme, plate.board, lang, plate.mode, plate.layout, plate.line);
     y += plate.height;
     return drawn;
   }).join('');

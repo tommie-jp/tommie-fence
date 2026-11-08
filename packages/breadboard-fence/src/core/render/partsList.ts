@@ -143,18 +143,18 @@ const widest = (values: readonly string[]): number => Math.max(0, ...values.map(
  * 行の送り。絵の欄では、**いちばん背の高い絵が 2 行ぶん (上下の隙間つき) に収まる**まで広げる —
  * 絵は基板と同じ大きさで描くので縮めない (トランジスタはピンの名前まで入れると 2 行を超える)。
  */
-const lineHeight = (theme: RenderTheme, mode: PartsListMode = 'below', icons: readonly (PartsIcon | null)[] = []): number => {
+const lineHeight = (theme: RenderTheme, mode: PartsListMode = 'below', icons: readonly (PartsIcon | null)[] = [], atLeast = 0): number => {
   if (mode !== 'symbols') return theme.metrics.textSize * LINE_RATIO;
   const tallest = Math.max(0, ...icons.map((icon) => icon?.height ?? 0));
-  return Math.max(theme.metrics.textSize * SYMBOL_LINE_RATIO, (tallest + ICON_CLEARANCE * 2) / ICON_ROWS);
+  return Math.max(atLeast, theme.metrics.textSize * SYMBOL_LINE_RATIO, (tallest + ICON_CLEARANCE * 2) / ICON_ROWS);
 };
 
 /** 並べる行数。上限を超えたぶんは「ほかに N 件」の 1 行にまとめる。 */
 const rowCount = (parts: number): number => (parts > LIMITS.listedParts ? LIMITS.listedParts + 1 : parts);
 
-const plateHeight = (rows: number, theme: RenderTheme, mode: PartsListMode = 'below', icons: readonly (PartsIcon | null)[] = []): number => {
+const plateHeight = (rows: number, theme: RenderTheme, mode: PartsListMode = 'below', icons: readonly (PartsIcon | null)[] = [], atLeast = 0): number => {
   const { textSize } = theme.metrics;
-  const height = textSize * PAD_RATIO * 2 + textSize + lineHeight(theme, mode, icons) * (rows - 1);
+  const height = textSize * PAD_RATIO * 2 + textSize + lineHeight(theme, mode, icons, atLeast) * (rows - 1);
   if (mode !== 'symbols') return height;
   // 最後の行の絵は、字の行の真ん中から下へ絵の半分だけ伸びる。表の下の余白で足りなければ広げる。
   const below = textSize * PAD_RATIO + textSize * (1 - CAP_RATIO);
@@ -177,12 +177,18 @@ export function partsListHeight(
   board: Board | null = null,
   mode: PartsListMode = 'below',
   layout: Layout | null = null,
+  atLeast = 0,
 ): number {
   if (parts.length === 0) return 0;
   const icons = iconsOf(shownOf(parts), layout, theme, mode);
   // 見出しの 1 行と、基板の 1 行を足す。「ほかに N 件」の行には絵が無い。
   const lastIcons = parts.length > LIMITS.listedParts ? [...icons, null] : icons;
-  return plateHeight(rowCount(parts.length) + 1 + (board === null ? 0 : 1), theme, mode, lastIcons) + GAP;
+  return plateHeight(rowCount(parts.length) + 1 + (board === null ? 0 : 1), theme, mode, lastIcons, atLeast) + GAP;
+}
+
+/** 表の行の送り。`sheets:` の図は全部の表をいちばん広い送りにそろえる。 */
+export function partsListLine(parts: readonly PlacedPart[], theme: RenderTheme, mode: PartsListMode, layout: Layout): number {
+  return lineHeight(theme, mode, iconsOf(shownOf(parts), layout, theme, mode));
 }
 
 /**
@@ -207,6 +213,7 @@ export function renderPartsList(
   lang: Lang = 'ja',
   mode: PartsListMode = 'below',
   layout: Layout | null = null,
+  atLeast = 0,
 ): string {
   if (parts.length === 0) return '';
   const symbols = mode === 'symbols' && layout !== null;
@@ -226,12 +233,12 @@ export function renderPartsList(
   const { palette } = theme;
   const { textSize } = theme.metrics;
   const pad = textSize * PAD_RATIO;
-  const line = lineHeight(theme, mode, icons);
+  const line = lineHeight(theme, mode, icons, atLeast);
 
   // 基板は基板と同じ色で塗る。`board-color` を変えたときに印字の色が追従する仕掛け
   // (theme.ts の inkFor) にそのまま相乗りできるため。字の縁取りは cell が敷く。
   const plate = element('rect', {
-    x: num(x), y: num(y), width: num(width), height: num(plateHeight(rows.length + (hidden === 0 ? 0 : 1), theme, mode, hidden === 0 ? icons : [...icons, null])), rx: 6,
+    x: num(x), y: num(y), width: num(width), height: num(plateHeight(rows.length + (hidden === 0 ? 0 : 1), theme, mode, hidden === 0 ? icons : [...icons, null], atLeast)), rx: 6,
     fill: palette.plate, stroke: palette.plateEdge,
   });
 
