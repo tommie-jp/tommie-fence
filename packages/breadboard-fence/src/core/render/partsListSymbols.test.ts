@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { renderBreadboard } from '../index.ts';
+import { scaledToColumn } from './partsListIcons.ts';
 
 /**
  * 部品表の最後の欄を図の中の部品の絵にする (`parts-list: symbols`、52 の依頼)。
@@ -50,6 +51,16 @@ describe('parts-list: symbols', () => {
     ));
     expect(errors).toEqual([]);
     expect(listOf(svg).match(/class="bf-parts-icon"/g)).toHaveLength(3);
+  });
+
+  test('scaledToColumn shrinks only the drawings wider than the column', () => {
+    const wide = { svg: '<g/>', width: 200, height: 40 };
+    const small = { svg: '<g/>', width: 80, height: 20 };
+    const [shrunk, kept, none] = scaledToColumn([wide, small, null], 100);
+    expect(shrunk).toMatchObject({ width: 100, height: 20 });
+    expect(shrunk?.svg).toContain('scale(0.5)');
+    expect(kept).toBe(small);
+    expect(none).toBeNull();
   });
 
   test('a film capacitor between a row and the rail still carries its code', () => {

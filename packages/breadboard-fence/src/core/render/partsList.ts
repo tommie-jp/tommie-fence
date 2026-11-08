@@ -3,7 +3,7 @@ import type { Lang, PartsMark } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
 import { formatAddress } from '../model/address.ts';
 import { partsLabels } from './labels.ts';
-import { partsIcon, partsIconsWithin } from './partsListIcons.ts';
+import { partsIcon, partsIconsWithin, scaledToColumn } from './partsListIcons.ts';
 import type { PartsIcon } from './partsListIcons.ts';
 import { LIMITS } from '../limits.ts';
 import { fit, textWidth } from './textFit.ts';
@@ -308,16 +308,29 @@ export function renderPartsList(
   const iconsAt = (value: number, withPosition: boolean): readonly (PartsIcon | null)[] =>
     partsIconsWithin(shown, layout as Layout, theme, (candidates) => iconsFitIn(candidates, markRoomFor(value, withPosition)));
   // リードを詰めても入らない図だけ、値の欄の長い説明を 1 字ぶんずつ切っていく。
-  const fittingValue = (withPosition: boolean): number | undefined =>
-    valueCandidates(fullValueWidth).find((value) => iconsFitIn(iconsAt(value, withPosition), markRoomFor(value, withPosition)));
-  // 絵と位置の両方は入らない狭い基板では、基板を見れば分かる位置のほうを諦める。
-  const showPosition = symbols && fittingValue(true) !== undefined;
-  const valueWidth = symbols ? fittingValue(showPosition) ?? fullValueWidth : fullValueWidth;
+  // それでも入らなければ位置の欄を諦め、次にはみ出す絵だけを縮める。縮めても入らない図は値を切らず、絵の欄を空ける。
+  type IconPlan = { readonly value: number; readonly showPosition: boolean; readonly icons: readonly (PartsIcon | null)[] };
+  const iconPlan = (): IconPlan => {
+    if (!symbols) return { value: fullValueWidth, showPosition: false, icons: [] };
+    const candidates = valueCandidates(fullValueWidth);
+    const plainAt = (withPosition: boolean): number | undefined =>
+      candidates.find((value) => iconsFitIn(iconsAt(value, withPosition), markRoomFor(value, withPosition)));
+    const withPosition = plainAt(true);
+    if (withPosition !== undefined) return { value: withPosition, showPosition: true, icons: iconsAt(withPosition, true) };
+    const without = plainAt(false);
+    if (without !== undefined) return { value: without, showPosition: false, icons: iconsAt(without, false) };
+    const narrowest = candidates[candidates.length - 1] ?? fullValueWidth;
+    const column = ((markRoomFor(narrowest, false) - ICON_COLUMN_GAP) * textSize) / 2;
+    const scaled = scaledToColumn(iconsAt(narrowest, false), column);
+    return iconsFitIn(scaled, markRoomFor(narrowest, false))
+      ? { value: narrowest, showPosition: false, icons: scaled }
+      : { value: fullValueWidth, showPosition: false, icons: iconsAt(fullValueWidth, false) };
+  };
+  const { value: valueWidth, showPosition, icons: fitted } = iconPlan();
 
   const positionX = valueX + (valueWidth + COLUMN_GAP) * textSize;
   const markX = showPosition ? positionX + (positionWidth + COLUMN_GAP) * textSize : positionX;
   const markRoom = room(markX);
-  const fitted = symbols ? iconsAt(valueWidth, showPosition) : [];
   const rows: readonly Row[] = textRows.map((row, index) =>
     symbols && index >= listedFrom ? { ...row, icon: fitted[index - listedFrom] ?? null } : row);
 

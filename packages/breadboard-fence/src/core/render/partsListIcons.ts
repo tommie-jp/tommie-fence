@@ -1,3 +1,4 @@
+import { transformerExtent } from 'fence-kit';
 import type { SceneRect } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
 import type { HoleAddress, PlacedPart, Point, Rect } from '../types.ts';
@@ -95,6 +96,11 @@ const axisRect = (rect: SceneRect): Rect => {
 function bodyRectOf(part: PlacedPart, layout: Layout): Rect | null {
   const body = bodyOf(part, layout);
   if (body === null) return null;
+  if (part.kind === 'wound' && part.variant === 'toroid') {
+    // トロイダルの輪はピンを囲む箱より大きく描く。箱で測ると輪が表の下の縁からはみ出す。
+    const drawn = transformerExtent(body.width, body.height, { variant: part.variant, model: part.value, pitch: layout.pitch });
+    return axisRect({ ...body, width: drawn.width, height: drawn.height });
+  }
   if (part.type !== 'crystal' || part.variant !== 'cylinder') return axisRect(body);
   const half = body.height / 2;
   return axisRect({ ...body, cx: body.cx + Math.sin(body.angle) * half, cy: body.cy - Math.cos(body.angle) * half });
@@ -212,5 +218,20 @@ export function partsIconsWithin(
   const natural = drawn();
   if (fits(natural)) return natural;
   const spans = Array.from({ length: Math.max(0, layout.columns - MIN_ICON_SPAN + 1) }, (_, index) => layout.columns - index);
-  return spans.map((span) => drawn(span)).find(fits) ?? natural;
+  return spans.map((span) => drawn(span)).find(fits) ?? drawn(MIN_ICON_SPAN);
+}
+
+/** 絵を縮める下限。これより小さいと刷り込みとピンの名前が読めない。 */
+const MIN_ICON_SCALE = 0.5;
+
+/**
+ * 列の幅 `width` からはみ出す絵だけを縮める。リードを詰められないトランスのように幅のある絵の最後の手段で、
+ * 基板と同じ大きさで描く決めの例外。ほかの絵の大きさは変えない。
+ */
+export function scaledToColumn(icons: readonly (PartsIcon | null)[], width: number): readonly (PartsIcon | null)[] {
+  return icons.map((icon) => {
+    if (icon === null || icon.width <= width) return icon;
+    const scale = Math.max(MIN_ICON_SCALE, width / icon.width);
+    return { svg: `<g transform="scale(${num(scale)})">${icon.svg}</g>`, width: icon.width * scale, height: icon.height * scale };
+  });
 }
