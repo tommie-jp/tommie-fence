@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.87.1] - 2026-11-08
+
 ### Fixed
 
 - breadboard-fence の修正を束ねる (`sheets:` の図の部品表の行の高さをそろえる)
