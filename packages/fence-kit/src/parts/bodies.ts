@@ -131,15 +131,20 @@ function resistorBody(part: BodyPart, span: number, ink: BodyInk): string {
  * **無極性のもの (セラミック・フィルム) にだけ刷る。** 実物の電解とタンタルは
  * 容量をそのまま (`100µF`) 刷るので、3 桁コードを載せると別物の顔になる。
  *
- * 胴に入らない幅では刷らない — 切れた `104` は `10` (= 10pF) に読める。
+ * 字の大きさは候補を大きい順に試す。どれも胴に入らない幅では刷らない —
+ * 切れた `104` は `10` (= 10pF) に読める。
  */
-function capacitorCodeOn(part: BodyPart, room: number, size: number, ink: BodyInk): string {
+function capacitorCodeOn(part: BodyPart, room: number, sizes: readonly number[], ink: BodyInk): string {
   const farads = part.value ? parsePicofarads(part.value) : null;
   const code = farads === null ? null : capacitorCode(farads);
-  if (code === null || room < size * code.length * 0.7) return '';
+  const size = code === null ? undefined : sizes.find((candidate) => room >= candidate * code.length * 0.7);
+  if (code === null || size === undefined) return '';
 
   return svgText(0, size * 0.35, code, { 'font-size': num(size), fill: ink.paint('#4a3208') });
 }
+
+/** フィルムの胴の字。短い胴 (レールと行の間に縦に挿した物) はセラミックと同じ大きさまで落とす。 */
+const FILM_CODE_SIZES = [9, 7] as const;
 
 /** フィルム・積層セラミックの角い胴。無極性のコンデンサの既定の姿。 */
 function filmCapBody(part: BodyPart, span: number, ink: BodyInk): string {
@@ -148,7 +153,7 @@ function filmCapBody(part: BodyPart, span: number, ink: BodyInk): string {
     x: num(-width / 2), y: -8, width: num(width), height: 16, rx: 3,
     fill: ink.paint('#e3a72f'), stroke: ink.paint('#9c6f10'),
   });
-  return shell + capacitorCodeOn(part, width - 4, 9, ink);
+  return shell + capacitorCodeOn(part, width - 4, FILM_CODE_SIZES, ink);
 }
 
 /**
@@ -161,7 +166,7 @@ function ceramicCapBody(part: BodyPart, span: number, ink: BodyInk): string {
     cx: 0, cy: 0, r: num(radius), fill: ink.paint('#d18b3c'), stroke: ink.paint('#8a5a22'),
   });
   // 円板は狭いので字も一回り小さく。入らなければ刷らない。
-  return shell + capacitorCodeOn(part, radius * 1.9, 7, ink);
+  return shell + capacitorCodeOn(part, radius * 1.9, [7], ink);
 }
 
 /** 電解の缶。マイナス側に帯を描く。逆挿しは壊れるので目立たせる。 */

@@ -59,6 +59,18 @@ function lieFlat(part: PlacedPart, layout: Layout): PlacedPart {
   };
 }
 
+/**
+ * 横に寝かせた 2 ピンの間を `maxSpan` 穴まで詰める。胴の大きさはこの範囲で変わらない
+ * (リードが短くなるだけ) ので、絵の高さと行の送りも変わらない。番地は表の絵のためだけのもの。
+ */
+function withinSpan(part: PlacedPart, maxSpan: number): PlacedPart {
+  if (part.kind !== 'two-lead' || part.pins.length !== 2) return part;
+  const [a, b] = part.pins.map((pin) => pin.address);
+  if (a?.kind !== 'hole' || b?.kind !== 'hole' || a.row !== b.row || Math.abs(b.col - a.col) <= maxSpan) return part;
+  const col = a.col + Math.sign(b.col - a.col) * maxSpan;
+  return { ...part, pins: part.pins.map((pin, index) => (index === 1 ? { ...pin, address: { ...b, col } } : pin)) };
+}
+
 const union = (rects: readonly Rect[]): Rect | null => {
   if (rects.length === 0) return null;
   const left = Math.min(...rects.map((rect) => rect.x));
@@ -167,9 +179,9 @@ const poleText = (pole: Pole, theme: RenderTheme): string =>
  * 表に置く絵。描かない種類 (機器と DIP と、Pico などのマイコンボード — 型番の欄で足り、絵は幅を
  * 取りすぎる。ボードは 1 つで全部の行の送りを広げてしまう) と、番地の決まらない部品は null。
  */
-export function partsIcon(part: PlacedPart, layout: Layout, theme: RenderTheme): PartsIcon | null {
+export function partsIcon(part: PlacedPart, layout: Layout, theme: RenderTheme, maxSpan = Infinity): PartsIcon | null {
   if (part.kind === 'device' || part.kind === 'dip' || part.kind === 'board') return null;
-  const flat = lieFlat(part, layout);
+  const flat = withinSpan(lieFlat(part, layout), maxSpan);
   const poles = polePlaces(flat, layout, theme);
   const box = boxOf(flat, layout, theme, poles);
   if (box === null) return null;
@@ -180,4 +192,25 @@ export function partsIcon(part: PlacedPart, layout: Layout, theme: RenderTheme):
     width: box.width,
     height: box.height,
   };
+}
+
+/** これより短くするとリードが胴に隠れて、部品の姿が基板と違って見える。 */
+const MIN_ICON_SPAN = 3;
+
+/**
+ * 表の欄に収まる絵 (収まるかは `fits` が決める)。長い部品が 1 つあるだけで全部の絵が欄から消えないよう、
+ * 収まらないときは**長い部品のリードだけ**を、収まるぎりぎりの長さまで詰める。
+ * 詰めても収まらなければそのままの絵を返す (表の側で欄を空ける)。
+ */
+export function partsIconsWithin(
+  parts: readonly PlacedPart[],
+  layout: Layout,
+  theme: RenderTheme,
+  fits: (icons: readonly (PartsIcon | null)[]) => boolean,
+): readonly (PartsIcon | null)[] {
+  const drawn = (maxSpan?: number) => parts.map((part) => partsIcon(part, layout, theme, maxSpan));
+  const natural = drawn();
+  if (fits(natural)) return natural;
+  const spans = Array.from({ length: Math.max(0, layout.columns - MIN_ICON_SPAN + 1) }, (_, index) => layout.columns - index);
+  return spans.map((span) => drawn(span)).find(fits) ?? natural;
 }

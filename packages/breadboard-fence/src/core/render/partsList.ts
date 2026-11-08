@@ -2,7 +2,7 @@ import { PARTS_SYMBOL_HEADING_BY_LANG, bandColor, partKind, partsMark, valueWith
 import type { Lang, PartsMark } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
 import { partsLabels } from './labels.ts';
-import { partsIcon } from './partsListIcons.ts';
+import { partsIcon, partsIconsWithin } from './partsListIcons.ts';
 import type { PartsIcon } from './partsListIcons.ts';
 import { LIMITS } from '../limits.ts';
 import { fit, textWidth } from './textFit.ts';
@@ -43,6 +43,18 @@ const SYMBOL_LINE_RATIO = 1.5;
  * (実機で「次の行は水平にずらし、2 行の高さで」と頼まれた。1 行の高さでは刷り込みが読めなかった)。
  */
 const ICON_ROWS = 2;
+
+/**
+ * 絵を入れるために値の欄を切るときの下限 (字の大きさに対する比)。`Analog Discovery 3` が切れずに読める幅。
+ * これより狭くしないと絵が入らない図は、値を読めるほうを取って絵の欄を空ける。
+ */
+const MIN_VALUE_WIDTH = 10;
+
+/** 値の欄の幅の候補。今の幅から下限まで 1 字ぶんずつ。 */
+const valueCandidates = (full: number): readonly number[] => [
+  full,
+  ...Array.from({ length: Math.max(0, Math.floor(full - MIN_VALUE_WIDTH)) }, (_, index) => full - index - 1),
+];
 
 /** 同じ列の上下の絵との間に残す隙間 (px)。 */
 const ICON_CLEARANCE = 1;
@@ -221,11 +233,11 @@ export function renderPartsList(
   // 表から部品を探すので名前の順に並べる (数字は数として: R2 の次は R10)。上限で切る前に並べる。
   const shown = shownOf(parts);
   const icons = iconsOf(shown, layout, theme, mode);
-  const listed = rowsOf(shown, lang).map((row, index) => (symbols ? { ...row, icon: icons[index] ?? null } : row));
+  const listed = rowsOf(shown, lang);
   const hidden = parts.length - listed.length;
   // 先頭は見出し。基板は最初に用意する物なので、名前の順には入れず見出しのすぐ下に置く。上限の数にも数えない。
   const heading = headingRow(lang);
-  const rows = [
+  const textRows: readonly Row[] = [
     symbols ? { ...heading, mark: PARTS_SYMBOL_HEADING_BY_LANG[lang] } : heading,
     ...(board === null ? [] : [boardRow(board, lang)]),
     ...listed,
@@ -238,7 +250,7 @@ export function renderPartsList(
   // 基板は基板と同じ色で塗る。`board-color` を変えたときに印字の色が追従する仕掛け
   // (theme.ts の inkFor) にそのまま相乗りできるため。字の縁取りは cell が敷く。
   const plate = element('rect', {
-    x: num(x), y: num(y), width: num(width), height: num(plateHeight(rows.length + (hidden === 0 ? 0 : 1), theme, mode, hidden === 0 ? icons : [...icons, null], atLeast)), rx: 6,
+    x: num(x), y: num(y), width: num(width), height: num(plateHeight(textRows.length + (hidden === 0 ? 0 : 1), theme, mode, hidden === 0 ? icons : [...icons, null], atLeast)), rx: 6,
     fill: palette.plate, stroke: palette.plateEdge,
   });
 
@@ -251,27 +263,52 @@ export function renderPartsList(
   // ID は図の部品と突き合わせるための鍵なので切らない。フェンスから来る ID は
   // 英数字 32 文字までで、いちばん狭い基板でも収まる (room はコアの API を直に
   // 呼ばれたときの保険で、フェンス経由では効かない)。
-  const idWidth = Math.min(widest(rows.map((row) => row.id)), room(idX));
+  const idWidth = Math.min(widest(textRows.map((row) => row.id)), room(idX));
 
   const typeX = idX + (idWidth + COLUMN_GAP) * textSize;
   const typeRoom = room(typeX);
-  const typeWidth = Math.min(widest(rows.map((row) => row.type)), MAX_TYPE_WIDTH, typeRoom);
+  const typeWidth = Math.min(widest(textRows.map((row) => row.type)), MAX_TYPE_WIDTH, typeRoom);
 
   const valueX = typeX + (typeWidth + COLUMN_GAP) * textSize;
   const valueRoom = room(valueX);
-  const valueWidth = Math.min(widest(rows.map((row) => row.value)), valueRoom);
+  const fullValueWidth = Math.min(widest(textRows.map((row) => row.value)), valueRoom);
+
+  // 絵は行の偶奇で左右の列に分かれる。列の幅はそれぞれの列にある絵だけで測る。
+  const listedFrom = textRows.length - listed.length;
+  const iconColumns = (candidates: readonly (PartsIcon | null)[]): readonly [number, number] => {
+    const widthOn = (parity: number): number => Math.max(0, ...candidates
+      .filter((_, offset) => (offset + listedFrom) % 2 === parity)
+      .map((icon) => icon?.width ?? 0));
+    return [widthOn(0), widthOn(1)];
+  };
+  const markRoomFor = (value: number): number => room(valueX + (value + COLUMN_GAP) * textSize);
+  const iconsFitIn = (candidates: readonly (PartsIcon | null)[], markSpace: number): boolean => {
+    const [left, right] = iconColumns(candidates);
+    return (left + right) / textSize + ICON_COLUMN_GAP <= markSpace;
+  };
+  const iconsAt = (value: number): readonly (PartsIcon | null)[] =>
+    partsIconsWithin(shown, layout as Layout, theme, (candidates) => iconsFitIn(candidates, markRoomFor(value)));
+  // リードを詰めても入らない図だけ、値の欄の長い説明を 1 字ぶんずつ切っていく。
+  const valueWidth = symbols
+    ? valueCandidates(fullValueWidth).find((value) => iconsFitIn(iconsAt(value), markRoomFor(value))) ?? fullValueWidth
+    : fullValueWidth;
 
   const markX = valueX + (valueWidth + COLUMN_GAP) * textSize;
   const markRoom = room(markX);
+  const fitted = symbols ? iconsAt(valueWidth) : [];
+  const rows: readonly Row[] = textRows.map((row, index) =>
+    symbols && index >= listedFrom ? { ...row, icon: fitted[index - listedFrom] ?? null } : row);
 
   const baselineOf = (index: number): number => y + pad + textSize * CAP_RATIO + line * index;
   /**
    * 絵は基板と同じ大きさのまま、その行の字の高さの真ん中に合わせて置く。
-   * 行の番号の偶奇で左右の列を替える (インターリーブ)。右の列は、いちばん幅のある絵の右から。
+   * 行の番号の偶奇で左右の列を替える (インターリーブ)。右の列は、左の列でいちばん幅のある絵の右から。
    */
-  const widestIcon = Math.max(0, ...rows.map((row) => row.icon?.width ?? 0));
-  const secondX = markX + widestIcon + ICON_COLUMN_GAP * textSize;
-  const iconsFit = (secondX + widestIcon - markX) / textSize <= markRoom;
+  // 右の列は普段は「いちばん幅のある絵」の右に置く。それでは入らない図だけ、左の列の幅まで寄せる。
+  const widestIcon = Math.max(...iconColumns(fitted));
+  const leftColumn = (widestIcon * 2) / textSize + ICON_COLUMN_GAP <= markRoom ? widestIcon : iconColumns(fitted)[0];
+  const secondX = markX + leftColumn + ICON_COLUMN_GAP * textSize;
+  const iconsFit = iconsFitIn(fitted, markRoom);
   const placeIcon = (icon: PartsIcon, index: number): string => {
     const top = baselineOf(index) - (textSize * CAP_RATIO) / 2 - icon.height / 2;
     const left = index % 2 === 0 ? markX : secondX;
@@ -300,7 +337,7 @@ export function renderPartsList(
       ...(typeRoom < MIN_COLUMN_WIDTH ? [] : [cell(typeX, baseline, fit(row.type, typeWidth), ink)]),
       ...(row.value === '' || valueRoom < MIN_COLUMN_WIDTH
         ? []
-        : [cell(valueX, baseline, fit(row.value, valueRoom), ink)]),
+        : [cell(valueX, baseline, fit(row.value, valueWidth), ink)]),
       ...(row.icon !== undefined
         ? (row.icon === null || !iconsFit ? [] : [placeIcon(row.icon, index)])
         : row.mark.length === 0 || markRoom < MIN_COLUMN_WIDTH || markWidth(row.mark) > markRoom

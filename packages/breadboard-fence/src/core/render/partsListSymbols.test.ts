@@ -17,6 +17,47 @@ const source = (mode: string | null) => fence(
 const listOf = (svg: string): string => svg.slice(svg.indexOf('部品'));
 
 describe('parts-list: symbols', () => {
+  test('long parts keep the drawings: the leads shorten until the two columns fit', () => {
+    const { svg, errors } = renderBreadboard(fence(
+      'board: half',
+      'parts:',
+      '  C3: capacitor/film g9 g17 1u',
+      '  C4: capacitor/film j13 j21 1u',
+      '  D1: diode b9 b13 1N4148',
+      '  R1: resistor d21 d25 100k',
+      '  AD:',
+      '    type: device',
+      '    at: top',
+      '    label: Analog Discovery 3',
+      '    pins: [2+, W1, GND, 2-, 1+, 1-]',
+    ));
+    expect(errors).toEqual([]);
+    expect(listOf(svg).match(/class="bf-parts-icon"/g)).toHaveLength(4);
+  });
+
+  test('a long device description is cut so the drawings still fit', () => {
+    const { svg, errors } = renderBreadboard(fence(
+      'board: half',
+      'parts:',
+      '  R1: resistor a5 a10 10k',
+      '  R2: resistor c5 c10 10k',
+      '  C1: capacitor/electrolytic e5(+) e9(-) 100uF',
+      '  AD:',
+      '    type: device',
+      '    at: top',
+      '    label: Analog Discovery (Supplies V+ と Scope と Wavegen の両方)',
+      '    pins: [V+, GND]',
+    ));
+    expect(errors).toEqual([]);
+    expect(listOf(svg).match(/class="bf-parts-icon"/g)).toHaveLength(3);
+  });
+
+  test('a film capacitor between a row and the rail still carries its code', () => {
+    const { svg, errors } = renderBreadboard(fence('board: half', 'parts:', '  C2: capacitor/film a13 -t13 1u'));
+    expect(errors).toEqual([]);
+    expect(svg.slice(0, svg.indexOf('部品')).match(/>105</g)).toHaveLength(1);
+  });
+
   test('the last heading reads 記号 and the table draws the parts as in the figure', () => {
     const { svg, errors } = renderBreadboard(source('symbols'));
     expect(errors).toEqual([]);
