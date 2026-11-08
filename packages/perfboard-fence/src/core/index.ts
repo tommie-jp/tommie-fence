@@ -207,8 +207,6 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
   // 基板に載せる前の部品から作る — 載せられなかった部品も、揃えるものには変わりない。
   const listNotes = parsed.doc.notes.filter((note) => note.kind === 'parts');
   const listed = listNotes.length > 0 ? partsListing(parsed.doc.parts, devices, boardRow(board, parsed.doc.boardName, lang), lang) : [];
-  // 記号の欄に置く部品の絵 (図と同じ関数で描く。breadboard の部品表と同じ形)。
-  const listIcons = listNotes.length > 0 ? partsIcons(parsed.doc.parts) : new Map<string, string>();
   // **白黒の図では色を網と線の型に移す** (`render/hatch.ts`)。移した先が何色かは
   // 図の中では言えないので、使った色の凡例を基板のすぐ下に出す。
   // 色つきのテーマでは見たままなので、帯そのものを出さない。
@@ -240,6 +238,9 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
   // 番地で置いた機器と USB コネクタのはみ出しを**先に測る**。基板の寸法だけで
   // 組むと、上は題に、下は書き出しや半田面に重なる。
   const bare = createLayout(board, { title: title !== null });
+  // 記号の欄に置く部品の絵。**基板と同じ描き方・同じ大きさ** (breadboard の部品表と同じ。52 の docs/152)。
+  // 位置は絵の外形で寄せるので、題の有無だけで組んだ layout で足りる。
+  const listIcons = listNotes.length > 0 ? partsIcons(placement.parts, bare, PLATE) : new Map();
   const devicesJut = deviceOverhang(devices, bare, board);
   // 1 列のヘッダに載ったモジュール (キットの基板とジャック) は左右にも張り出す。
   const connectorsJut = connectorOverhang(placement.parts, bare);

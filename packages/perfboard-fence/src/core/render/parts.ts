@@ -41,7 +41,10 @@ const CAPTION_DESCENT = 0.2;
  * 部品 1 つぶんの名札の置き場所。`CaptionRoom` を部品の名前で包んだもの —
  * 自分の胴は避けない (名札は胴の脇に置くので、必ず接している)。
  */
-type PartRoom = {
+/** 名札の印。部品表の絵から名札を外すのに使う。 */
+export const CAPTION_CLASS = 'pf-caption';
+
+export type PartRoom = {
   readonly place: (x: number, below: number, above: number, width: number) => number;
   readonly pick: (candidates: readonly Rect[]) => number;
   readonly blocked: (box: Rect) => boolean;
@@ -109,6 +112,8 @@ function partLabel(
 ): string {
   const size = theme.metrics.textSize;
   const style = {
+    // 部品表の絵 (`partsListIcons.ts`) は同じ描き方で描いて、名札だけをこの印で外す。
+    class: CAPTION_CLASS,
     fill: theme.palette.plateText,
     'font-size': num(size),
     halo: theme.palette.plate,
@@ -560,7 +565,7 @@ const isBoxed = (part: PlacedPart): boolean => {
  * 描くので、点の差で数えると裏だけ 180 度回ってしまう。向きは書かれた番地の
  * ものであって、どちらから見るかで変わらない。
  */
-function packageAngle(part: PlacedPart): number {
+export function packageAngle(part: PlacedPart): number {
   const from = part.pins.at(0)?.address;
   const to = part.pins.at(-1)?.address;
   if (!from || !to) return 0;
@@ -637,7 +642,7 @@ const CHIP_SCALE = 1;
  * SIP のピンの名前 (胴の外、行の増える側) が胴の縁から出る深さ。fence-kit の
  * `sipLegends` と同じ寸法 (縁取りの半分 + 隙間 + 字の高さと深さ)。
  */
-const SIP_LEGEND_DEPTH = 1 + 0.5 + CHIP_SCALE * 6.5 * (0.72 + 0.2);
+export const SIP_LEGEND_DEPTH = 1 + 0.5 + CHIP_SCALE * 6.5 * (0.72 + 0.2);
 const chipInk = (theme: Theme): ChipInk => ({
   body: theme.palette.chipBody,
   pin: theme.palette.chipPin,
@@ -916,8 +921,8 @@ function renderDirectSot(part: PlacedPart, layout: Layout, theme: Theme, room?: 
   );
 }
 
-/** 形ごとの描き方。 */
-function renderOne(part: PlacedPart, layout: Layout, theme: Theme, room: PartRoom): string {
+/** 形ごとの描き方。部品表の絵 (`partsListIcons.ts`) も同じ関数で描く。 */
+export function renderOne(part: PlacedPart, layout: Layout, theme: Theme, room: PartRoom): string {
   const kind = footprintOf(part.type, part.variant)?.kind;
   if (kind === 'connector') return renderConnector(part, layout, theme, room);
   if (kind === 'three-lead' && directSotSpec(part.variant) !== null) return renderDirectSot(part, layout, theme, room);

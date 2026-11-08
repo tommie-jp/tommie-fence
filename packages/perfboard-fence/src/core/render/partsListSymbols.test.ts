@@ -26,14 +26,32 @@ describe('the parts table draws the parts as in the figure', () => {
     expect(svg.match(/class="pf-parts-icon"/g)).toHaveLength(2);
   });
 
-  test('the next row is shifted sideways (interleaved) and the drawings are two rows tall', () => {
+  test('the next row is shifted sideways (interleaved) and the drawings keep the board size', () => {
     const { svg } = renderPerfboard(source);
-    const placed = [...svg.matchAll(/class="pf-parts-icon" transform="translate\(([\d.]+) ([\d.]+)\) scale\(([\d.]+)\)/g)]
-      .map((m) => ({ x: Number(m[1]), scale: Number(m[3]) }));
+    const placed = [...svg.matchAll(/class="pf-parts-icon" transform="translate\(([\d.]+) ([\d.]+)\)"/g)]
+      .map((m) => ({ x: Number(m[1]) }));
     expect(placed).toHaveLength(2);
     expect(placed[0]!.x).not.toBe(placed[1]!.x);
-    // 2 行ぶん (行の送りは字の 1.5 倍) から上下の隙間 1 px ずつを引いた高さ。
-    expect(26 * placed[0]!.scale).toBeGreaterThan(20);
+    // 基板と同じ大きさで描くので縮めない。名札 (`R1 10k`) は表の欄にあるので絵には入れない。
+    expect(svg).not.toMatch(/class="pf-parts-icon" transform="[^"]*scale/);
+    const table = svg.slice(svg.indexOf('class="pf-parts-icon"'));
+    expect(table).not.toContain('pf-caption');
+  });
+
+  test('the table adds pin names to three-lead parts and polarity to diodes and polar capacitors', () => {
+    const table = (lines: string) => {
+      const { svg } = renderPerfboard(fence('board: 5x7cm', 'parts:', lines, 'notes:', '  - parts'));
+      return svg.slice(svg.indexOf('class="pf-parts-icon"'));
+    };
+    const q = table('  Q1: transistor c5 c6 c7 2SC1815');
+    for (const name of ['E', 'C', 'B']) expect(q).toContain(`>${name}</text>`);
+    const d = table('  D1: diode a3 a7 1N4148');
+    expect(d.indexOf('>A</text>')).toBeGreaterThan(-1);
+    expect(d.indexOf('>A</text>')).toBeLessThan(d.indexOf('>K</text>'));
+    const c = table('  C1: capacitor/electrolytic a3 a6 100u');
+    expect(c).toContain('>+</text>');
+    expect(c).toContain('>−</text>');
+    expect(table('  C1: capacitor/film j3 m3 100n')).toContain('>104<');
   });
 
   test('even rows get a faint background, so the odd rows read lighter', () => {
