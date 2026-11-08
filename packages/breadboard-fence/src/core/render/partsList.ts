@@ -1,9 +1,9 @@
-import { bandColor, partKind, partsMark, valueWithRole } from 'fence-kit';
+import { PARTS_SYMBOL_HEADING_BY_LANG, bandColor, partIcon, partKind, partsMark, valueWithRole } from 'fence-kit';
 import type { Lang, PartsMark } from 'fence-kit';
 import { partsLabels } from './labels.ts';
 import { LIMITS } from '../limits.ts';
 import { fit, textWidth } from './textFit.ts';
-import type { Board, BoardSize, PlacedPart } from '../types.ts';
+import type { Board, BoardSize, PartsListMode, PlacedPart } from '../types.ts';
 import { BOARD_HALO_OPACITY, TEXT_HALO_WIDTH, element, num, svgText } from './svg.ts';
 import type { RenderTheme } from './theme.ts';
 import { isLight, textScale } from './theme.ts';
@@ -28,6 +28,15 @@ const MIN_COLUMN_WIDTH = 4;
  */
 const MAX_TYPE_WIDTH = 13;
 
+/**
+ * 絵の欄 (`parts-list: symbols`) の行の高さ (px、字の大きさ 1 倍のとき)。fence-kit の
+ * `partIcon` の絵は縦 26 px なので、上下に少し空けて 30。字が大きいテーマでは同じ比で広げる。
+ */
+const SYMBOL_ROW = 30;
+
+/** fence-kit の `partIcon` の絵の縦幅 (px)。 */
+const ICON_HEIGHT = 26;
+
 /** 帯の色の四角。1 本ぶんの幅と間 (字の大きさに対する比)。高さは字の高さに合わせる (perfboard と同じ)。 */
 const SWATCH = { width: 0.9, gap: 0.25, height: 0.8 } as const;
 
@@ -35,7 +44,14 @@ const SWATCH = { width: 0.9, gap: 0.25, height: 0.8 } as const;
  * 表の 1 行。最後の欄は抵抗なら帯の色の並び (四角で描く)、コンデンサなら胴の記号 (`104`)。
  * 欄の中身は perfboard の部品表と同じもの (fence-kit)。
  */
-type Row = { readonly id: string; readonly type: string; readonly value: string; readonly mark: PartsMark };
+type Row = {
+  readonly id: string;
+  readonly type: string;
+  readonly value: string;
+  readonly mark: PartsMark;
+  /** 最後の欄に置く部品の絵 (`parts-list: symbols` のときだけ)。描けない種類は null。 */
+  readonly icon?: string | null;
+};
 
 /** 見出しの行。番号と型番だけが並ぶと、どの欄が値なのかが読めない。 */
 const headingRow = (lang: Lang): Row => {
@@ -103,21 +119,41 @@ function swatches(x: number, baseline: number, colors: readonly string[], size: 
 
 const widest = (values: readonly string[]): number => Math.max(0, ...values.map(textWidth));
 
-const lineHeight = (theme: RenderTheme): number => theme.metrics.textSize * LINE_RATIO;
+const lineHeight = (theme: RenderTheme, mode: PartsListMode = 'below'): number =>
+  mode === 'symbols'
+    ? Math.max(theme.metrics.textSize * LINE_RATIO, SYMBOL_ROW * textScale(theme))
+    : theme.metrics.textSize * LINE_RATIO;
 
 /** 並べる行数。上限を超えたぶんは「ほかに N 件」の 1 行にまとめる。 */
 const rowCount = (parts: number): number => (parts > LIMITS.listedParts ? LIMITS.listedParts + 1 : parts);
 
-const plateHeight = (rows: number, theme: RenderTheme): number => {
+const plateHeight = (rows: number, theme: RenderTheme, mode: PartsListMode = 'below'): number => {
   const { textSize } = theme.metrics;
-  return textSize * PAD_RATIO * 2 + textSize + lineHeight(theme) * (rows - 1);
+  // 絵の欄では、どの行も行の高さの帯をまるごと取る (絵は字より背が高い)。
+  if (mode === 'symbols') return textSize * PAD_RATIO * 2 + lineHeight(theme, mode) * rows;
+  return textSize * PAD_RATIO * 2 + textSize + lineHeight(theme, mode) * (rows - 1);
 };
 
 /** 部品リストが図の下に足す高さ (基板 + 下の余白)。並べるものが無ければ 0。 */
-export function partsListHeight(parts: readonly PlacedPart[], theme: RenderTheme, board: Board | null = null): number {
+export function partsListHeight(
+  parts: readonly PlacedPart[],
+  theme: RenderTheme,
+  board: Board | null = null,
+  mode: PartsListMode = 'below',
+): number {
   // 見出しの 1 行と、基板の 1 行を足す。
-  return parts.length === 0 ? 0 : plateHeight(rowCount(parts.length) + 1 + (board === null ? 0 : 1), theme) + GAP;
+  return parts.length === 0 ? 0 : plateHeight(rowCount(parts.length) + 1 + (board === null ? 0 : 1), theme, mode) + GAP;
 }
+
+/**
+ * 部品の絵。**図と同じ関数 (fence-kit の `partIcon`) で、値も渡して描く** — 抵抗の帯の色や
+ * コンデンサの刷り込みが図と同じになる。絵を持たない種類 (DIP・機器) は null で、欄は空になる。
+ */
+const iconOf = (part: PlacedPart): string | null =>
+  part.kind === 'device' ? null : partIcon(part.type, { variant: part.variant, value: part.value });
+
+/** 絵 (`<svg width=…>`) の幅。 */
+const iconWidth = (icon: string): number => Number(/width="([\d.]+)"/.exec(icon)?.[1] ?? 0);
 
 /**
  * 図の下に貼る部品リスト。ID・種類・値を書いた順に 1 行ずつ並べる。
@@ -132,24 +168,32 @@ export function renderPartsList(
   theme: RenderTheme,
   board: Board | null = null,
   lang: Lang = 'ja',
+  mode: PartsListMode = 'below',
 ): string {
   if (parts.length === 0) return '';
+  const symbols = mode === 'symbols';
 
   // 表から部品を探すので名前の順に並べる (数字は数として: R2 の次は R10)。上限で切る前に並べる。
   const sorted = [...parts].sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric: true }));
-  const listed = rowsOf(sorted.slice(0, LIMITS.listedParts), lang);
+  const shown = sorted.slice(0, LIMITS.listedParts);
+  const listed = rowsOf(shown, lang).map((row, index) => (symbols ? { ...row, icon: iconOf(shown[index]!) } : row));
   const hidden = parts.length - listed.length;
   // 先頭は見出し。基板は最初に用意する物なので、名前の順には入れず見出しのすぐ下に置く。上限の数にも数えない。
-  const rows = [headingRow(lang), ...(board === null ? [] : [boardRow(board, lang)]), ...listed];
+  const heading = headingRow(lang);
+  const rows = [
+    symbols ? { ...heading, mark: PARTS_SYMBOL_HEADING_BY_LANG[lang] } : heading,
+    ...(board === null ? [] : [boardRow(board, lang)]),
+    ...listed,
+  ];
   const { palette } = theme;
   const { textSize } = theme.metrics;
   const pad = textSize * PAD_RATIO;
-  const line = lineHeight(theme);
+  const line = lineHeight(theme, mode);
 
   // 基板は基板と同じ色で塗る。`board-color` を変えたときに印字の色が追従する仕掛け
   // (theme.ts の inkFor) にそのまま相乗りできるため。字の縁取りは cell が敷く。
   const plate = element('rect', {
-    x: num(x), y: num(y), width: num(width), height: num(plateHeight(rows.length + (hidden === 0 ? 0 : 1), theme)), rx: 6,
+    x: num(x), y: num(y), width: num(width), height: num(plateHeight(rows.length + (hidden === 0 ? 0 : 1), theme, mode)), rx: 6,
     fill: palette.plate, stroke: palette.plateEdge,
   });
 
@@ -175,7 +219,17 @@ export function renderPartsList(
   const markX = valueX + (valueWidth + COLUMN_GAP) * textSize;
   const markRoom = room(markX);
 
-  const baselineOf = (index: number): number => y + pad + textSize * CAP_RATIO + line * index;
+  // 絵の欄では、行ごとに行の高さの帯を取り、字も絵も帯の真ん中に置く (見出しの行も同じ)。
+  const rowTop = (index: number): number => y + pad + line * index;
+  const baselineOf = (index: number): number => (symbols
+    ? rowTop(index) + (line + textSize * CAP_RATIO) / 2
+    : y + pad + textSize * CAP_RATIO + line * index);
+  /** 絵 (縦 26 px、原点は左上) を行の帯の真ん中に置く。字の大きさに比例して縮める。 */
+  const scale = textScale(theme);
+  const placeIcon = (icon: string, index: number): string => {
+    const top = rowTop(index) + (line - ICON_HEIGHT * scale) / 2;
+    return element('g', { transform: `translate(${num(markX)} ${num(top)}) scale(${num(scale)})` }, icon);
+  };
   // 縁取りは図のキャプションと同じものを敷く。`style` の `text-color` は基板ではなく
   // この縁取りとの対比で読ませる指定なので、外すとリストだけが地に沈む。
   // リストは基板の上の字ではなく読む表なので、透かさず地に対して一番濃い色 (黒か白) で書く。
@@ -200,11 +254,13 @@ export function renderPartsList(
       ...(row.value === '' || valueRoom < MIN_COLUMN_WIDTH
         ? []
         : [cell(valueX, baseline, fit(row.value, valueRoom), ink)]),
-      ...(row.mark.length === 0 || markRoom < MIN_COLUMN_WIDTH || markWidth(row.mark) > markRoom
-        ? []
-        : [typeof row.mark === 'string'
-          ? cell(markX, baseline, row.mark, ink)
-          : swatches(markX, baseline, row.mark, textSize, ink)]),
+      ...(row.icon !== undefined
+        ? (row.icon === null || (iconWidth(row.icon) * scale) / textSize > markRoom ? [] : [placeIcon(row.icon, index)])
+        : row.mark.length === 0 || markRoom < MIN_COLUMN_WIDTH || markWidth(row.mark) > markRoom
+          ? []
+          : [typeof row.mark === 'string'
+            ? cell(markX, baseline, row.mark, ink)
+            : swatches(markX, baseline, row.mark, textSize, ink)]),
     ];
   });
 

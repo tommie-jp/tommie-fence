@@ -150,6 +150,6 @@ export type { IssueRow } from './editor/issues.ts';
 export { COLOR_LIST_ID, TYPE_LIST_ID, makeNonce, panelHtml, renderFencePicker } from './editor/panelHtml.ts';
 export type { MapViewHtml, PanelChrome, PanelHtmlOptions } from './editor/panelHtml.ts';
 export {
-  PARTS_HEADINGS, PARTS_HEADINGS_BY_LANG, bandColors, capacitorMark, partKind, partsMark, valueWithRole,
+  PARTS_HEADINGS, PARTS_HEADINGS_BY_LANG, PARTS_SYMBOL_HEADING_BY_LANG, bandColors, capacitorMark, partKind, partsMark, valueWithRole,
 } from './partsListing.ts';
 export type { PartsMark } from './partsListing.ts';

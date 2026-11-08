@@ -163,7 +163,7 @@ function readFence(source: string): ParseResult {
       const mode = pick(PARTS_LIST_MODES, scalarText(pair.value));
       // 読めなかったときは直前の値のまま (board と同じ、後勝ちだが不正値では上書きしない)。
       if (mode) partsList = mode;
-      else errors.push(fenceError('parts-list は below か none です', lineOf(pair.value as Node) ?? line));
+      else errors.push(fenceError('parts-list は below・symbols・none のどれかです', lineOf(pair.value as Node) ?? line));
     } else if (key === 'lang') {
       const resolved = resolveLang(undefined, scalarText(pair.value));
       if (resolved.error !== null) errors.push(fenceError(resolved.error, line));

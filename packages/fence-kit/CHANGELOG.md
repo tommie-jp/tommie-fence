@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added
+
+- **`partIcon` に値 (`value`) を渡せる。** 部品表に図と同じ絵を出すとき (breadboard の `parts-list: symbols`) に、
+  抵抗の帯の色やコンデンサの刷り込みを値どおりに描く。パレットは今までどおり値なし。
+  部品表の絵の欄の見出し `PARTS_SYMBOL_HEADING_BY_LANG` (`記号` / `Symbol`) を足した
+
 ## [0.35.1] - 2026-11-04
 
 ### Fixed

@@ -58,3 +58,11 @@ describe('パレットの絵', () => {
     expect(painted).toContain('#ff00ff');
   });
 });
+
+describe('the value is drawn when given (parts list)', () => {
+  test('a resistor with a value differs from the bare palette icon', () => {
+    expect(partIcon('resistor', { value: '10k' })).not.toEqual(partIcon('resistor'));
+    expect(partIcon('resistor', { value: '10k' })).not.toEqual(partIcon('resistor', { value: '220' }));
+  });
+});
+

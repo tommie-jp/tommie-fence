@@ -65,7 +65,7 @@ wires:
 | ラベル | `l=字` で図に出るラベルだけを差し替える (値と両方は書けない) | `M1: sip4 @ a20 l=OLED` |
 | 名札の置き場所 | 2 ピン・3 ピンの行の末尾に `cap=側[:横,縦]` → [名札と胴をずらす](#名札と胴をずらす-cap-shift) | `D1: diode i17 i14 1N4148 cap=below:1,0` |
 | 胴を半穴ずらす | 2 ピンの行の末尾に `shift=向き` → [名札と胴をずらす](#名札と胴をずらす-cap-shift) | `R1: resistor b3 b9 68k shift=down` |
-| 部品リスト | `parts-list: none` で図の下のリストを消す → [部品リスト](#部品リスト-parts-list) | `parts-list: none` |
+| 部品リスト | `parts-list: none` で図の下のリストを消す。`symbols` で最後の欄を図の中の部品の絵にする → [部品リスト](#部品リスト-parts-list) | `parts-list: symbols` |
 | 図の字の言語 | `lang: en` で部品リストの見出しなど、フェンスが出す固定の字を英語にする (書いた字は変えない) → [図の字の言語](#図の字の言語-lang) | `lang: en` |
 | 注釈 | `notes:` に印と字を並べる → [注釈](#注釈-notes) | `- circle R1` |
 | コメント | 行内の `#` 以降 | `# 電源まわり` |
@@ -294,6 +294,15 @@ IC の型番には働きを値の欄に添える (`CD4081 (2 入力 AND ×4)`)�
 図だけを渡された人が、何を用意すればよいか図の外を見ずに分かるようにするため、
 **既定で出る**。並べた図は [examples/04-parts-list.md](../examples/04-parts-list.md)。
 
+**`parts-list: symbols` で、最後の欄を図の中の部品の絵にする。** 見出しは `記号` になり、
+抵抗は帯の色まで・セラミックコンデンサは刷り込み (`104`) まで、図と同じ関数で値どおりに描く
+(帯の色の四角や記号の字の代わり)。絵を描けない種類 (DIP・機器) は欄が空になる。
+絵が入るぶん行が高くなる。並べた図は [examples/04-parts-list.md](../examples/04-parts-list.md) の図03。
+
+```yaml
+parts-list: symbols   # below (既定) / symbols / none
+```
+
 見出しの次の 1 行は**基板** (`基板` / `breadboard` / `half (400 穴)`)。電源レールが
 サイズの既定と違うときだけ `レール無し` `レール有り` を添える。印字は載せない。
 部品の件数の上限には数えない。
@@ -312,7 +321,7 @@ parts:
 ```bread
 # ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図06 部品リストを消す
-parts-list: none    # below (既定) / none
+parts-list: none    # below (既定) / symbols / none
 parts:
   R1: resistor a5 a10 330
   C1: capacitor/ceramic a14 a17 0.1u

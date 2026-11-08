@@ -76,7 +76,10 @@ export type Board = BoardSpec & { readonly columns: number };
  * フェンスの `parts-list:` に書く、部品リストの出し方。
  * 既定で出すのは、図だけを渡されても何を用意すればよいか分かるようにするため。
  */
-export const PARTS_LIST_MODES = ['below', 'none'] as const;
+/**
+ * 図の下の部品リスト。`symbols` は最後の欄を図の中の部品の絵にする (見出しは「記号」)。
+ */
+export const PARTS_LIST_MODES = ['below', 'symbols', 'none'] as const;
 export type PartsListMode = (typeof PARTS_LIST_MODES)[number];
 
 export const DEFAULT_PARTS_LIST: PartsListMode = 'below';

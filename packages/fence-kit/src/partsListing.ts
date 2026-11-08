@@ -49,6 +49,12 @@ export const PARTS_HEADINGS_BY_LANG: Readonly<Record<Lang, readonly [string, str
   en: ['Part', 'Type', 'Value', 'Color / mark'],
 };
 
+/**
+ * 最後の欄に図の中の部品の絵を出すとき (`parts-list: symbols`) の見出し。
+ * 帯の色も刷り込みも絵の中に描かれるので、「色・記号」でなく「記号」。
+ */
+export const PARTS_SYMBOL_HEADING_BY_LANG: Readonly<Record<Lang, string>> = { ja: '記号', en: 'Symbol' };
+
 /** 種類の欄に、綴り (`sip3`) の代わりに出す呼び名。 */
 const CERAMIC_FILTER: Readonly<Record<Lang, string>> = { ja: 'セラミックフィルター', en: 'ceramic filter' };
 

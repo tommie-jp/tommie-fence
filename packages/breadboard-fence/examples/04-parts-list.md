@@ -60,3 +60,21 @@ notes:
 ```
 
 ![図02 部品リストを消す](out/04-parts-list-2.svg)
+
+## 部品の絵を出す (symbols)
+
+`parts-list: symbols` を書くと、最後の欄が図の中の部品の絵になり、見出しは `記号` になる。
+抵抗の帯の色やコンデンサの刷り込みも、図と同じく値どおりに描く。絵を描けない種類 (DIP・機器) は欄が空。
+
+```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
+title: 図03 部品リストに部品の絵を出す
+parts-list: symbols
+parts:
+  R1: resistor a5 a10 330
+  C1: capacitor/ceramic a14 a17 0.1u
+  D1: led b20(A) b21(K) red
+  U1: dip8 @ e25 NE555
+```
+
+![図03 部品リストに部品の絵を出す](out/04-parts-list-3.svg)
