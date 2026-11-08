@@ -23,6 +23,8 @@ export type SceneInput = {
   readonly wires: readonly RenderedWire[];
   /** `wires` と同じ並びの、書かれた両端 (番地か `機器.ピン`)。線の名前になる。 */
   readonly wireEnds: readonly (readonly [string, string])[];
+  /** `wires` と同じ並びの、線のネットの名前 (穴の導通から)。分からなければ null。 */
+  readonly wireNets?: readonly (string | null)[];
   readonly layout: Layout;
   readonly theme: RenderTheme;
   readonly drops: ReadonlyMap<string, number>;
@@ -52,6 +54,7 @@ export function breadboardScene(input: SceneInput, sheet: string | null = null):
     id: names[index] ?? `wire#${index + 1}`,
     points: wire.points,
     line: wire.line === 0 ? null : wire.line,
+    net: input.wireNets?.[index] ?? null,
   }));
   return {
     fence: 'breadboard',

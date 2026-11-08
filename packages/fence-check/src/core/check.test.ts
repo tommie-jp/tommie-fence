@@ -156,6 +156,20 @@ describe("9. wires that run on top of each other (wire-overlap)", () => {
     expect(found).toEqual([]);
   });
 
+  test('wires on the same net (into the same strip of holes) are not counted', () => {
+    const found = overlapsOf({
+      wires: [{ ...wire('wire#1', [[0, 0], [0, 60]]), net: 'N3' }, { ...wire('wire#2', [[0, 20], [0, 80]]), net: 'N3' }],
+    });
+    expect(found).toEqual([]);
+  });
+
+  test('wires on different nets are counted even when both nets are known', () => {
+    const found = overlapsOf({
+      wires: [{ ...wire('wire#1', [[0, 0], [0, 60]]), net: 'N3' }, { ...wire('wire#2', [[1, 20], [1, 80]]), net: 'GND' }],
+    });
+    expect(found).toHaveLength(1);
+  });
+
   test('a wire laid along a lead of a part is counted (schematics)', () => {
     const found = checkScene(scene({
       fence: 'circuit',

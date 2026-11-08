@@ -241,7 +241,11 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
     const from = pointOf(wire.from, layout.point, placements);
     const to = pointOf(wire.to, layout.point, placements);
     return from && to
-      ? [{ from, to, hints: wire.hints, color: wire.color, line: wire.line, ends: [endText(wire.from), endText(wire.to)] as const }]
+      ? [{
+        from, to, hints: wire.hints, color: wire.color, line: wire.line, ends: [endText(wire.from), endText(wire.to)] as const,
+        // 線の始まりの導通グループ (fence-check がネットを引くのに使う)。
+        strip: stripOfEndpoint(wire.from),
+      }]
       : [];
   });
   const drops = captionDrops(parts, layout, style.theme);
@@ -296,6 +300,8 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
     netlist,
     scene: breadboardScene({
       parts, devices: placements, wires: rendered, wireEnds: drawable.map((wire) => wire.ends), layout, theme: style.theme, drops,
+      // 線のネット。同じネットの線どうしの重なりは数えない (fence-check の wire-overlap)。
+      wireNets: drawable.map((wire) => netlist.find((net) => net.strips.includes(wire.strip))?.name ?? null),
     }),
     ...report(errors, source, style.debug, options.offset ?? 0),
     anchors: sheetAnchors(parsed.doc.points, board, layout, titleHeight(parsed.doc.title, style.theme)),

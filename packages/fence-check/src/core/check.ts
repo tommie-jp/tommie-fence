@@ -108,13 +108,16 @@ function parallelOverlap(one: Segment, other: Segment): number {
  * 線の組ごとに、重なった長さの合計で 1 件。**端を共有する線の組は数えない** — 同じ穴・同じ節点へ
  * 集まる線は同じネットで、重なって見えてよい (束ねた GND の線など)。
  */
+// ネットが分かる図 (ブレッドボード) では、同じネットの線の組も数えない (`SceneWire.net`)。
 function wireOverlaps(wires: readonly SceneWire[], make: Make): Finding[] {
   const found: Finding[] = [];
   const cut = wires.map((wire) => segmentsOf(wire.points));
   wires.forEach((one, index) => {
     wires.slice(index + 1).forEach((other, offset) => {
       const shareEnd = endsOfWire(one).some((end) => endsOfWire(other).some((theirs) => isSamePoint(end, theirs)));
-      if (shareEnd) return;
+      // 同じネット (ブレッドボードの同じ列へ集まる線など) は重なって見えてよい。ネットの分かる図だけ。
+      const sameNet = one.net != null && one.net === other.net;
+      if (shareEnd || sameNet) return;
       let total = 0;
       let at: ScenePoint | null = null;
       for (const mine of cut[index]!) {

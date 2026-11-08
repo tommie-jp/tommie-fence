@@ -80,3 +80,23 @@ describe('what fence-check needs for wire-pin and device-side (52 docs/151)', ()
     expect(scene?.parts.find((part) => part.id === 'R1')?.offBoard).toBeUndefined();
   });
 });
+
+describe('wires carry their net (fence-check skips overlaps on the same net)', () => {
+  test('two wires into the same strip of holes share a net; a wire elsewhere does not', () => {
+    const [scene] = scenesOfBreadboard([
+      'board: half',
+      'parts:',
+      '  R1: resistor c5 c10 1k',
+      'wires:',
+      '  - a5 -- a20',
+      '  - b5 -- b25',
+      '  - a12 -- a30',
+      '',
+    ].join('\n'));
+    const nets = scene!.wires.map((wire) => wire.net);
+    expect(nets[0]).not.toBeNull();
+    expect(nets[0]).toBe(nets[1]);
+    expect(nets[2]).not.toBe(nets[0]);
+  });
+});
+

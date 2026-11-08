@@ -42,6 +42,11 @@ export type SceneWire = {
   readonly points: readonly ScenePoint[];
   readonly line: number | null;
   readonly lead?: boolean;
+  /**
+   * その線のネットの名前 (分かる図だけ。ブレッドボードは穴の導通から)。**同じネットの線どうしは
+   * 重なって見えてよい** (同じ列へ集まる線など) ので、`wire-overlap` はネットが同じ組を数えない。
+   */
+  readonly net?: string | null;
 };
 
 /** 名札 1 つ。**縁取りを含めない字の帯**。`owner` は持ち主の部品 ID。 */
