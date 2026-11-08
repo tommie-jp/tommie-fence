@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- breadboard-fence 0.61.0 を束ねる (`sheets:` の図の部品表を最後の枚の下に枚ごとに並べる。Pico などのボードで部品表の行が広がらない)
+
 ## [0.86.0] - 2026-11-08
 
 ### Changed
