@@ -40,17 +40,40 @@ describe('parts-list: symbols', () => {
     expect(list).not.toContain('bf-parts-icon');
   });
 
-  test('rows keep half the text height between them; drawings are two rows tall and interleaved', () => {
+  test('drawings keep the board size (no scaling) and alternate between two columns', () => {
     const { svg } = renderBreadboard(source('symbols'));
-    const placed = [...svg.matchAll(/class="bf-parts-icon" transform="translate\(([\d.]+) ([\d.]+)\) scale\(([\d.]+)\)/g)]
-      .map((m) => ({ x: Number(m[1]), y: Number(m[2]), scale: Number(m[3]) }));
+    const placed = [...svg.matchAll(/class="bf-parts-icon" transform="translate\(([\d.]+) ([\d.]+)\)"/g)]
+      .map((m) => ({ x: Number(m[1]), y: Number(m[2]) }));
     expect(placed).toHaveLength(2);
-    const [first, second] = placed;
-    // 行の送りは字の 1.5 倍 (行間が字の 1/2)。絵は 2 行ぶん (上下の隙間 1 px ずつを引く)。
-    const line = 12.5 * 1.5;
-    expect(26 * first!.scale).toBeCloseTo(2 * line - 2, 0);
+    expect(svg).not.toMatch(/class="bf-parts-icon" transform="[^"]*scale/);
     // 次の行の絵は横にずらす。
+    const [first, second] = placed;
     expect(second!.x).toBeGreaterThan(first!.x);
+  });
+
+  test('the drawing shows the printed code (22p is 220) as on the board', () => {
+    const icon = /<g class="bf-parts-icon"[\s\S]*$/.exec(listOf(renderBreadboard(source('symbols')).svg))?.[0] ?? '';
+    expect(icon).toContain('>220<');
+  });
+
+  test('a transistor keeps its pin names (E C B) and the part captions are left out', () => {
+    const { svg } = renderBreadboard(fence('board: half', 'parts:', '  Q1: transistor f5 f6 f7 2SC1815'));
+    const list = listOf(svg);
+    for (const name of ['E', 'C', 'B']) expect(list).toContain(`>${name}</text>`);
+    expect(list).not.toContain('bf-caption');
+  });
+
+  test('diodes are marked A and K, polar capacitors + and −, on the side the fence says', () => {
+    const diode = listOf(renderBreadboard(fence('board: half', 'parts:', '  D1: diode a5 a10 1N4148')).svg);
+    expect(diode.indexOf('>A</text>')).toBeGreaterThan(-1);
+    expect(diode.indexOf('>A</text>')).toBeLessThan(diode.indexOf('>K</text>'));
+    const reversed = listOf(renderBreadboard(fence('board: half', 'parts:', '  D1: led a5(K) a10 red')).svg);
+    expect(reversed.indexOf('>K</text>')).toBeLessThan(reversed.indexOf('>A</text>'));
+    const polar = listOf(renderBreadboard(fence('board: half', 'parts:', '  C1: capacitor/electrolytic j5 -b5 100u')).svg);
+    expect(polar).toContain('>+</text>');
+    expect(polar).toContain('>−</text>');
+    const film = listOf(renderBreadboard(fence('board: half', 'parts:', '  C1: capacitor/film a5 a8 100n')).svg);
+    expect(film).not.toContain('>+</text>');
   });
 
   test('odd rows below the heading get a lighter band; even rows keep the plate', () => {

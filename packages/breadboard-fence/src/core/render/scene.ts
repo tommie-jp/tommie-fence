@@ -75,7 +75,7 @@ export function breadboardScene(input: SceneInput, sheet: string | null = null):
 }
 
 /** 胴の外枠。描く側の関数を使う (配線よけの `partObstacles` から名札の帯を除いたもの)。 */
-function bodyOf(part: PlacedPart, layout: Layout): SceneRect | null {
+export function bodyOf(part: PlacedPart, layout: Layout): SceneRect | null {
   switch (part.kind) {
     case 'board': return sceneRectOf(boardBodyRect(part, layout));
     case 'sip': return nonEmpty(sceneRectOf(sipBarRect(part, layout)));

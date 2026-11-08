@@ -151,7 +151,7 @@ describe('the ends of a part lead show where it goes into the hole', () => {
 
 describe('the legs of a three-lead part end in the same metal dot', () => {
   test('each leg hole gets the dot instead of a square', () => {
-    const { svg } = fence('parts:', '  Q1: transistor e10(B) e12(C) e14(E) 2SC1815');
+    const { svg } = fence('parts-list: none', 'parts:', '  Q1: transistor e10(B) e12(C) e14(E) 2SC1815');
     const { chipPin, lead } = DEFAULT_THEME.palette;
     const dots = [...svg.matchAll(new RegExp(`<circle cx="[\\d.]+" cy="[\\d.]+" r="[\\d.]+" fill="${chipPin}"`, 'g'))];
 
