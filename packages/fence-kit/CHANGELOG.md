@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.38.0] - 2026-11-10
+
 ### Added
 
 - **部品の定格・想定値の記法 (`readRating` `withRatings` `ratingWords`)。** `i=` (LED の電流)・`vf=` (LED の順電圧)・`v=` (コンデンサの耐圧) の書ける部品・単位・部品表での見せ方を 1 か所に置いた (breadboard と perfboard が読む)
