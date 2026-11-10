@@ -1,3 +1,4 @@
+import { ratingWords } from 'fence-kit';
 import { MIRROR_WORD, isTurned } from '../parts/orient.ts';
 import type { Turn } from '../parts/orient.ts';
 import type { PartSpec } from '../types.ts';
@@ -32,6 +33,6 @@ export function spellPart(part: PartSpec): string {
     ...turnWords(part.turn),
     ...(part.value === null ? [] : [part.value]),
     ...(part.color == null ? [] : [part.color]),
-    ...(part.current ? [`i=${part.current}`] : []),
+    ...ratingWords(part.ratings),
   ].join(' ');
 }

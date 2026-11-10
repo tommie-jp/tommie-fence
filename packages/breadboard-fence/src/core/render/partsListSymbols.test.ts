@@ -152,6 +152,13 @@ describe('parts-list: symbols', () => {
     expect(svg).toContain('>D1 red<');
   });
 
+  test('vf= and v= add the forward voltage and the capacitor rating to the value', () => {
+    const { svg, errors } = renderBreadboard(fence('board: half', 'parts:', '  D1: led a5 a8 red i=3mA vf=2.0V', '  C1: capacitor/electrolytic c12 c15 100u v=16V'));
+    expect(errors).toEqual([]);
+    expect(svg).toContain('>red 3mA VF 2.0V<');
+    expect(svg).toContain('>100u 16V<');
+  });
+
   test('i= is refused on parts other than an LED and without a unit', () => {
     expect(renderBreadboard(fence('board: half', 'parts:', '  R1: resistor a5 a8 1k i=3mA')).errors[0]?.message).toContain('LED');
     expect(renderBreadboard(fence('board: half', 'parts:', '  D1: led a5 a8 red i=3')).errors[0]?.message).toContain('単位');

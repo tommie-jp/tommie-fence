@@ -1,3 +1,4 @@
+import type { PartRatings } from 'fence-kit';
 import type { Lang } from 'fence-kit';
 import { THEME_NAMES } from './limits.ts';
 /**
@@ -124,8 +125,8 @@ export type PartSpec = {
   /** 書かれたままの穴 (`b3`)。基板に載るかは placement が見る。 */
   readonly holes: readonly string[];
   readonly value: string | null;
-  /** LED の想定電流 (`i=3mA`、書かれたまま)。図には出さず、部品表の値の欄に添える。 */
-  readonly current?: string | null;
+  /** 定格・想定値 (`i=3mA` `vf=2.0V` `v=16V`、書かれたまま)。図には出さず、部品表の値の欄に添える。 */
+  readonly ratings?: PartRatings | null;
   /** 書かれた向き。**アンカー 1 つで置く形だけが持つ** (parts/orient.ts)。 */
   readonly turn: Turn;
   /** 部品の基板の色 (書かれたままの綴り。`blue`)。基板のある部品だけが持つ。 */

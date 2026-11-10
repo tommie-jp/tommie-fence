@@ -153,3 +153,5 @@ export {
   PARTS_HEADINGS, PARTS_HEADINGS_BY_LANG, PARTS_SYMBOL_HEADING_BY_LANG, bandColors, capacitorMark, partKind, partsMark, valueWithRole,
 } from './partsListing.ts';
 export type { PartsMark } from './partsListing.ts';
+export { readRating, ratingWords, withRatings } from './parts/ratings.ts';
+export type { PartRatings, RatingRead, RatingTag } from './parts/ratings.ts';

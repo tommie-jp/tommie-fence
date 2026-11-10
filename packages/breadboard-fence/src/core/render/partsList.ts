@@ -1,4 +1,4 @@
-import { PARTS_SYMBOL_HEADING_BY_LANG, bandColor, partKind, partsMark, valueWithRole } from 'fence-kit';
+import { PARTS_SYMBOL_HEADING_BY_LANG, bandColor, partKind, partsMark, valueWithRole, withRatings } from 'fence-kit';
 import type { Lang, PartsMark } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
 import { formatAddress } from '../model/address.ts';
@@ -130,8 +130,6 @@ export function boardRow(board: Board, lang: Lang = 'ja'): Row {
  * IC には働きを添える (`CD4081 (2 入力 AND ×4)`)。型番だけだと、どの IC が何をするのか
  * 表から読めない。機器の名札には添えない。
  */
-/** LED は値 (色) に想定電流を添える (`red 3mA`)。図の名札には出さない。 */
-const withCurrent = (text: string, part: PlacedPart): string => (part.current ? `${text} ${part.current}`.trim() : text);
 
 /** これを超えるピンの部品は全部を並べず、1 番ピンの穴だけを出す。 */
 const LISTED_PINS = 3;
@@ -145,7 +143,7 @@ function positionOf(part: PlacedPart): string {
 const rowsOf = (parts: readonly PlacedPart[], lang: Lang): readonly Row[] =>
   parts.map((part) => part.kind === 'device'
     ? { id: part.id, type: typeOf(part, lang), value: valueOf(part), mark: '' }
-    : { id: part.id, type: typeOf(part, lang), value: withCurrent(valueWithRole(valueOf(part), lang), part), mark: partsMark(part.type, part.variant, part.value) });
+    : { id: part.id, type: typeOf(part, lang), value: withRatings(valueWithRole(valueOf(part), lang), part.ratings), mark: partsMark(part.type, part.variant, part.value) });
 
 const markWidth = (mark: PartsMark): number =>
   typeof mark === 'string'

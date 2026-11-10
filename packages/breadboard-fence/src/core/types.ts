@@ -1,3 +1,4 @@
+import type { PartRatings } from 'fence-kit';
 import type { Lang } from 'fence-kit';
 import type { Turn } from './parts/orient.ts';
 // フェンス構文からレンダリングまでで共有する型。DOM にも Node にも依存しない。
@@ -159,8 +160,8 @@ export type PartSpec = {
   readonly caption?: CaptionSpec | null;
   /** 胴を半穴ずらす向き (`shift=down`)。2 ピンの部品だけ。 */
   readonly shift?: BodyShift | null;
-  /** LED の想定電流 (`i=3mA`、書かれたまま)。図には出さず、部品表の値の欄に添える。 */
-  readonly current?: string | null;
+  /** 定格・想定値 (`i=3mA` `vf=2.0V` `v=16V`、書かれたまま)。図には出さず、部品表の値の欄に添える。 */
+  readonly ratings?: PartRatings | null;
   /**
    * `@` で書いた形か (`SW1: button @ e5`)。**書き戻すときに `@` を落とさない**
    * ために持つ (52 の docs/54 の段 1)。読んだ中身からは見分けられない —
@@ -356,7 +357,7 @@ export type PlacedPart = {
   readonly caption?: CaptionSpec | null;
   /** 胴を半穴ずらす向き (2 ピンだけ)。 */
   readonly shift?: BodyShift | null;
-  /** LED の想定電流 (`i=3mA`、書かれたまま)。図には出さず、部品表の値の欄に添える。 */
-  readonly current?: string | null;
+  /** 定格・想定値 (`i=3mA` `vf=2.0V` `v=16V`、書かれたまま)。図には出さず、部品表の値の欄に添える。 */
+  readonly ratings?: PartRatings | null;
   readonly line: number;
 };

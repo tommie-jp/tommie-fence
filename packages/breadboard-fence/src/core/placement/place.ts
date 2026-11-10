@@ -277,7 +277,7 @@ function placePart(spec: PartSpec, board: Board): Result<PlacedPart> {
     color: spec.color ?? null,
     caption: spec.caption ?? null,
     shift: spec.shift ?? null,
-    current: spec.current ?? null,
+    ratings: spec.ratings ?? null,
     line: spec.line,
   };
   // **名札の置き場所は 2 ピン・3 ピン・1 列の部品だけ。** ほかの部品は胴の中か決まった所に字を置くので、

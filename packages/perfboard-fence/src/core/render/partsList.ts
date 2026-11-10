@@ -1,5 +1,5 @@
-import { PARTS_SYMBOL_HEADING_BY_LANG, bandColor, lookupNamedChip, partKind, partsMark, valueWithRole } from 'fence-kit';
-import type { Lang, PartsMark } from 'fence-kit';
+import { PARTS_SYMBOL_HEADING_BY_LANG, bandColor, lookupNamedChip, partKind, partsMark, valueWithRole, withRatings } from 'fence-kit';
+import type { Lang, PartRatings, PartsMark } from 'fence-kit';
 import { colorValue } from '../color.ts';
 import { SOCKET_LOOK } from '../parts/types.ts';
 import type { Band, Layout } from '../model/layout.ts';
@@ -45,8 +45,8 @@ export type ListedPart = {
   readonly socket?: boolean;
   /** 書かれたままの穴 (`b3`)。位置の欄に出す。 */
   readonly holes?: readonly string[];
-  /** LED の想定電流 (`3mA`)。値の欄に添える。 */
-  readonly current?: string | null;
+  /** 定格・想定値 (`i=3mA` など)。値の欄に添える。 */
+  readonly ratings?: PartRatings | null;
 };
 
 /** 部品表の 1 行ぶん。列に分けて持ち、幅を測ってから置き場所を決める。 */
@@ -59,8 +59,6 @@ const LISTED_PINS = 3;
 const positionOf = (holes: readonly string[]): string =>
   (holes.length > LISTED_PINS ? holes.slice(0, 1) : holes).join(',');
 
-/** LED は値 (色) に想定電流を添える (`red 3mA`)。図の名札には出さない。 */
-const withCurrent = (text: string, current: string | null | undefined): string => (current ? `${text} ${current}`.trim() : text);
 
 
 /**
@@ -89,7 +87,7 @@ export function partsListing(
   const rows: PartsRow[] = [
     ...parts.map((part): PartsRow => {
       const row = [part.id, partKind(part.type, part.socket === true ? SOCKET_LOOK : part.variant, part.value, lang),
-        withCurrent(valueWithRole(part.value ?? lookupNamedChip(part.type, part.variant)?.name ?? '', lang), part.current),
+        withRatings(valueWithRole(part.value ?? lookupNamedChip(part.type, part.variant)?.name ?? '', lang), part.ratings),
         partsMark(part.type, part.variant, part.value)] as const;
       return part.holes === undefined ? row : [...row, positionOf(part.holes)];
     }),

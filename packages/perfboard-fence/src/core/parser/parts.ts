@@ -1,3 +1,5 @@
+import { readRating } from 'fence-kit';
+import type { PartRatings } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS, isReferenceable } from '../limits.ts';
 import { isAddressSpelling, parseAddress } from '../model/address.ts';
@@ -134,15 +136,13 @@ export function parsePartLine(id: string, line: string, board: BoardExtent = ANY
   const after = rest.slice(holes.length);
   let turn: Turn = NO_TURN;
   const tail: string[] = [];
-  let current: string | null = null;
+  // 定格・想定値 (`i=3mA` `vf=2.0V` `v=16V`)。図には出さず、部品表の値の欄に添える (breadboard と同じ。fence-kit の readRating)。
+  let ratings: PartRatings = {};
   for (const token of after) {
-    // `i=3mA` — LED の想定電流 (点灯時)。図には出さず、部品表の値の欄に添える (breadboard と同じ)。
-    if (token.startsWith('i=')) {
-      if (type !== 'led') return fail(`${safeToken(written)} に i= は書けません (LED だけに書けます)`, token);
-      if (current !== null) return fail(`${safeToken(written)} に i= が 2 回書かれています`, token);
-      const amount = token.slice(2);
-      if (!/^\d+(\.\d+)?(uA|µA|mA|A)$/.test(amount)) return fail(`i= は電流を単位つきで書きます (例: i=3mA。今は ${safeToken(amount)})`, token);
-      current = amount;
+    const rating = readRating(token, type, ratings);
+    if (rating !== null) {
+      if (!rating.ok) return fail(`${safeToken(written)}: ${rating.message}`, token);
+      ratings = { ...ratings, [rating.tag]: rating.value };
       continue;
     }
     const rotate = rotationOf(token);
@@ -198,7 +198,7 @@ export function parsePartLine(id: string, line: string, board: BoardExtent = ANY
     value: {
       id, type, variant: socket ? null : variant, written, holes, value: value === '' ? null : value, turn, color,
       ...(socket ? { socket: true } : {}),
-      ...(current === null ? {} : { current }),
+      ...(Object.keys(ratings).length === 0 ? {} : { ratings }),
     },
   };
 }
