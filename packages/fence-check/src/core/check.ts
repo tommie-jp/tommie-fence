@@ -16,7 +16,7 @@ import type { Segment } from './geometry.ts';
  *   perf は裸の線で同じネットのピンをなぞるのが普通なので、`Scene` にネットが載るまで見ない)
  * - `device-side` — 板の外の機器の箱から出た線が、板の真ん中の溝をまたぐ (bread。docs/151)
  */
-export const KINDS = ['overlap', 'wire-part', 'crossing', 'junction4', 'caption', 'wire-pin', 'device-side', 'wire-overlap', 'power-branch'] as const;
+export const KINDS = ['overlap', 'wire-part', 'crossing', 'junction4', 'caption', 'wire-pin', 'device-side', 'wire-overlap', 'power-branch', 'detour', 'diagonal'] as const;
 export type Kind = (typeof KINDS)[number];
 
 export type Finding = {
@@ -32,7 +32,14 @@ export type Finding = {
   /** `uncertain` は座標が近似の図 (circuit) で出したもの。 */
   readonly grade: 'sure' | 'uncertain';
   readonly at: ScenePoint;
+  /**
+   * 交差した 2 本のネットの組 (`crossing` だけ。docs/150 の #6 の後半)。電源・GND の線が信号の線と
+   * 交わる `power-signal` が、breadboard-wiring #9 の見たいもの。ネットの分からない図では持たない。
+   */
+  readonly nets?: NetPair;
 };
+
+export type NetPair = 'power-signal' | 'power-power' | 'signal-signal';
 
 export type CheckOptions = {
   /** これより浅い重なり・短い横切りは数えない (px)。丸めの揺れを拾わないため。 */
@@ -65,6 +72,8 @@ export function checkScene(scene: Scene, options: CheckOptions = {}): readonly F
     ...deviceSides(scene, make),
     ...wireOverlaps(scene.wires, make),
     ...(scene.fence === 'breadboard' ? powerBranches(scene.wires, make) : []),
+    ...(scene.fence === 'circuit' ? [] : detours(scene.wires, make)),
+    ...(scene.fence === 'breadboard' ? [] : diagonals(scene.wires, scene.fence, make)),
   ];
 }
 
@@ -87,6 +96,57 @@ function powerBranches(wires: readonly SceneWire[], make: Make): Finding[] {
     const bends = Math.max(0, segments.length - 1);
     if (bends === 0) return [];
     return [make('power-branch', wire.id, wire.net ?? 'power', bends, wire.line, segments[0]!.to)];
+  });
+}
+
+/** ブレッドボード・ユニバーサル基板の穴の間隔 (px)。 */
+const PITCH = 20;
+/** 遠回りと見なす、線の長さと両端の隔たり (縦と横の和) の比。 */
+const DETOUR_RATIO = 2;
+/** 比によらず長すぎると見なす線の長さ (px)。15 ピッチ。 */
+const DETOUR_LENGTH = 15 * PITCH;
+
+const lengthOf = (segments: readonly Segment[]): number =>
+  segments.reduce((sum, segment) => sum + Math.hypot(segment.to.x - segment.from.x, segment.to.y - segment.from.y), 0);
+
+/**
+ * 7. 遠回りの線 (docs/150 の #7、breadboard-wiring・perfboard-wiring「線は短く、最短に近い道で」)。
+ * 線の長さが両端の隔たり (縦と横の和) の 2 倍以上か、15 ピッチ (300 px) 以上なら 1 件、量は長さ。
+ *
+ * 除くもの: 板の外の機器から入れる線 (端が `device`。板の外を回るのが当たり前)、部品のリード、
+ * レールへ縦 1 本で降りる線 (電源の筋は長くてよい)。
+ */
+function detours(wires: readonly SceneWire[], make: Make): Finding[] {
+  return wires.flatMap((wire) => {
+    if (wire.lead === true || wire.ends?.includes('device')) return [];
+    const segments = segmentsOf(wire.points);
+    if (segments.length === 0) return [];
+    if (segments.length === 1 && wire.ends?.includes('rail')) return [];
+    const length = lengthOf(segments);
+    const [first, last] = [wire.points[0]!, wire.points[wire.points.length - 1]!];
+    const apart = Math.abs(last.x - first.x) + Math.abs(last.y - first.y);
+    const roundabout = apart > 0 && length / apart >= DETOUR_RATIO;
+    if (!roundabout && length < DETOUR_LENGTH) return [];
+    return [make('detour', wire.id, wire.net ?? 'wire', length, wire.line, first)];
+  });
+}
+
+/** 縦か横と見なす差 (px)。座標の丸めの揺れ。 */
+const AXIS_SLACK = 0.5;
+
+/**
+ * 8. 斜めの線 (docs/150 の #8)。ユニバーサル基板は 1 ピッチより長い斜めの区間 (隣の穴へ曲げた
+ * リードは斜めでよい)、回路図は斜めの区間すべて。線ごとに 1 件、量は斜めの区間の長さの和。
+ * ブレッドボードは穴どうしを直線で結ぶのが前提なので見ない (部品の上を通れば `wire-part` が拾う)。
+ */
+function diagonals(wires: readonly SceneWire[], fence: Scene['fence'], make: Make): Finding[] {
+  return wires.flatMap((wire) => {
+    if (wire.lead === true) return [];
+    const slanted = segmentsOf(wire.points).filter((segment) =>
+      Math.abs(segment.to.x - segment.from.x) > AXIS_SLACK && Math.abs(segment.to.y - segment.from.y) > AXIS_SLACK);
+    const counted = fence === 'perfboard' ? slanted.filter((segment) => lengthOf([segment]) > PITCH) : slanted;
+    if (counted.length === 0) return [];
+    return [make('diagonal', wire.id, wire.net ?? 'wire', lengthOf(counted), wire.line, counted[0]!.from)];
   });
 }
 
@@ -235,16 +295,27 @@ function wireParts(parts: readonly SceneBody[], wires: readonly SceneWire[], min
 }
 
 /** 3. 線どうしの十字。点ごとに 1 件。 */
+/** 2 本のネットの組。両方の `power` が分かる図だけ。 */
+function netPairOf(one: SceneWire, other: SceneWire): NetPair | null {
+  if (one.power === undefined || other.power === undefined) return null;
+  if (one.power && other.power) return 'power-power';
+  return one.power || other.power ? 'power-signal' : 'signal-signal';
+}
+
 function crossings(wires: readonly SceneWire[], make: Make): Finding[] {
   const found: Finding[] = [];
   const cut = wires.map((wire) => segmentsOf(wire.points));
   wires.forEach((one, index) => {
     wires.slice(index + 1).forEach((other, offset) => {
       const theirs = cut[index + 1 + offset]!;
+      const nets = netPairOf(one, other);
       for (const mine of cut[index]!) {
         for (const segment of theirs) {
           const point = crossingOf(mine, segment);
-          if (point !== null) found.push(make('crossing', one.id, other.id, 1, laterLine(one.line, other.line), point));
+          if (point !== null) {
+            const crossing = make('crossing', one.id, other.id, 1, laterLine(one.line, other.line), point);
+            found.push(nets === null ? crossing : { ...crossing, nets });
+          }
         }
       }
     });

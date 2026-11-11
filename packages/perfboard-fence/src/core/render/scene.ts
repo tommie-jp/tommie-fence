@@ -49,6 +49,7 @@ export function perfboardScene(input: SceneInput, sheet: string | null = null): 
       id: names[index] ?? `wire#${index + 1}`,
       points: [layout.point(wire.from), layout.point(wire.to)],
       line: wire.line,
+      ends: ['hole', 'hole'] as const,
     })),
     ...deviceWires.flatMap((wire, index): SceneWire[] => {
       const from: Point | undefined = pinOf.get(wire.device)?.get(wire.pin);
@@ -56,6 +57,8 @@ export function perfboardScene(input: SceneInput, sheet: string | null = null): 
         id: names[wires.length + index] ?? `${wire.device}.${wire.pin}#${index + 1}`,
         points: [from, layout.point(wire.hole)],
         line: wire.line,
+        // 板の外の機器から入れる線 (fence-check の `detour` は数えない)。
+        ends: ['device', 'hole'],
       }];
     }),
   ];

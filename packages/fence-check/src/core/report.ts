@@ -1,6 +1,6 @@
 import type { SceneFence } from 'fence-kit';
 import { KINDS } from './check.ts';
-import type { Finding, Kind } from './check.ts';
+import type { Finding, Kind, NetPair } from './check.ts';
 
 /** 1 枚の図の検査結果。`file` と `line` は Markdown の中の場所 (フェンスの開き記号の行)。 */
 export type FigureResult = {
@@ -28,6 +28,8 @@ export type FindingRow = {
   readonly amount: number;
   readonly unit: 'px' | 'point';
   readonly grade: 'sure' | 'uncertain';
+  /** 交差した 2 本のネットの組 (`crossing` で、ネットの分かる図だけ)。件の鍵には入れない。 */
+  readonly nets?: NetPair;
 };
 
 export type Summary = {
@@ -57,6 +59,7 @@ export function rowsOf(figures: readonly FigureResult[]): readonly FindingRow[] 
     amount: finding.amount,
     unit: finding.unit,
     grade: finding.grade,
+    ...(finding.nets === undefined ? {} : { nets: finding.nets }),
   })));
 }
 
@@ -66,7 +69,8 @@ export function formatRow(row: FindingRow): string {
   const title = row.title === null ? '' : ` ${row.title}`;
   const amount = row.unit === 'px' ? `${row.amount}px` : '';
   const mark = row.grade === 'uncertain' ? '?' : '';
-  return `${row.file}:${row.line} ${row.fence}${sheet}${title} ${row.kind} ${row.a} × ${row.b} ${amount}${mark}`.trimEnd();
+  const nets = row.nets === undefined ? '' : ` (${row.nets})`;
+  return `${row.file}:${row.line} ${row.fence}${sheet}${title} ${row.kind} ${row.a} × ${row.b} ${amount}${mark}${nets}`.trimEnd();
 }
 
 const zeroKinds = (): Record<Kind, number> =>

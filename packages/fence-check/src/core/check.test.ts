@@ -118,7 +118,7 @@ describe('3. crossings and four-way junctions', () => {
         wire('D1', [[-10, 10], [0, 0]]), wire('D2', [[0, 0], [10, 10]]),
       ],
     }));
-    expect(found).toEqual([]);
+    expect(found.filter((one) => one.kind === 'junction4')).toEqual([]);
   });
 
   test('a T on a schematic is fine', () => {
@@ -320,5 +320,74 @@ describe('6. a device box on the far side of the ravine (52 docs/151)', () => {
       wires: [wire('w', [[0, 50], [0, 150]])],
     }));
     expect(only(found)).toEqual([]);
+  });
+});
+
+describe('6 (second half). crossings name the kind of nets they cross', () => {
+  const powered = (id: string, points: [number, number][], power: boolean): SceneWire => ({ ...wire(id, points), power });
+  const crossingOf = (one: SceneWire, other: SceneWire) =>
+    checkScene(scene({ wires: [one, other] })).find((found) => found.kind === 'crossing');
+
+  test('a power wire across a signal wire is power-signal', () => {
+    expect(crossingOf(powered('p', [[0, 0], [100, 0]], true), powered('s', [[50, -50], [50, 50]], false))?.nets).toBe('power-signal');
+  });
+
+  test('two signal wires are signal-signal; two power wires are power-power', () => {
+    expect(crossingOf(powered('a', [[0, 0], [100, 0]], false), powered('b', [[50, -50], [50, 50]], false))?.nets).toBe('signal-signal');
+    expect(crossingOf(powered('a', [[0, 0], [100, 0]], true), powered('b', [[50, -50], [50, 50]], true))?.nets).toBe('power-power');
+  });
+
+  test('scenes without nets leave it out', () => {
+    expect(crossingOf(wire('a', [[0, 0], [100, 0]]), wire('b', [[50, -50], [50, 50]]))?.nets).toBeUndefined();
+  });
+});
+
+describe('7. wires that take the long way (detour)', () => {
+  const detoursOf = (over: Partial<Scene>) => checkScene(scene(over)).filter((one) => one.kind === 'detour');
+
+  test('a wire twice as long as its ends are apart', () => {
+    // 端の隔たり 40 px、長さ 40 + 40 + 40 = 120 px (3 倍)。
+    const found = detoursOf({ wires: [wire('wire(a1-a3)', [[0, 0], [0, 40], [40, 40], [40, 0]], 3)] });
+    expect(found).toEqual([expect.objectContaining({ kind: 'detour', a: 'wire(a1-a3)', amount: 120, unit: 'px', line: 3 })]);
+  });
+
+  test('a long straight wire of 15 pitches or more', () => {
+    expect(detoursOf({ wires: [wire('long', [[0, 0], [320, 0]])] })).toHaveLength(1);
+  });
+
+  test('a short L-shaped wire is fine', () => {
+    expect(detoursOf({ wires: [wire('l', [[0, 0], [0, 40], [60, 40]])] })).toEqual([]);
+  });
+
+  test('leaves out wires from an off-board device and a straight drop to a rail', () => {
+    const device: SceneWire = { ...wire('dev', [[0, 0], [0, 400]]), ends: ['device', 'hole'] };
+    const rail: SceneWire = { ...wire('rail', [[0, 0], [0, 320]]), ends: ['hole', 'rail'] };
+    expect(detoursOf({ wires: [device, rail] })).toEqual([]);
+  });
+
+  test('is not looked for on schematics', () => {
+    expect(detoursOf({ fence: 'circuit', wires: [wire('w', [[0, 0], [0, 40], [40, 40], [40, 0]])] })).toEqual([]);
+  });
+});
+
+describe('8. slanted wires (diagonal)', () => {
+  const diagonalsOf = (over: Partial<Scene>) => checkScene(scene(over)).filter((one) => one.kind === 'diagonal');
+
+  test('a perfboard wire longer than a pitch that is neither level nor upright', () => {
+    const found = diagonalsOf({ fence: 'perfboard', wires: [wire('wire(a1-c4)', [[0, 0], [60, 40]], 2)] });
+    expect(found).toEqual([expect.objectContaining({ kind: 'diagonal', a: 'wire(a1-c4)', amount: 72.1, unit: 'px' })]);
+  });
+
+  test('a one-pitch slant on a perfboard is fine (a lead bent to the next hole)', () => {
+    expect(diagonalsOf({ fence: 'perfboard', wires: [wire('w', [[0, 0], [12, 12]])] })).toEqual([]);
+  });
+
+  test('any slanted segment on a schematic, graded uncertain', () => {
+    const found = diagonalsOf({ fence: 'circuit', approximate: true, wires: [wire('w', [[0, 0], [0, 20], [10, 30]])] });
+    expect(found).toEqual([expect.objectContaining({ kind: 'diagonal', amount: 14.1, grade: 'uncertain' })]);
+  });
+
+  test('breadboards are left alone (holes are joined by straight wires on purpose)', () => {
+    expect(diagonalsOf({ wires: [wire('w', [[0, 0], [60, 40]])] })).toEqual([]);
   });
 });
