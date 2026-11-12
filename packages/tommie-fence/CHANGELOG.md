@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- perfboard-fence を束ねる (マイコンボードに `r180` を書ける)
+
 ## [0.90.0] - 2026-11-11
 
 ### Changed

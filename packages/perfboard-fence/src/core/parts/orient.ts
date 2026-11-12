@@ -58,7 +58,8 @@ export function orientOf(type: string): Orient {
   const footprint = footprintOf(type, null);
   if (footprint === null) return 'none';
   // アンカー 1 つで置く形は回せる (ピンの位置をこちらが決めているので、回した先も出せる)。
+  // ボード (Pico など) も回せるが、書けるのは r180 だけ (parser/parts.ts が r90・r270 を断る)。
   const anchored = footprint.kind === 'dip' || footprint.kind === 'sip' || footprint.kind === 'switch'
-    || footprint.kind === 'named';
+    || footprint.kind === 'named' || footprint.kind === 'board';
   return anchored ? 'full' : 'none';
 }

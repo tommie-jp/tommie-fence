@@ -169,6 +169,10 @@ export function parsePartLine(id: string, line: string, board: BoardExtent = ANY
       written,
     );
   }
+  // **ボードは r180 だけ。** 寝かせた胴 (r90 / r270) ではピンの名前が隣のピンに重なって読めない。
+  if (footprintOf(type, null)?.kind === 'board' && (turn.rotate === 90 || turn.rotate === 270)) {
+    return fail(`${safeToken(written)} に r90・r270 は書けません (ボードの向きは r180 だけ。寝かせるとピンの名前が重なって読めません)`, written);
+  }
   if (turn.mirror && refusesMirror(type)) {
     return fail(`${safeToken(written)} に ${MIRROR_WORD} は書けません (${MIRROR_REFUSAL})`, MIRROR_WORD);
   }
