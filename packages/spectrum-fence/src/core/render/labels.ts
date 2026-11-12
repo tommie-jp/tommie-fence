@@ -15,6 +15,8 @@ type Labels = {
   readonly current: string;
   readonly frequency: string;
   readonly level: string;
+  /** 読み値の表の、マーカーの名札の欄の見出し。 */
+  readonly label: string;
   readonly resolution: string;
   readonly sweeps: string;
   /** 範囲の間の字 (`0 Hz〜1 kHz`)。 */
@@ -24,11 +26,11 @@ type Labels = {
 const TABLE: Readonly<Record<Lang, Labels>> = {
   ja: {
     readings: '読み値', measured: '実測', measuredFallback: '実測 (data)', holdCalc: '計算', ideal: '理想 (計算)', current: '今の掃引 (計算)',
-    frequency: '周波数', level: 'レベル', resolution: '分解能', sweeps: '掃引', through: '〜',
+    frequency: '周波数', level: 'レベル', label: '名札', resolution: '分解能', sweeps: '掃引', through: '〜',
   },
   en: {
     readings: 'Readings', measured: 'Measured', measuredFallback: 'Measured (data)', holdCalc: 'calc.', ideal: 'Ideal (calculated)', current: 'Current sweep (calculated)',
-    frequency: 'Frequency', level: 'Level', resolution: 'Resolution', sweeps: 'sweeps', through: ' to ',
+    frequency: 'Frequency', level: 'Level', label: 'Label', resolution: 'Resolution', sweeps: 'sweeps', through: ' to ',
   },
 };
 

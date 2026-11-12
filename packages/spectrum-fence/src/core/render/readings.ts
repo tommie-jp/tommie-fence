@@ -39,7 +39,8 @@ export function renderReadings(readings: Readings, dataName: string | null, band
 /** 読み値を字の行に (CLI・playground)。**図の帯と同じ見出しと並び**。 */
 export function readingLinesOf(readings: Readings, dataName: string | null, lang: Lang = 'ja'): readonly string[] {
   const parts = partsOf(readings, dataName, lang);
-  return [...parts.heading, ...tableLines(parts.rows)];
+  // 名札の欄が空の行は、後ろの空白を落とす (端末に余計な桁を残さない)。
+  return [...parts.heading, ...tableLines(parts.rows).map((line) => line.trimEnd())];
 }
 
 /** 凡例の字 (重ねたときは 破線 = 理想、実線 = 重ねた値。`dataName` は `実測 (a.csv)` の形)。何も無ければ null。`holdSweeps` は積んだ掃引の数。 */

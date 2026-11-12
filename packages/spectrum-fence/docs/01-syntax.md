@@ -314,6 +314,38 @@ markers:
 - 掃引の外のマーカーは描かずに言う
 - 点の上に ▼ と番号が付く (格子の上の縁に近ければ ▲ を点の下に返す)
 
+### 名札 (`- 7.26M: 字`)
+
+マーカーの後ろにコロンと字を書くと、そのマーカーに名札が付く (`peak` にも付く)。
+名札は**書き手の注釈**で、計器の画面には無い物なので、マーカーの色ではなく注釈の色 (赤) で刷る。
+
+```spectrum
+# スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
+title: 図07 マーカーの名札 — 7 MHz 帯の短波放送
+device: tinysa-ultra
+sweep: 7.0M-7.5M 450
+rbw: 3kHz
+lna: on
+ref: -60dBm
+signal:
+  - sine 7.26MHz -71dBm
+  - sine 7.325MHz -81dBm
+  - sine 7.41MHz -76dBm
+markers:
+  - 7.26M: 強い短波放送の例
+  - 7.325M: 弱めの放送の例
+  - 7.41M: 中くらいの放送の例
+  - 7.1M: 局の無い所 (床を読む)
+```
+
+![図07 マーカーの名札 — 7 MHz 帯の短波放送](out/01-syntax-7.svg)
+
+- 名札は点の周りの空いた所 (格子の内で、トレース・▼ と番号・ほかの名札に掛からない所) に置く
+  (graph の点の名札と同じ置き方)。空きが無ければ重ねて描き、お知らせで言う (名札は省かない)
+- 読み値の表の終わりに `名札` の欄が付く (名札のあるマーカーが 1 つでもあるときだけ)。`check` の読み値にも出る
+- 24 字まで (長い字は切って `…`)。見えない字 (bidi・幅 0) は落とす。コロンの後ろが空なら断る
+- 並びの 1 行書き (`markers: [7.26M, 7.1M]`) は今までどおり (名札は付けない)
+
 ## MAX HOLD (`hold:`)
 
 tinySA の MAX HOLD (掃引を重ねて、点ごとの最大を残す) は `hold:` で書く。
@@ -343,7 +375,7 @@ hold:
 
 ```spectrum
 # スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
-title: 図07 VC1 を回したときの発振の範囲 (MAX HOLD)
+title: 図08 VC1 を回したときの発振の範囲 (MAX HOLD)
 device: tinysa-ultra
 sweep: 70M-110M 450
 rbw: 100kHz
@@ -353,7 +385,7 @@ hold: sine 74MHz..102MHz -54.4dBm
 markers: [74M, 88M, 102M]
 ```
 
-![図07 VC1 を回したときの発振の範囲 (MAX HOLD)](out/01-syntax-7.svg)
+![図08 VC1 を回したときの発振の範囲 (MAX HOLD)](out/01-syntax-8.svg)
 
 74〜102 MHz の間が−54.40 dBm の平らな帯になる (山の幅は RBW 100 kHz)。青い線が今の掃引 (88 MHz)。
 M1〜M3 はどれも保持したトレースの値。
@@ -362,7 +394,7 @@ M1〜M3 はどれも保持したトレースの値。
 
 ```spectrum
 # スペクトラムアナライザの画面 (tommie-fence の spectrum フェンス)
-title: 図08 nRF24 の 4 チャンネルのパケットを MAX HOLD で重ねる
+title: 図09 nRF24 の 4 チャンネルのパケットを MAX HOLD で重ねる
 device: tinysa-ultra
 sweep: 2400M-2484M 450
 rbw: 300kHz
@@ -375,7 +407,7 @@ hold:
 markers: [peak, 2402M, 2480M]
 ```
 
-![図08 nRF24 の 4 チャンネルのパケットを MAX HOLD で重ねる](out/01-syntax-8.svg)
+![図09 nRF24 の 4 チャンネルのパケットを MAX HOLD で重ねる](out/01-syntax-9.svg)
 
 M1 は一番高い ch 26 (2426 MHz、−48 dBm)。
 

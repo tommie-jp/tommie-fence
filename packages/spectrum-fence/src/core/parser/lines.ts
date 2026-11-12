@@ -1,5 +1,7 @@
 import { parseWave } from 'fence-kit';
 import type { WaveSpec } from 'fence-kit';
+import { dropInvisible, safeToken } from '../errors.ts';
+import { LIMITS, clampText } from '../limits.ts';
 import type { MarkerSpec } from '../model/markers.ts';
 import { FREQUENCY_HINT, parseFrequency } from '../model/sweep.ts';
 import type { Read } from '../model/sweep.ts';
@@ -25,4 +27,17 @@ export function parseMarker(text: string, line: number | null): Read<MarkerSpec>
   const f = parseFrequency(trimmed);
   if (f === null) return { ok: false, reason: /^\d/.test(trimmed) ? `${MARKER_HINT}。${FREQUENCY_HINT}` : MARKER_HINT, ...(trimmed === '' ? {} : { token: trimmed }) };
   return { ok: true, value: { kind: 'f', f, line } };
+}
+
+/**
+ * マーカーの名札 (`- 7.26M: 字` のコロンの後ろ。graph の点の名札と同じ読み方)。見えない字 (bidi・幅 0) は
+ * 図に刷る前に落とし、長い字は切る (切ったことは `…` で見える)。空は断る。
+ */
+export function parseMarkerLabel(body: string | null, marker: string): Read<string> {
+  const text = body === null ? '' : clampText(dropInvisible(body).trim(), LIMITS.markerLabelLength);
+  if (text === '') {
+    const example = marker.trim() === '' ? '7.26M' : safeToken(marker.trim());
+    return { ok: false, reason: `マーカーの名札が空です (- ${example}: 字。名札が要らなければコロンを外します)` };
+  }
+  return { ok: true, value: text };
 }

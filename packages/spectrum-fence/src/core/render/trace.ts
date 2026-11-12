@@ -1,4 +1,5 @@
 import { BOLD_FAMILY, element, num, svgText } from 'fence-kit';
+import type { Box } from 'fence-kit';
 import { xOf, yOf } from '../layout/scales.ts';
 import type { Axes } from '../layout/scales.ts';
 import type { Rect } from '../layout/screen.ts';
@@ -62,6 +63,22 @@ export function renderTrace(points: readonly Point[], basis: 'model' | 'data' | 
 /** 番号が格子の上にはみ出す高さ。これより上の点では印を下向きに返す。 */
 const GLYPH_REACH = 17;
 
+/** 印が点の下に返るか (格子の上の縁に近い点)。 */
+const glyphBelow = (y: number, grid: Rect): boolean => y - GLYPH_REACH < grid.y;
+
+/**
+ * マーカーの印 (▽ と番号) が占める箱。名札をここに掛けない ({@link renderMarker} と同じ寸法)。
+ */
+export function markerGlyphBox(point: Point, axes: Axes, grid: Rect, theme: Theme): Box {
+  const x = xOf(point.at, axes, grid);
+  const y = yOf(point.level, axes, grid);
+  const size = theme.metrics.smallSize;
+  const half = 5;
+  return glyphBelow(y, grid)
+    ? { x: x - half, y, width: half * 2, height: 9 + size * 0.8 + 2 }
+    : { x: x - half, y: y - 9 - size, width: half * 2, height: 9 + size };
+}
+
 /**
  * マーカーの印 (▽ と番号)。先が点を指す。**格子の上の縁に近い点では ▲ を点の下に**
  * 置く (vna の写し)。
@@ -69,7 +86,7 @@ const GLYPH_REACH = 17;
 export function renderMarker(point: Point, label: string, axes: Axes, grid: Rect, color: string, theme: Theme): string {
   const x = xOf(point.at, axes, grid);
   const y = yOf(point.level, axes, grid);
-  const below = y - GLYPH_REACH < grid.y;
+  const below = glyphBelow(y, grid);
   const tip = below ? 7 : -7;
   const path = `M${num(x)},${num(y)} L${num(x - 4)},${num(y + tip)} L${num(x + 4)},${num(y + tip)} Z`;
   const size = theme.metrics.smallSize;

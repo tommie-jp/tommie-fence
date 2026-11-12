@@ -1,6 +1,6 @@
 import { applyExpectations, formatHertzShort, normalizeNewlines, resolveLang } from 'fence-kit';
 import type { Lang } from 'fence-kit';
-import { attachSourceText, fenceError, notice, shiftErrors } from './errors.ts';
+import { attachSourceText, fenceError, notice, safeToken, shiftErrors } from './errors.ts';
 import { frequencyTicks, levelTicks } from './layout/scales.ts';
 import type { Axes } from './layout/scales.ts';
 import { DIVISIONS, SIZE, createLayout } from './layout/screen.ts';
@@ -20,6 +20,8 @@ import { renderFrequencyLabels, renderGrid, renderLevelLabels, renderStatus, sta
 import type { StatusItem } from './render/grid.ts';
 import { keyText, readingLinesOf, readingsSize, renderKey, renderReadings } from './render/readings.ts';
 import { renderHeld } from './render/held.ts';
+import { renderMarkerLabels } from './render/markerLabels.ts';
+import type { ShownMarker } from './render/markerLabels.ts';
 import { renderTrace, renderMarker } from './render/trace.ts';
 import { resolveStyle, traceColor } from './render/theme.ts';
 import { renderTitle } from './render/title.ts';
@@ -144,10 +146,16 @@ export function renderSpectrum(input: string, options: RenderOptions = {}): Rend
     source: null,
     theme,
   });
-  const markerSvg = drawn.markers.map((marker, index) => {
-    const point = markerPoint(marker, drawn.measured.length > 0 ? drawn.measured : isHeld ? drawn.held : drawn.points);
-    return point === null ? '' : renderMarker(point, `${index + 1}`, drawn.axes, layout.grid, color, theme);
-  }).join('');
+  const read = drawn.measured.length > 0 ? drawn.measured : isHeld ? drawn.held : drawn.points;
+  const shown: readonly ShownMarker[] = drawn.markers.flatMap((marker, index) => {
+    const point = markerPoint(marker, read);
+    return point === null ? [] : [{ point, number: index + 1, label: marker.label, line: marker.line }];
+  });
+  const markerSvg = shown.map((marker) => renderMarker(marker.point, `${marker.number}`, drawn.axes, layout.grid, color, theme)).join('');
+  // 名札は書き手の注釈 (注釈の色)。避ける線は画面に描くトレースの全部。
+  const markerLabels = renderMarkerLabels(shown, [drawn.held, drawn.points, drawn.measured], drawn.axes, layout.grid, theme);
+  const crowded = markerLabels.clashed.map((marker) =>
+    notice(`マーカー ${marker.number} の名札「${safeToken(marker.label ?? '')}」を置く空きが無く、重ねて描いています (名札を短くするか、マーカーを離します)`, marker.line));
 
   const body = renderTitle(doc.title, layout, theme)
     + renderKey(hasModel, drawn.dataName, layout, theme, drawn.holdSweeps, lang)
@@ -158,11 +166,12 @@ export function renderSpectrum(input: string, options: RenderOptions = {}): Rend
     + renderTrace(drawn.points, 'model', drawn.axes, layout.grid, liveColor, drawn.measured.length > 0)
     + renderTrace(drawn.measured, 'data', drawn.axes, layout.grid, color)
     + markerSvg
+    + markerLabels.svg
     + renderStatus(status, layout, theme)
     + (layout.readingsBand === null ? '' : renderReadings(drawn.readings, drawn.dataName, layout.readingsBand, theme, lang));
   const svg = renderDocument(layout, body, { theme, width: style.width, stamp: style.stamp });
 
-  const reported = attachSourceText(byLine([...parsed.errors, ...(chosen.error === null ? [] : [fenceError(chosen.error, null)]), ...drawn.said]), source);
+  const reported = attachSourceText(byLine([...parsed.errors, ...(chosen.error === null ? [] : [fenceError(chosen.error, null)]), ...drawn.said, ...crowded]), source);
   const at = (list: readonly FenceError[]): readonly FenceError[] => shiftErrors(list, options.offset ?? 0);
   // `expect:` で承知したお知らせに理由を付ける。当たらない承知もお知らせで言う (52 の docs/145)。
   const { errors, notices } = applyExpectations(source, {

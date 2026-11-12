@@ -20,11 +20,11 @@ const markdownIn = (dir: string): readonly string[] =>
     return name.endsWith('.md') ? [path] : [];
   });
 
-/** 利用者が書いた字 (title: と data: の凡例の名前) を外す — 数えるのはフェンスが出す固定の字だけ。 */
+/** 利用者が書いた字 (title:・data: の凡例の名前・マーカーの名札) を外す — 数えるのはフェンスが出す固定の字だけ。 */
 const withoutUserText = (source: string): string =>
   source.split('\n')
     .filter((line) => !/^title:/.test(line))
-    .map((line) => line.replace(/^(data:\s*\S+)\s+.*$/, '$1'))
+    .map((line) => line.replace(/^(data:\s*\S+)\s+.*$/, '$1').replace(/^(\s*-\s*(?:peak|[\d.]+\s*[kMG]?(?:Hz)?))\s*:\s.*$/, '$1'))
     .join('\n');
 
 const textsOf = (svg: string): readonly string[] => [...svg.matchAll(/<text\b[^>]*>([^<]*)<\/text>/g)].map((m) => m[1] ?? '');

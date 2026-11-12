@@ -43,7 +43,8 @@ markers: [100M, 300M, 500M]
   the Spectrum export of WaveForms), **only from the same folder as the
   Markdown**. The core never opens files; the host reads them
 - **Marker** readings (a frequency or `peak`) appear under the drawing in the
-  instrument's format (`1  100.000 MHz  −7.90 dBm`)
+  instrument's format (`1  100.000 MHz  −7.90 dBm`). `- 7.26M: text` adds a
+  label (drawn in the note colour, and as a label column in the readings)
 
 ## How it differs from its siblings
 

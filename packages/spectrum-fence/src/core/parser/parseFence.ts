@@ -14,7 +14,7 @@ import type { Read } from '../model/sweep.ts';
 import { KEY_KINDS, TOP_LEVEL_KEYS } from '../types.ts';
 import type { FenceDocument, FenceError, Located, TopLevelKey } from '../types.ts';
 import { parseHoldItem } from './hold.ts';
-import { parseMarker, parseSignalLine } from './lines.ts';
+import { parseMarker, parseMarkerLabel, parseSignalLine } from './lines.ts';
 import { EMPTY_STYLE, parseStyle } from './style.ts';
 import { parseDb, parseLevel, parseSamples, parseSwitch, parseUnit, parseWindow } from './values.ts';
 
@@ -235,7 +235,7 @@ function readHold(context: Context, kind: DeviceKind): readonly HoldEntry[] {
   return entries;
 }
 
-/** `markers:` — 並びか 1 つ。4 つまで。 */
+/** `markers:` — 並びか 1 つ。4 つまで。`- 7.26M: 字` は名札つき (1 項目のマップ。graph の点の名札と同じ形)。 */
 function readMarkers(context: Context): readonly MarkerSpec[] {
   const entry = context.entries.get('markers');
   if (entry === undefined) return [];
@@ -247,9 +247,22 @@ function readMarkers(context: Context): readonly MarkerSpec[] {
       context.errors.push(fenceError(`マーカーは ${LIMITS.markers} つまでです (M1〜M4)`, line));
       break;
     }
-    const read = parseMarker(writtenText(node, context.source) ?? scalarText(node) ?? '', line);
-    if (read.ok) markers.push(read.value);
-    else context.errors.push(fenceError(read.reason, line, read.token));
+    const pair = isMap(node) && node.items.length === 1 ? node.items[0] : undefined;
+    const text = pair === undefined
+      ? writtenText(node, context.source) ?? scalarText(node) ?? ''
+      : writtenText(pair.key, context.source) ?? scalarText(pair.key) ?? '';
+    const read = parseMarker(text, line);
+    if (!read.ok) {
+      context.errors.push(fenceError(read.reason, line, read.token));
+      continue;
+    }
+    if (pair === undefined) {
+      markers.push(read.value);
+      continue;
+    }
+    const label = parseMarkerLabel(scalarText(pair.value), text);
+    if (label.ok) markers.push({ ...read.value, label: label.value });
+    else context.errors.push(fenceError(label.reason, line));
   }
   return markers;
 }

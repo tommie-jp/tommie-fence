@@ -24,6 +24,8 @@ export const LIMITS = {
   samples: { min: 1024, max: 65536 },
   /** マーカーの数 (実機と同じ 4)。 */
   markers: 4,
+  /** マーカーの名札 (`- 7.26M: 字`) の字数 (コードポイント。graph の点の名札と同じ)。 */
+  markerLabelLength: 24,
   /** 周波数の上の端 (Hz)。 */
   frequencyMax: 10e9,
   /** レベルの範囲 (dBm。dBV も同じ幅で見る)。 */
