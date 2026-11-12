@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.39.0] - 2026-11-12
+
 ### Added
 
 - **名札の置き場 (`placeLabels` `segmentCrossesBox`、型 `Box` `Pixel` `LabelRequest` `PlacedLabel`)。** graph の点の名札の置き方

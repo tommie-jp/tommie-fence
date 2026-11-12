@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+## [0.93.0] - 2026-11-12
+
+### Changed
+
+- **束ねるフェンスを上げた** (fence-kit 0.39.0 / graph-fence 0.7.0 / spectrum-fence 0.8.0)。詳しくは各パッケージの CHANGELOG。
+
 ## [0.92.0] - 2026-11-12
 
 ### Changed

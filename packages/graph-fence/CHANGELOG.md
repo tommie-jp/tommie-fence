@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-12
+
 ### Changed
 
 - 点の名札の置き場 (`placeLabels`) を fence-kit から取るようにした (spectrum と共用)。図は変わらない
