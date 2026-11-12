@@ -192,3 +192,31 @@ describe('parseFence', () => {
     expect(messages('style:\n  size: 3')).toContain('知らない style の項目です');
   });
 });
+
+describe('point labels', () => {
+  const fence = (points: string): string => `x: 順 番 1..9\nlines:\n  難しさ 点:\n${points}`;
+  const pointsOf = (source: string) => {
+    const line = parseFence(source).doc.lines[0];
+    return line?.source.kind === 'points' ? line.source.points : [];
+  };
+
+  test('reads a label after the colon and leaves other points bare', () => {
+    const points = pointsOf(fence('    - 1 0: ゲルマラジオ\n    - 2 1\n    - 9 6点: トランシーバ\n'));
+    expect(points).toEqual([{ x: 1, y: 0, label: 'ゲルマラジオ' }, { x: 2, y: 1 }, { x: 9, y: 6, label: 'トランシーバ' }]);
+  });
+
+  test('refuses an empty label, a broken point, and too many labels', () => {
+    const errors = (source: string): string => parseFence(source).errors.map((error) => error.message).join('\n');
+    expect(errors(fence('    - 1 0:\n'))).toContain('名札');
+    expect(errors(fence('    - 1: 字\n'))).toContain('- x y');
+    const many = Array.from({ length: 30 }, (_, index) => `    - ${index + 1} 1: 字${index}\n`).join('');
+    expect(errors(fence(many))).toContain('名札は');
+  });
+
+  test('cuts a long label and drops invisible characters', () => {
+    const [point] = pointsOf(fence(`    - 1 0: ${'あ'.repeat(40)}\n`));
+    expect([...(point?.label ?? '')].length).toBeLessThanOrEqual(25);
+    const [clean] = pointsOf(fence('    - 1 0: a‮b\n'));
+    expect(clean?.label).toBe('ab');
+  });
+});

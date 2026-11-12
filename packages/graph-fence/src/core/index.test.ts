@@ -127,3 +127,41 @@ describe('renderGraph — 言うこと', () => {
     expect(result.svg).toContain('a (実測)');
   });
 });
+
+describe('renderGraph — 点の名札', () => {
+  const ROAD = [
+    'x: 作る順 番 1..9',
+    'y: 難しさ 点 0..6',
+    'lines:',
+    '  難しさ 点:',
+    '    - 1 0: ゲルマラジオ',
+    '    - 4 3: 最初の 1 台',
+    '    - 5 2',
+    '    - 9 6: トランシーバ',
+  ].join('\n');
+
+  test('draws a dot and the label for each labelled point, and nothing for bare points', () => {
+    const result = renderGraph(ROAD);
+    expect(result.errors).toEqual([]);
+    expect(result.notices).toEqual([]);
+    for (const label of ['ゲルマラジオ', '最初の 1 台', 'トランシーバ']) expect(result.svg).toContain(label);
+    expect(result.svg.match(/<circle[^>]*r="3"/g)?.length).toBe(3);
+  });
+
+  test('leaves a figure without labels exactly as before', () => {
+    const bare = ROAD.replace(/: (ゲルマラジオ|最初の 1 台|トランシーバ)/g, '');
+    expect(renderGraph(bare).svg).not.toContain('<circle');
+  });
+
+  test('escapes the label', () => {
+    const result = renderGraph(ROAD.replace('ゲルマラジオ', '"<b>&"'));
+    expect(result.svg).not.toContain('<b>');
+    expect(result.svg).toContain('&lt;b&gt;');
+  });
+
+  test('says so when labels cannot be kept apart', () => {
+    const crowded = ['x: 順 番 1..9', 'y: 難しさ 点 0..6', 'lines:', '  難しさ 点:',
+      ...Array.from({ length: 20 }, (_, index) => `    - ${(4 + index * 0.01).toFixed(2)} 3: とても長い名札の ${index} 番め`)].join('\n');
+    expect(said(crowded)).toContain('重ねて描いています');
+  });
+});

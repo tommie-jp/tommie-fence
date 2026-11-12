@@ -1,6 +1,6 @@
 import { applyExpectations, normalizeNewlines, resolveLang, textWidth } from 'fence-kit';
 import type { Lang } from 'fence-kit';
-import { attachSourceText, fenceError, notice, shiftErrors } from './errors.ts';
+import { attachSourceText, fenceError, notice, safeToken, shiftErrors } from './errors.ts';
 import { linearAxis, logAxis, startsAtZero } from './layout/axis.ts';
 import type { Axis } from './layout/axis.ts';
 import { SIZE, createLayout } from './layout/page.ts';
@@ -18,7 +18,7 @@ import { axisLabel, renderAxisName, renderFrame, renderXTicks, renderYTicks } fr
 import { renderDocument } from './render/document.ts';
 import { renderErrorBanner } from './render/errorHtml.ts';
 import { linesSize, renderLines, sourceListing } from './render/mono.ts';
-import { renderBand, renderIdeal, renderLevel, renderMark, renderMarkLabels, renderMeasured, renderNoteText, renderPeak } from './render/plot.ts';
+import { renderBand, renderIdeal, renderLevel, renderMark, renderMarkLabels, renderMeasured, renderNoteText, renderPointLabels, renderPeak } from './render/plot.ts';
 import { legendRows, readingLinesOf, readingsSize, renderLegend, renderReadings } from './render/readings.ts';
 import type { LegendItem } from './render/readings.ts';
 import { lineColor, resolveStyle } from './render/theme.ts';
@@ -278,12 +278,24 @@ export function renderGraph(input: string, options: RenderOptions = {}): RenderR
         return top === null ? '' : renderPeak(top, formatReading(top.y, line.unit), xAxis, yAxis, rect, lineColor(theme, line.index), theme);
       }).join('')
       : '';
+    // 点の名札は枠ごとに置く (避ける線は、その枠の理想の線)。
+    const ideal = panel.lines.filter((line) => !isMeasured(line));
+    const pointLabels = renderPointLabels(
+      ideal.flatMap((line) => (sampled.get(line) ?? []).flatMap((point) => (point.label === undefined
+        ? []
+        : [{ ...point, label: point.label, color: lineColor(theme, line.index) }]))),
+      ideal.map((line) => sampled.get(line) ?? []), xAxis, yAxis, rect, theme,
+    );
+    for (const label of pointLabels.clashed) {
+      said.push(notice(`名札「${safeToken(label)}」を置く空きが無く、重ねて描いています (名札を減らすか、範囲を広げます)`, panel.lines[0]?.line ?? null));
+    }
     return renderFrame(xAxis, yAxis, rect, theme)
       + bands.map((band) => renderBand(band.from, band.to, band.text, xAxis, rect, theme, bottomPanel)).join('')
       + lines
       + levels
       + marks.map((x) => renderMark(x, xAxis, rect, theme)).join('')
       + peaks
+      + pointLabels.svg
       + texts
       + renderYTicks(yAxis, panel.unit, rect, theme)
       + heading

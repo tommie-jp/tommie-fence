@@ -33,7 +33,7 @@ notes:
 ```
 
 - **Lines** are an expression of `x` (the axis value; SI prefixes `1.59k` `25.9m`
-  `10M` are factors) or points written one per line (`- 2k 0.38`). Ideal lines
+  `10M` are factors) or points written one per line (`- 2k 0.38`; `- 2k 0.38: text` puts a dot and a label at the point). Ideal lines
   are dashed
 - **Units** separate the panels: lines with different units stack in panels that
   share the x axis (three at most). Axis names read "quantity/unit"

@@ -1,5 +1,7 @@
 import { BOLD_FAMILY, element, num, svgText, textWidth } from 'fence-kit';
 import type { Axis } from '../layout/axis.ts';
+import { placeLabels } from '../layout/labels.ts';
+import type { Pixel } from '../layout/labels.ts';
 import type { Rect } from '../layout/page.ts';
 import type { Point } from '../model/lines.ts';
 import { xAt, yAt } from './axes.ts';
@@ -149,8 +151,41 @@ export function renderPeak(point: Point, text: string, xAxis: Axis, yAxis: Axis,
   return element('path', { d: path, fill: color }) + noteText(at, below ? y + base + size + 2 : y + base - 3, text, theme, 'middle', color);
 }
 
-/** 点に字。 */
+/** 点に字。**左右の縁では枠の内へ寄せる** (字が枠の外へ出ない。peak と同じ)。 */
 export function renderNoteText(x: number, y: number, text: string, xAxis: Axis, yAxis: Axis, rect: Rect, theme: Theme): string {
   if (!inside(xAxis, x) || !inside(yAxis, y)) return '';
-  return noteText(xAt(xAxis, rect, x), yAt(yAxis, rect, y), text, theme, 'middle');
+  const half = (textWidth(text) * theme.metrics.smallSize) / 2;
+  const at = Math.min(Math.max(xAt(xAxis, rect, x), rect.x + half + 2), rect.x + rect.width - half - 2);
+  return noteText(at, yAt(yAxis, rect, y), text, theme, 'middle');
+}
+
+const LABEL_DOT_RADIUS = 3;
+
+/** 名札つきの点 (点列の `- 4 3: 字`)。色は線の色。 */
+export type LabelledPoint = Point & { readonly label: string; readonly color: string };
+
+/**
+ * 点の名札。**点に ● を打ち、字は周りの空いた所へ** ({@link placeLabels})。`lines` は枠の中の
+ * 理想の線 (字を線に掛けない)。`clashed` は空いた所が無く、重なったまま置いた名札。
+ */
+export function renderPointLabels(
+  points: readonly LabelledPoint[], lines: readonly (readonly Point[])[], xAxis: Axis, yAxis: Axis, rect: Rect, theme: Theme,
+): { readonly svg: string; readonly clashed: readonly string[] } {
+  const shown = points.filter((point) => inside(xAxis, point.x) && inside(yAxis, point.y));
+  if (shown.length === 0) return { svg: '', clashed: [] };
+  const size = theme.metrics.smallSize;
+  const toPixel = (point: Point): Pixel => ({ x: xAt(xAxis, rect, point.x), y: yAt(yAxis, rect, point.y) });
+  const pixels = shown.map(toPixel);
+  const avoid = lines.flatMap((line) => segments(line, xAxis, yAxis)).map((run) => run.map(toPixel));
+  const placed = placeLabels(
+    shown.map((point, index) => ({ ...(pixels[index] as Pixel), width: textWidth(point.label) * size + 2, height: size + 2 })), rect, avoid,
+  );
+  const svg = shown.map((point, index) => {
+    const at = pixels[index] as Pixel;
+    const box = placed[index]?.box;
+    if (box === undefined) return '';
+    return element('circle', { cx: num(at.x), cy: num(at.y), r: LABEL_DOT_RADIUS, fill: point.color })
+      + noteText(box.x + 1, box.y + size, point.label, theme, 'start', point.color);
+  }).join('');
+  return { svg, clashed: shown.filter((_, index) => placed[index]?.clash === true).map((point) => point.label) };
 }

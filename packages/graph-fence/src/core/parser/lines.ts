@@ -32,7 +32,7 @@ export function parseLineExpr(text: string): LineResult<Expr> {
   return ok(read.expr);
 }
 
-const POINT_HINT = '点は「- x y」の 1 行で書きます (- 2k 0.38)';
+const POINT_HINT = '点は「- x y」の 1 行で書きます (- 2k 0.38。名札を付けるなら - 2k 0.38: 字)';
 
 /** 点列の 1 点。**単位は軸と同じなら付けてよい** (`2kHz 0.38mA`)。 */
 export function parsePoint(text: string, xUnit: string, yUnit: string): LineResult<Point> {
@@ -44,4 +44,14 @@ export function parsePoint(text: string, xUnit: string, yUnit: string): LineResu
   if (!y.ok) return fail(`点の y が読めません: ${safeToken(words[1] ?? '')} (${y.reason})`, words[1]);
   if (Math.abs(x.value) > LIMITS.valueMax || Math.abs(y.value) > LIMITS.valueMax) return fail('点の値が大きすぎます', text);
   return ok({ x: x.value, y: y.value });
+}
+
+/**
+ * 点の名札 (`- 4 3: 字` のコロンの後ろ)。見えない字 (bidi・幅 0) は図に刷る前に落とし、
+ * 長い字は切る (切ったことは `…` で見える)。
+ */
+export function parsePointLabel(body: string | null): LineResult<string> {
+  const text = body === null ? '' : dropInvisible(body).trim();
+  if (text === '') return fail('点の名札が空です (- 2k 0.38: 字。名札が要らなければコロンを外します)');
+  return ok(clampText(text, LIMITS.pointLabelLength));
 }

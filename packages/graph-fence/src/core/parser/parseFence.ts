@@ -8,7 +8,7 @@ import type { LineSpec, Point } from '../model/lines.ts';
 import { TOP_LEVEL_KEYS } from '../types.ts';
 import type { AxisSpec, FenceDocument, FenceError, NoteSpec, StyleSpec } from '../types.ts';
 import { parseAxis } from './axes.ts';
-import { parseLineExpr, parseLineKey, parsePoint } from './lines.ts';
+import { parseLineExpr, parseLineKey, parsePoint, parsePointLabel } from './lines.ts';
 import { parseNoteLine } from './notes.ts';
 import { EMPTY_STYLE, parseStyle } from './style.ts';
 
@@ -170,6 +170,8 @@ function readLines(pair: Pair, xUnit: string, source: string, lineOf: LineOf, er
   }
   const lines: LineSpec[] = [];
   const names = new Set<string>();
+  // 名札の数は図 1 枚で数える (線ごとではない)。
+  const budget = { labels: 0 };
   for (const item of value.items) {
     const keyText = scalarText(item.key) ?? '';
     const keyLine = lineOf(item.key as Node);
@@ -188,7 +190,7 @@ function readLines(pair: Pair, xUnit: string, source: string, lineOf: LineOf, er
       continue;
     }
     names.add(`${name} ${unit}`);
-    const read = readLineValue(item.value, keyLine, xUnit, unit, source, lineOf, errors);
+    const read = readLineValue(item.value, keyLine, xUnit, unit, source, lineOf, errors, budget);
     if (read !== null) lines.push({ name, unit, source: read, index: lines.length, line: keyLine });
   }
   return lines;
@@ -196,6 +198,7 @@ function readLines(pair: Pair, xUnit: string, source: string, lineOf: LineOf, er
 
 function readLineValue(
   value: unknown, keyLine: number | null, xUnit: string, yUnit: string, source: string, lineOf: LineOf, errors: FenceError[],
+  budget: { labels: number },
 ): LineSpec['source'] | null {
   if (isSeq(value)) {
     if (value.items.length === 0) {
@@ -211,14 +214,34 @@ function readLineValue(
         broken = true;
         break;
       }
-      const text = writtenText(item, source) ?? scalarText(item) ?? '';
+      // `- 4 3: 字` は 1 項目のマップ。座標がキー、名札が値 (注釈の `- text …: 字` と同じ形)。
+      const pair = isMap(item) && item.items.length === 1 ? item.items[0] : undefined;
+      const text = pair === undefined
+        ? writtenText(item, source) ?? scalarText(item) ?? ''
+        : writtenText(pair.key, source) ?? scalarText(pair.key) ?? '';
       const read = parsePoint(text, xUnit, yUnit);
       if (!read.ok) {
         errors.push({ ...read.error, line });
         broken = true;
         continue;
       }
-      points.push(read.value);
+      if (pair === undefined) {
+        points.push(read.value);
+        continue;
+      }
+      const label = parsePointLabel(scalarText(pair.value));
+      if (!label.ok) {
+        errors.push({ ...label.error, line });
+        broken = true;
+        continue;
+      }
+      budget.labels += 1;
+      if (budget.labels > LIMITS.pointLabels) {
+        errors.push(fenceError(`点の名札は 1 枚に ${LIMITS.pointLabels} 個までです`, line));
+        broken = true;
+        break;
+      }
+      points.push({ ...read.value, label: label.value });
     }
     if (broken) return null;
     const sorted = [...points].sort((a, b) => a.x - b.x);

@@ -8,7 +8,8 @@ import type { Expr } from './expr.ts';
  * (手で測った 10 点ほどを結ぶと、測っていない所まで在るように見える。52 の docs/98 §5.1)。
  */
 
-export type Point = { readonly x: number; readonly y: number };
+/** `label` は点列の点に書いた名札 (`- 4 3: 字`)。式と実測の点には無い。 */
+export type Point = { readonly x: number; readonly y: number; readonly label?: string };
 
 export type LineSource =
   | { readonly kind: 'expr'; readonly expr: Expr; readonly text: string }
