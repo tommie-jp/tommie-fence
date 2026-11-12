@@ -56,8 +56,9 @@ parts:
   U13: dip8 g32 ATtiny85
   U14: dip8 g38 PIC12F683
   U15: dip8 l2 PIC12F1822
-  U16: dip8 l8 LM75
-  U17: dip8 l14 MCP9808
+  U16: dip8 l8 AE-SI5351A-B
+  U17: dip8 l14 LM75
+  U18: dip8 l20 MCP9808
 ```
 
 ![図02 DIP8 の型番](out/14-gallery-chips-2.svg)
@@ -301,14 +302,15 @@ parts:
   U6: sip3 c32 HC-SR501
   U7: sip7 c38 GY-9833
   U8: sip8 g2 ADAFRUIT-1782
-  U9: sip3 g12 TA7642
-  U10: sip3 g17 A3144
-  U11: sip3 g22 A1324
-  U12: sip3 g27 LM35
-  U13: sip3 g32 SFELF10M7
-  U14: sip3 g38 CFULA455
-  U15: sip4 k2 OSTA5131A
-  U16: sip4 k8 OSTAMA5B31A
+  U9: sip7 g12 ADAFRUIT-2045
+  U10: sip3 g21 TA7642
+  U11: sip3 g26 A3144
+  U12: sip3 g31 A1324
+  U13: sip3 g36 LM35
+  U14: sip3 g41 SFELF10M7
+  U15: sip3 k2 CFULA455
+  U16: sip4 k8 OSTA5131A
+  U17: sip4 k14 OSTAMA5B31A
 ```
 
 ![図11 1 列の型番](out/14-gallery-chips-11.svg)

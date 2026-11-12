@@ -30,8 +30,9 @@ parts:
   U14: dip8 11.75,4 PIC12F683
   U15: dip8 13.5,4 PIC12F1822
   U16: dip4 15.25,4 3SK291
-  U17: dip8 1.75,6 LM75
-  U18: dip8 3.75,6 MCP9808
+  U17: dip8 1.75,6 AE-SI5351A-B
+  U18: dip8 3.75,6 LM75
+  U19: dip8 5.5,6 MCP9808
 ```
 
 ![図01 ギャラリー DIP4・DIP8 の型番](out/21-gallery-chips-1.png)

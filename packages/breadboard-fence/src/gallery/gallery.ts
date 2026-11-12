@@ -1,4 +1,4 @@
-import { boardPartNames, discreteTable, moduleTable, pinoutTable } from 'fence-kit';
+import { TRIMMER_CAP_HOLES, boardPartNames, discreteTable, moduleTable, pinoutTable } from 'fence-kit';
 import type { PinoutRow } from 'fence-kit';
 import { typesWithVariants, variantsOf } from '../core/parts/variants.ts';
 import { knownPartTypes, lookupFootprint } from '../core/placement/footprints.ts';
@@ -95,7 +95,8 @@ function kindItem(type: string, variant: string | null): Item | null {
   const prefix = prefixOf(type);
   switch (kind) {
     case 'two-lead':
-      return leaded(prefix, token, 2, big || type === 'sma' ? BIG : SMALL_TWO, undefined, 4);
+      // トリマコンデンサはピンの間隔が決まっている (2 列)。ほかは 4 列離して胴を見せる。
+      return leaded(prefix, token, 2, big || type === 'sma' ? BIG : SMALL_TWO, undefined, variant === 'trimmer' ? TRIMMER_CAP_HOLES : 4);
     case 'three-lead':
       return leaded(prefix, token, 3, big ? BIG : SMALL_THREE);
     case 'wound': {

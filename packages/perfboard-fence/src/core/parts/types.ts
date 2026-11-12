@@ -102,7 +102,8 @@ const ALIASES: Record<string, string> = {
  * 変換基板に載せた姿 (`sot346-dip`) と、この基板に直付けする姿 (`sot346` `2012`)。
  */
 const THROUGH_HOLE: Record<string, readonly string[]> = {
-  capacitor: ['ceramic', 'film', 'electrolytic', 'tantalum'],
+  // `trimmer` はトリマコンデンサ (上から回すセラミックトリマ)。回路図の `capacitor-var` を基板に挿す形。
+  capacitor: ['ceramic', 'film', 'electrolytic', 'tantalum', 'trimmer'],
   // 実物のワット数。1/4W は 6.5mm、1/2W は 9mm ほどで、挿す穴の間隔も変わる。
   resistor: ['quarter', 'half'],
   // 小信号のガラス管 (DO-35) と、1A クラスの黒いプラスチック (DO-41)。

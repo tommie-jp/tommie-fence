@@ -91,6 +91,8 @@ export const ROLES_EN: Readonly<Record<string, string>> = {
   '再トリガ単安定マルチバイブレータ ×2': 'retriggerable monostable multivibrator ×2',
   'AM ラジオ IC (ストレート)': 'AM radio IC (TRF)',
   'DDS の信号発生モジュール (AD9833)': 'DDS signal generator module (AD9833)',
+  'I2C クロック発生器のブレークアウト (Si5351A)': 'I2C clock generator breakout (Si5351A)',
+  'クロック発生器のモジュール (Si5351A、DIP8 形)': 'clock generator module (Si5351A, DIP-8 shape)',
   'I2C 温度センサ': 'I2C temperature sensor',
   'I2C 温度センサのブレークアウト (MCP9808)': 'I2C temperature sensor breakout (MCP9808)',
   'I2C 温度センサ (±0.5 ℃)': 'I2C temperature sensor (±0.5 °C)',

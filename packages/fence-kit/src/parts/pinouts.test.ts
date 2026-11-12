@@ -163,9 +163,9 @@ describe('ピンの名前の表', () => {
     // 3 本足の IC・センサ、8 ピンの温度センサ、村田のフィルタ 2 つ、RJ45・DC・オーディオの DIP 化キット、フルカラー LED。
     expect(all.slice(0, 9)).toEqual(['NE555', 'TLC555', 'LM358', 'TL071', 'TL072', 'LM393', 'SA612', 'MCP6002', 'LM386']);
     expect(all.slice(32, 39)).toEqual(['62256', '6116', '74HC245', '74HC273', '74HC14', '74HC00', '74HC161']);
-    expect(all.slice(-22)).toEqual([
+    expect(all.slice(-24)).toEqual([
       '3SK291', 'SFU455B', 'KY-040', 'HC-SR04', 'SG90', 'DHT11', 'HC-SR501', 'GY-9833', 'ADAFRUIT-1782',
-      'TA7642', 'A3144', 'A1324', 'LM35', 'LM75', 'MCP9808', 'SFELF10M7', 'CFULA455', 'AE-RJ-45-LAN-DIP-A',
+      'ADAFRUIT-2045', 'AE-SI5351A-B', 'TA7642', 'A3144', 'A1324', 'LM35', 'LM75', 'MCP9808', 'SFELF10M7', 'CFULA455', 'AE-RJ-45-LAN-DIP-A',
       'AE-DC-POWER-JACK-DIP', 'AE-PHONE-JACK-DIP', 'OSTA5131A', 'OSTAMA5B31A',
     ]);
     expect(new Set(all).size).toBe(all.length);
@@ -502,6 +502,7 @@ describe('教科書で使う 3 本足の IC・センサ・フィルタと 8 ピ�
   test.each([
     ['GY-9833', 7, ['VCC', 'DGND', 'SDATA', 'SCLK', 'FSYNC', 'AGND', 'OUT']],
     ['ADAFRUIT-1782', 8, ['VDD', 'GND', 'SCL', 'SDA', 'ALERT', 'A0', 'A1', 'A2']],
+    ['ADAFRUIT-2045', 7, ['CLK0', 'CLK1', 'CLK2', 'SCL', 'SDA', 'GND', 'VIN']],
   ] as const)('the module %s is %i pins in a row with a look', (model, count, names) => {
     const found = lookupPinout(model, count);
     expect(found?.names).toEqual(names);
@@ -514,6 +515,29 @@ describe('教科書で使う 3 本足の IC・センサ・フィルタと 8 ピ�
     expect(lookupPinout('gy9833', 7)?.model).toBe('GY-9833');
     // CJMCU-9833 の名の基板は並びが違う品が多いので、別名にしない。
     expect(lookupPinout('CJMCU-9833', 7)).toBeNull();
+  });
+
+  test('reads the Si5351A breakout by its Adafruit number, its generic name and the purple clone', () => {
+    // 並びは Adafruit の基板データ (シルクの左から 0 1 2 SCL SDA GND VIN)。数字だけの印字は番号と割れるので CLK を付ける。
+    for (const model of ['ADAFRUIT-2045', 'SI5351A-BREAKOUT', 'CJMCU-5351', 'adafruit-2045']) {
+      expect(lookupPinout(model, 7)?.model, model).toBe('ADAFRUIT-2045');
+    }
+    expect(lookupPinout('ADAFRUIT-2045', 7)?.names.some((name) => /^\d+$/.test(name))).toBe(false);
+    // 確かめていない名前 (GY-SI5351) は別名にしない。
+    expect(lookupPinout('GY-SI5351', 7)).toBeNull();
+    expect(lookupRole('ADAFRUIT-2045', 'en')).toBe('I2C clock generator breakout (Si5351A)');
+  });
+
+  test('keeps the Akizuki Si5351A module apart: a DIP-8 shaped board with its own order', () => {
+    // 秋月の説明書 (AE-Si5351A.PDF) の端子説明の表。7.62 mm 幅・2.54 mm ピッチの 8 本で、番号は DIP と同じ回り方。
+    const names = ['VDDO', 'SCL', 'SDA', 'GND', 'CLK0', 'CLK1', 'CLK2', 'VDD'];
+    for (const model of ['AE-SI5351A-B', 'AE-SI5351A', '110679', 'AE-Si5351A-B']) {
+      expect(lookupPinout(model, 8)?.names, model).toEqual(names);
+    }
+    expect(lookupPinout('AE-SI5351A-B', 8)?.look).toBeUndefined();
+    expect(lookupPinout('AE-SI5351A-B', 7)).toBeNull();
+    expect(lookupPinout('ADAFRUIT-2045', 8)).toBeNull();
+    expect(lookupRole('AE-SI5351A-B', 'en')).toBe('clock generator module (Si5351A, DIP-8 shape)');
   });
 
   test('names the role in English too', () => {

@@ -1,4 +1,4 @@
-import { isDirectSmd, smdMount } from 'fence-kit';
+import { TRIMMER_CAP_HOLES, isDirectSmd, smdMount } from 'fence-kit';
 import type { SmdMount } from 'fence-kit';
 import { notice, safeToken } from '../errors.ts';
 import type { Layout } from '../model/layout.ts';
@@ -127,5 +127,22 @@ function wrongMount(parts: readonly PlacedPart[], spelling: Spelling): FenceErro
   });
 }
 
+/**
+ * トリマコンデンサのピンの間隔。**端子は短い板で、抵抗のリードのように曲げて広げられない** ので、
+ * 実物の間隔 (5 mm = 2 穴) と違えば言う。直付けの面実装と同じく止めない — 図は書いたとおりに描く。
+ */
+function wrongTrimmerPitch(parts: readonly PlacedPart[], spelling: Spelling): FenceError[] {
+  return parts.flatMap((part) => {
+    if (part.type !== 'capacitor' || part.variant !== 'trimmer') return [];
+    const [first, second] = part.pins.map((pin) => pin.address);
+    if (first === undefined || second === undefined || straight(first, second, TRIMMER_CAP_HOLES)) return [];
+    return [notice(
+      `${safeToken(part.id)} (capacitor/trimmer) は間に 1 穴空けて (${TRIMMER_CAP_HOLES} 穴離して) 上下か左右に挿します`
+      + ` — ピンの間隔が 5 mm で、曲げて広げられません (書かれた穴: ${formatAddress(first, spelling)} ${formatAddress(second, spelling)})`,
+      part.line,
+    )];
+  });
+}
+
 export const checkFit = (parts: readonly PlacedPart[], layout: Layout, spelling: Spelling): FenceError[] =>
-  [...collisions(parts, layout), ...tooTight(parts, spelling), ...wrongMount(parts, spelling)];
+  [...collisions(parts, layout), ...tooTight(parts, spelling), ...wrongMount(parts, spelling), ...wrongTrimmerPitch(parts, spelling)];

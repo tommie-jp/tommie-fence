@@ -23,10 +23,11 @@ export function bandColors(type: string, value: string | null): readonly string[
 
 /**
  * コンデンサの胴に刷ってある 3 桁の記号 (`100n` → `104`)。**電解は値をそのまま刷る**ので出さない。
+ * トリマは胴に記号が無く、最大容量は胴の色で見分ける物なので出さない。
  * 3 桁で書けない値 (10pF 未満・丸めると別の値) も出さない。
  */
 export function capacitorMark(type: string, variant: string | null, value: string | null): string {
-  if (type !== 'capacitor' || variant === 'electrolytic' || value === null) return '';
+  if (type !== 'capacitor' || variant === 'electrolytic' || variant === 'trimmer' || value === null) return '';
 
   const picofarads = parsePicofarads(value);
   return picofarads === null ? '' : capacitorCode(picofarads) ?? '';

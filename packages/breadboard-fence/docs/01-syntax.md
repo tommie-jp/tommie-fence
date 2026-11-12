@@ -652,15 +652,16 @@ parts:
 
 ```bread
 # ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
-title: 図14 コンデンサの 4 つの姿
+title: 図14 コンデンサの 5 つの姿
 parts:
-  C1: capacitor/ceramic a5 a8 0.1u
-  C2: capacitor/film a12 a15 0.47u
-  C3: capacitor/electrolytic a19(+) a22(-) 100u
-  C4: capacitor/tantalum a26(+) a29(-) 10u
+  C1: capacitor/ceramic a3 a6 0.1u
+  C2: capacitor/film a9 a12 0.47u
+  C3: capacitor/electrolytic a15(+) a18(-) 100u
+  C4: capacitor/tantalum a21(+) a24(-) 10u
+  TC1: capacitor/trimmer a27 a29 50p
 ```
 
-![図14 コンデンサの 4 つの姿](out/01-syntax-14.svg)
+![図14 コンデンサの 5 つの姿](out/01-syntax-14.svg)
 
 | 種類 | 選べる姿 | 描かれ方 |
 | --- | --- | --- |
@@ -668,6 +669,7 @@ parts:
 | | `film` | 角い胴 (無極性の既定) |
 | | `electrolytic` | 帯つきの缶。**マイナス側**に帯 |
 | | `tantalum` | 黄色い粒。**プラス側**に印 |
+| | `trimmer` | トリマコンデンサ (セラミックトリマ)。上から見た丸い胴に、回す所と溝。値は最大容量 (`50p`)。**同じ行で 2 列離す** (`a27 a29`) |
 | `led` | `3mm` / `5mm` | 玉の大きさ。既定は `5mm`。値は色 (`red` `green` `blue` `yellow` `white` `orange`、赤外 LED は `ir` で透明な胴) |
 | `phototransistor` | `3mm` / `5mm` | 同上。胴は黒く、平らな面は描かない (平らな側が C の品と E の品がある) |
 | `transistor` | `to92` / `to220` / `sot23-dip` / `sot346-dip` / `sot89-dip` | 丸い胴 (既定) / 放熱タブつきの角い胴 / 面実装を載せた変換基板 (SOT-23・S-Mini・SOT-89) |
@@ -695,6 +697,11 @@ parts:
   同じ `0.1u` でもどれを買うかはそこで決まるため。
 - **電解の帯はマイナス側、タンタルの印はプラス側**で、同じコンデンサでも印の意味が逆。
   取り違えると壊れるので、形から先に見分けられるようにしてある。
+- **トリマコンデンサ (`capacitor/trimmer`) は、同じ行で間に 1 列空けて 2 列離して挿す** (`a5 a7`)。
+  6 mm 級のセラミックトリマはピンの間隔が 5 mm で、端子は短い板なので抵抗のリードのように曲げて広げられない。
+  違う間隔で書くと、図は書いたとおりに描いたうえで置き方をお知らせで言う。胴に 3 桁の記号は刷らない
+  (実物は胴の色で最大容量を見分ける)。回路図の `capacitor-var` (可変コンデンサ) にあたる。
+  ポリバリコンは格子に乗らないので、今までどおり機器 (`device`) で書く。
 - **無極性の姿に極性を書いたときは描かずに報告する** (そのまま組むと壊れるため)。
   向きを書かなかったときの決まりは [極性と向き](#極性と向き)。
 

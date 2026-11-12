@@ -75,20 +75,21 @@ parts:
   C2: capacitor/film b20 b24
   C3: capacitor/electrolytic b26 b30
   C4: capacitor/tantalum b32 b36
-  D1: led/3mm b38 b42
-  D2: led/5mm e2 e6
-  D3: diode/do35 e8 e12
-  D4: diode/do41 e14 e18
-  L1: inductor/axial e20 e24
-  L2: inductor/radial e26 e30
-  X1: crystal/hc49 e32 e36
-  X2: crystal/cylinder e38 e42
-  D5: zener/do35 h2 h6
-  D6: zener/do41 h8 h12
-  D7: schottky/do35 h14 h18
-  D8: schottky/do41 h20 h24
-  Q1: phototransistor/3mm h26 h30
-  Q2: phototransistor/5mm h32 h36
+  C5: capacitor/trimmer b38 b40
+  D1: led/3mm e2 e6
+  D2: led/5mm e8 e12
+  D3: diode/do35 e14 e18
+  D4: diode/do41 e20 e24
+  L1: inductor/axial e26 e30
+  L2: inductor/radial e32 e36
+  X1: crystal/hc49 e38 e42
+  X2: crystal/cylinder h2 h6
+  D5: zener/do35 h8 h12
+  D6: zener/do41 h14 h18
+  D7: schottky/do35 h20 h24
+  D8: schottky/do41 h26 h30
+  Q1: phototransistor/3mm h32 h36
+  Q2: phototransistor/5mm h38 h42
 ```
 
 ![図02 2 ピンの部品の姿](out/13-gallery-leads-2.svg)

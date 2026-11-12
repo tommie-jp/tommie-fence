@@ -200,8 +200,46 @@ function tantalumCapBody(part: BodyPart, span: number, ink: BodyInk): string {
   return shell + mark;
 }
 
+/**
+ * トリマコンデンサのピンの間隔 (穴の数)。6 mm 級のセラミックトリマ (村田 TZ03 の E タイプなど) の
+ * 取り付け穴は 5 mm で、2.54 mm の格子では**間に 1 穴空けた 2 穴** (5.08 mm)。端子は短い板で、
+ * 抵抗のリードのように曲げて広げられない。置く側 (breadboard・perfboard) がこの数と突き合わせる。
+ */
+export const TRIMMER_CAP_HOLES = 2;
+
+/** トリマの胴の半径の上限 (px) と、ピンの間隔に対する比。ほかの 2 ピンと同じく実寸より小さく描く。 */
+const TRIMMER_CAP_RADIUS = 14;
+const TRIMMER_CAP_RATIO = 0.35;
+const trimmerCapRadius = (span: number): number => Math.min(span * TRIMMER_CAP_RATIO, TRIMMER_CAP_RADIUS);
+
+/**
+ * トリマコンデンサ (セラミックトリマ) を**上から**。丸い樹脂の胴の真ん中に金属のローターがあり、
+ * そこにドライバーで回す溝が 1 本ある。色はコンデンサの系統 (橙) のまま、**形で見分けさせる** —
+ * 円板のセラミックとは、内側の丸と溝で区別できる。
+ *
+ * **3 桁コードは刷らない。** 実物の胴に字は無く、最大容量は胴の色で見分ける (値は名札に出る)。
+ * **溝は斜め** — ピンの線 (x 軸) に重ねると、リードが胴を貫いているように見える。
+ */
+function trimmerCapBody(span: number, ink: BodyInk): string {
+  const radius = trimmerCapRadius(span);
+  const rotor = radius * 0.62;
+  const slot = rotor * Math.SQRT1_2 * 0.92;
+  const shell = element('circle', {
+    cx: 0, cy: 0, r: num(radius), fill: ink.paint('#d9822b'), stroke: ink.paint('#8a4f14'),
+  });
+  const disc = element('circle', {
+    cx: 0, cy: 0, r: num(rotor), fill: ink.paint('#d4d8de'), stroke: ink.paint('#7c848e'),
+  });
+  const groove = element('line', {
+    x1: num(-slot), y1: num(slot), x2: num(slot), y2: num(-slot),
+    stroke: ink.paint('#3a3f46'), 'stroke-width': num(Math.max(radius * 0.16, 1.2)), 'stroke-linecap': 'butt',
+  });
+  return shell + disc + groove;
+}
+
 function capacitorBody(part: BodyPart, span: number, ink: BodyInk): string {
   const look = capacitorLook(part);
+  if (look === 'trimmer') return trimmerCapBody(span, ink);
   if (look === 'ceramic') return ceramicCapBody(part, span, ink);
   if (look === 'film') return filmCapBody(part, span, ink);
   if (look === 'tantalum') return tantalumCapBody(part, span, ink);
@@ -952,6 +990,7 @@ export function bodySize(part: BodyPart, span: number): { readonly width: number
     case 'capacitor': {
       const look = capacitorLook(part);
       if (look === 'ceramic') return twice(Math.min(span * 0.45, 9.5));
+      if (look === 'trimmer') return twice(trimmerCapRadius(span));
       if (look === 'tantalum') return { width: Math.min(span * 0.55, 30), height: 17 };
       if (look === 'electrolytic') return { width: Math.min(span * 0.6, 34), height: 19 };
       return { width: Math.min(span * 0.55, 30), height: 16 };

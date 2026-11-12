@@ -44,7 +44,7 @@ describe('splitPartType', () => {
 
 describe('variantsOf', () => {
   test('lists the looks a capacitor can be drawn as', () => {
-    expect(variantsOf('capacitor')).toEqual(['ceramic', 'film', 'electrolytic', 'tantalum']);
+    expect(variantsOf('capacitor')).toEqual(['ceramic', 'film', 'electrolytic', 'tantalum', 'trimmer']);
   });
 
   test('lists the looks of the parts whose package differs by size', () => {

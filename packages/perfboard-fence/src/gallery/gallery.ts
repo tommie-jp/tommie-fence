@@ -1,4 +1,4 @@
-import { boardPartNames, discreteTable, moduleTable, namedChipTypes, pinoutTable } from 'fence-kit';
+import { TRIMMER_CAP_HOLES, boardPartNames, discreteTable, moduleTable, namedChipTypes, pinoutTable } from 'fence-kit';
 import type { PinoutRow } from 'fence-kit';
 import { rowLabel } from '../core/model/address.ts';
 import { partPrefix } from '../core/parts/catalog.ts';
@@ -105,7 +105,8 @@ function kindItem(type: string, variant: string | null): Item | null {
   if (isDirectSmd(variant) && variant !== null) return smdItem(prefix, token, variant);
   switch (kind) {
     case 'two-lead':
-      return leaded(prefix, token, 2, type === 'sma' ? 7 : SMALL_TWO, undefined, 4);
+      // トリマコンデンサはピンの間隔が決まっている (2 穴)。ほかは 4 穴離して胴を見せる。
+      return leaded(prefix, token, 2, type === 'sma' ? 7 : SMALL_TWO, undefined, variant === 'trimmer' ? TRIMMER_CAP_HOLES : 4);
     case 'three-lead':
       return leaded(prefix, token, 3, big ? BIG : SMALL_THREE);
     case 'wound': {

@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- 機器 (`device`) の `model:` と多端子部品の型番で、`ADAFRUIT-2045` (Si5351A のクロック発生器のブレークアウト、7 ピン。紫の互換基板 `CJMCU-5351` も同じ) と `AE-SI5351A-B` (秋月の Si5351A モジュール、DIP8 形) のピンの名前を引ける (fence-kit の表)。早見表・部品ギャラリー (examples/21・23) にも足した
+- 文法リファレンスと早見表に、可変コンデンサ (`capacitor-var`) の基板での書き方 (トリマは `capacitor/trimmer`、ポリバリコンは `device`) を書いた
+
 ## [0.48.0] - 2026-11-04
 
 ### Added

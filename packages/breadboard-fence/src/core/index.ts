@@ -2,6 +2,7 @@ import { applyExpectations, hasSheets, keptSourceLines, renderSheets, resolveLan
 import type { Lang, Scene, SceneEndKind, SheetExtras, SheetPoint } from 'fence-kit';
 import { breadboardScene } from './render/scene.ts';
 import { toroidNotices } from './parts/toroidNotices.ts';
+import { trimmerNotices } from './parts/trimmerNotices.ts';
 import { attachSourceText, fail, fenceError, notice, ok, safeToken, shiftErrors } from './errors.ts';
 import { normalizeNewlines } from './newlines.ts';
 import { LIMITS } from './limits.ts';
@@ -215,6 +216,7 @@ function renderOneSheet(input: string, options: OneSheetOptions): RenderResult &
   const placement = placeParts(parsed.doc.parts, board);
   errors.push(...placement.errors);
   errors.push(...toroidNotices(placement.parts));
+  errors.push(...trimmerNotices(placement.parts));
 
   const resolved = resolveStyle(parsed.doc.style);
   const style = resolved.style;

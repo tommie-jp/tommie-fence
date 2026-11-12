@@ -177,47 +177,51 @@ parts:
       model: ADAFRUIT-1782
   M9:
       type: device
-      at: 4.5,5
-      model: TA7642
+      at: 4.75,5
+      model: ADAFRUIT-2045
   M10:
       type: device
-      at: 6.25,5
-      model: A3144
+      at: 7,5
+      model: TA7642
   M11:
       type: device
-      at: 8.25,5
-      model: A1324
+      at: 9,5
+      model: A3144
   M12:
       type: device
-      at: 10.25,5
-      model: LM35
+      at: 10.75,5
+      model: A1324
   M13:
       type: device
-      at: 12.25,5
-      model: SFELF10M7
+      at: 12.75,5
+      model: LM35
   M14:
       type: device
-      at: 14.25,5
-      model: CFULA455
+      at: 14.75,5
+      model: SFELF10M7
   M15:
       type: device
-      at: 2.25,8
-      model: AE-RJ-45-LAN-DIP-A
+      at: 2,8
+      model: CFULA455
   M16:
       type: device
-      at: 5.25,8
-      model: AE-DC-POWER-JACK-DIP
+      at: 4.25,8
+      model: AE-RJ-45-LAN-DIP-A
   M17:
       type: device
-      at: 8,8
-      model: AE-PHONE-JACK-DIP
+      at: 7.25,8
+      model: AE-DC-POWER-JACK-DIP
   M18:
       type: device
-      at: 10.5,8
-      model: OSTA5131A
+      at: 10,8
+      model: AE-PHONE-JACK-DIP
   M19:
       type: device
       at: 12.5,8
+      model: OSTA5131A
+  M20:
+      type: device
+      at: 14.5,8
       model: OSTAMA5B31A
 ```
 

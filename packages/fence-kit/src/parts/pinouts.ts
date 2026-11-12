@@ -764,6 +764,32 @@ const ROWS: readonly PinoutRow[] = [
     look: { body: '#1f2a44', edge: '#111827' },
     note: '`sip8` を濃い青の帯で描く (基板のピンヘッダだけ)。SCL・SDA は基板に 10 kΩ のプルアップがある。アドレスは既定 0x18 (A0〜A2 で 0x18〜0x1F)',
   },
+  {
+    // Adafruit 2045 (Si5351A のクロック発生器のブレークアウト、1 列 7 本)。Adafruit の GitHub の基板データ
+    // (Adafruit-Si5351A-Clock-Generator-Breakout-PCB の Adafruit Si5351A.brd、2026-11-12 に確かめた): ヘッダ JP1 の
+    // 部品面のシルクは、ヘッダを手前にして左から `0` `1` `2` `SCL` `SDA` `GND` `VIN` (x = 7.62〜22.86 mm)。
+    // 信号は JP1 の 7 番 CLK0・6 番 CLK1・5 番 CLK2・4 番 SCL_5V・3 番 SDA_5V・2 番 GND・1 番 VIN で、
+    // **Eagle のパッドの番号は右から数える** (1 番が VIN)。表は ADAFRUIT-1782 と同じく左からの並び。
+    // **出力の印字は数字だけ** (`0` `1` `2`) なので、番号と割れないよう基板データの信号名 (SMA の側のシルクも
+    // `CLK0`〜`CLK2`) で呼ぶ — CD4017B の出力に `Q` を付けたのと同じ決まり。
+    // 紫の互換基板 CJMCU-5351 は販売元 (DollaTek) の説明書の写真で同じ印字・同じ並びを確かめたので別名に入れる
+    // (https://manuals.plus/asin/B07HBMLN1S.pdf)。`GY-SI5351` の名の基板は確かめていないので入れない。
+    models: ['ADAFRUIT-2045', 'SI5351A-BREAKOUT', 'CJMCU-5351'], role: 'I2C クロック発生器のブレークアウト (Si5351A)',
+    names: ['CLK0', 'CLK1', 'CLK2', 'SCL', 'SDA', 'GND', 'VIN'],
+    look: { body: '#1f2a44', edge: '#111827' },
+    note: '`sip7` を濃い青の帯で描く (基板のピンヘッダだけ)。出力の印字は `0` `1` `2` (番号と割れないよう `CLK0`〜`CLK2` で呼ぶ)。VIN は 3〜5 V (基板に 3.3 V のレギュレータ)、SCL・SDA は基板でレベル変換 (10 kΩ のプルアップつき)。出力は 3 Vpp の方形波、アドレスは 0x60。紫の互換基板 (`CJMCU-5351`) も同じ印字',
+  },
+  {
+    // 秋月の Si5351A モジュール (型番 AE-Si5351A-B、販売コード 110679)。10 mm 角の基板に 2.54 mm ピッチの穴が
+    // 4 個ずつ 2 列 (列の間 7.62 mm) で、**DIP8 と同じ形**。秋月の説明書
+    // https://akizukidenshi.com/goodsaffix/AE-Si5351A.PDF の端子説明の表と基板図 (2026-11-12 に確かめた):
+    // 1 VDDO・2 SCL・3 SDA・4 GND・5 CLK0・6 CLK1・7 CLK2・8 VDD。基板図のシルクは左の列が上から
+    // VDDO SCL SDA GND、右の列が上から VDD CLK2 CLK1 CLK0 で、番号は DIP と同じ回り方。
+    // レギュレータもレベル変換もプルアップも載っていない (回路図は IC・水晶・0.1 µF 2 個だけ)。
+    models: ['AE-SI5351A-B', 'AE-SI5351A', '110679'], role: 'クロック発生器のモジュール (Si5351A、DIP8 形)',
+    names: ['VDDO', 'SCL', 'SDA', 'GND', 'CLK0', 'CLK1', 'CLK2', 'VDD'],
+    note: '秋月の 10 mm 角の基板 (`dip8` で置く)。**電源は 3.3 V** — `VDD` (コア) は 2.5〜3.3 V、`VDDO` (出力) は 1.8〜3.3 V で、5 V は掛けられない。レベル変換もプルアップも無いので SCL・SDA は 3.3 V に吊る。アドレスは 0x60',
+  },
   // --- 3 本足の IC・センサ (TO-92 と Allegro の UA)。並びは印字面を手前、足を下にして左から 1・2・3 ---
   {
     // 東芝の原本は見つからず、互換の UTC 7642 (TO-92) と Wiltronics の資料による。UTC の SOT-23 は並びが違う。

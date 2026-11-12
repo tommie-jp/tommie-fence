@@ -57,7 +57,7 @@ export { fit, textWidth } from './textFit.ts';
 export { placeLabels, segmentCrossesBox } from './labelPlace.ts';
 export type { Box, LabelRequest, Pixel, PlacedLabel } from './labelPlace.ts';
 export {
-  REAL_INK, SMA_SIZE, bodySize, crystalCan, drawBody, drawsOwnLeads, hasBody, smaBody, transformerCore, transformerExtent,
+  REAL_INK, SMA_SIZE, TRIMMER_CAP_HOLES, bodySize, crystalCan, drawBody, drawsOwnLeads, hasBody, smaBody, transformerCore, transformerExtent,
 } from './parts/bodies.ts';
 export {
   TAPPED_TRANSFORMER_PINS, TOROID_CORES, formatInductance, lookupToroid, parseToroidValue, tappedTransformerPins,

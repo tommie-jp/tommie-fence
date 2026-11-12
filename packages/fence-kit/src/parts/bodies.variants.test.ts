@@ -67,7 +67,7 @@ describe('胴の総なめ', () => {
 
 describe('姿で描き分ける', () => {
   const VARIANTS: readonly (readonly [string, string])[] = [
-    ['capacitor', 'ceramic'], ['capacitor', 'film'], ['capacitor', 'electrolytic'], ['capacitor', 'tantalum'],
+    ['capacitor', 'ceramic'], ['capacitor', 'film'], ['capacitor', 'electrolytic'], ['capacitor', 'tantalum'], ['capacitor', 'trimmer'],
     ['led', '3mm'], ['led', '5mm'],
     ['diode', 'do35'], ['diode', 'do41'],
     ['resistor', 'half'],
@@ -87,7 +87,7 @@ describe('姿で描き分ける', () => {
       if (seen.size === 1) continue;
       expect(seen.size, `${type} の姿が描き分けられていない`).toBeGreaterThan(1);
     }
-    expect(byType.get('capacitor')?.size).toBe(4);
+    expect(byType.get('capacitor')?.size).toBe(5);
     expect(byType.get('led')?.size).toBe(2);
     expect(byType.get('diode')?.size).toBe(2);
   });

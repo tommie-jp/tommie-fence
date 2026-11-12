@@ -81,6 +81,7 @@ parts:
 - 抵抗系 `resistor` `resistor-var` `potentiometer` `photoresistor`
   `thermistor` `thermistor-ntc` `thermistor-ptc` `varistor`
 - 容量・コイル `capacitor` `capacitor-var` `ecap` `varicap` `inductor` `crystal`
+  (`capacitor-var` は基板の図では、トリマが `capacitor/trimmer`、ポリバリコンが機器 `device`)
 - ダイオード系 `diode` `led` `zener` `schottky` `photodiode` `diac`
   `thyristor` `triac`
 - 電源 `vsource` `sine` `square` `triangle` `isource` `battery` `solar`
@@ -240,6 +241,8 @@ parts:
 | `HC-SR501` (`HCSR501`) | `sip3` | `VCC` `OUT` `GND` (人感 (焦電) センサのモジュール。緑の帯で描く (基板のピンヘッダだけ)。電源は 4.5〜20 V、`OUT` は 3.3 V の H。見る向きで左右が逆になるので、基板の印字で確かめる) |
 | `GY-9833` (`GY9833`) | `sip7` | `VCC` `DGND` `SDATA` `SCLK` `FSYNC` `AGND` `OUT` (AD9833 の DDS モジュール。紫の帯で描く。印字に `DGND` `AGND` がある版。**実物で確かめる: 製造元の図が無く、並びは個人の KiCad データ 5 つの一致による。CJMCU-9833 の名の基板は REF VCC GND DAT CLK FNC OUT の別の並びが多い。実物は基板の印字で確かめる**) |
 | `ADAFRUIT-1782` (`MCP9808-BREAKOUT`) | `sip8` | `VDD` `GND` `SCL` `SDA` `ALERT` `A0` `A1` `A2` (Adafruit の MCP9808 ブレークアウト。濃い青の帯で描く。SCL・SDA は基板に 10 kΩ のプルアップ。既定のアドレスは 0x18) |
+| `ADAFRUIT-2045` (`SI5351A-BREAKOUT` `CJMCU-5351`) | `sip7` | `CLK0` `CLK1` `CLK2` `SCL` `SDA` `GND` `VIN` (`sip7` を濃い青の帯で描く (基板のピンヘッダだけ)。出力の印字は `0` `1` `2` (番号と割れないよう `CLK0`〜`CLK2` で呼ぶ)。VIN は 3〜5 V (基板に 3.3 V のレギュレータ)、SCL・SDA は基板でレベル変換 (10 kΩ のプルアップつき)。出力は 3 Vpp の方形波、アドレスは 0x60。紫の互換基板 (`CJMCU-5351`) も同じ印字) |
+| `AE-SI5351A-B` (`AE-SI5351A` `110679`) | `dip8` | `VDDO` `SCL` `SDA` `GND` `CLK0` `CLK1` `CLK2` `VDD` (秋月の 10 mm 角の基板 (`dip8` で置く)。**電源は 3.3 V** — `VDD` (コア) は 2.5〜3.3 V、`VDDO` (出力) は 1.8〜3.3 V で、5 V は掛けられない。レベル変換もプルアップも無いので SCL・SDA は 3.3 V に吊る。アドレスは 0x60) |
 | `TA7642` (`7642` `UTC7642`) | `sip3` / `ic3` | `GND` `IN` `OUT` (AM ラジオ IC。黒い TO-92 の胴。`OUT` は抵抗を通して電源へ。東芝の原本の資料は無く、互換品 (UTC 7642) の資料による) |
 | `A3144` (`A3144E` `A3144EUA` `OH3144`) | `sip3` / `ic3` | `VCC` `GND` `OUT` (ホールスイッチ。黒い胴 (実物は TO-92 より小さい UA)。`OUT` は開放コレクタで、プルアップが要る) |
 | `A1324` (`A1324LUA-T` `A1325` `A1326`) | `sip3` / `ic3` | `VCC` `GND` `VOUT` (リニアホールセンサ。**出力は 3 番**。磁界が無いと `VCC` の半分を出す) |

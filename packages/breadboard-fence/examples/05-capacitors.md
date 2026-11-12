@@ -3,24 +3,27 @@
 同じ `capacitor` でも、実物はセラミック・フィルム・電解で姿が違う。
 種類に続けて `capacitor/ceramic` のように書くと、その姿で描かれる。
 
-## 4 種類を並べる
+## 5 種類を並べる
 
 ```bread
 # ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
-title: 図01 コンデンサの 4 つの姿
+title: 図01 コンデンサの 5 つの姿
 board: half
 parts:
-  C1: capacitor/ceramic a5 a8 100n
-  C2: capacitor/film a12 a15 470n
-  C3: capacitor/electrolytic a19(+) a22(-) 100u
-  C4: capacitor/tantalum a26(+) a29(-) 10u
+  C1: capacitor/ceramic a3 a6 100n
+  C2: capacitor/film a9 a12 470n
+  C3: capacitor/electrolytic a15(+) a18(-) 100u
+  C4: capacitor/tantalum a21(+) a24(-) 10u
+  TC1: capacitor/trimmer a27 a29 50p
 notes:
   - source blue
 ```
 
-![図01 コンデンサの 4 つの姿](out/05-capacitors-1.svg)
+![図01 コンデンサの 5 つの姿](out/05-capacitors-1.svg)
 
-- **セラミックは円板、フィルムは角い胴、電解は帯つきの缶、タンタルは黄色い粒**。
+- **セラミックは円板、フィルムは角い胴、電解は帯つきの缶、タンタルは黄色い粒、トリマは溝のある丸い胴**。
+- **トリマコンデンサは同じ行で 2 列離す** (`a27 a29`)。ピンの間隔が 5 mm と決まっていて、曲げて広げられない。
+  値は最大容量を書く (`50p`)。
 - **電解の帯はマイナス側、タンタルの印はプラス側**で、同じコンデンサでも印の意味が逆。
   取り違えると壊れるので、形から先に見分けられるようにしてある。
 - 図の下の部品リストには `capacitor/ceramic` と種類ごと並ぶ。
