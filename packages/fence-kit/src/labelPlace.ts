@@ -1,9 +1,7 @@
-import type { Rect } from './page.ts';
-
 /**
- * 点の名札の置き場。**点の周りの 8 方向を決まった順に試し、最初に空いている所へ置く**
+ * 点の名札の置き場 (graph の点の名札と spectrum のマーカーの名札)。**点の周りの 8 方向を決まった順に試し、最初に空いている所へ置く**
  * (上 → 右上 → 右 → 右下 → 下 → 左下 → 左 → 左上。近い輪で空きが無ければ、少し離した輪で同じ順に)。空いている = 枠の内に収まり、
- * 先に置いた名札・ほかの名札つきの点・線のどれにも掛からない。
+ * 先に置いた名札・ほかの名札つきの点・線・避ける箱 (`obstacles`) のどれにも掛からない。
  *
  * どこも空いていなければ**上に置いて枠の内へ寄せ、`clash` で言う** — 名札は図の中身なので
  * 省かない (mark の字は読み値の表に同じ値があるので省くが、名札は図にしか無い)。
@@ -38,7 +36,7 @@ const candidates = ({ x, y, width, height }: LabelRequest, gap: number): readonl
   { x: x - gap - width, y: y - gap - height },
 ].map((corner) => ({ ...corner, width, height }));
 
-const within = (box: Box, rect: Rect): boolean =>
+const within = (box: Box, rect: Box): boolean =>
   box.x >= rect.x && box.y >= rect.y && box.x + box.width <= rect.x + rect.width && box.y + box.height <= rect.y + rect.height;
 
 const boxesOverlap = (a: Box, b: Box): boolean =>
@@ -77,14 +75,19 @@ const crossesAny = (box: Box, lines: readonly (readonly Pixel[])[]): boolean => 
   return false;
 });
 
-const clampInto = (box: Box, rect: Rect): Box => ({
+const clampInto = (box: Box, rect: Box): Box => ({
   ...box,
   x: Math.max(rect.x, Math.min(box.x, rect.x + rect.width - box.width)),
   y: Math.max(rect.y, Math.min(box.y, rect.y + rect.height - box.height)),
 });
 
-/** `wanted` の順に置く (書いた順が優先)。`lines` は避ける線 (px の折れ線)。 */
-export function placeLabels(wanted: readonly LabelRequest[], rect: Rect, lines: readonly (readonly Pixel[])[]): readonly PlacedLabel[] {
+/**
+ * `wanted` の順に置く (書いた順が優先)。`rect` は名札を収める枠、`lines` は避ける線 (px の折れ線)、
+ * `obstacles` は避ける箱 (spectrum のマーカーの ▽ と番号など。無ければ空)。
+ */
+export function placeLabels(
+  wanted: readonly LabelRequest[], rect: Box, lines: readonly (readonly Pixel[])[], obstacles: readonly Box[] = [],
+): readonly PlacedLabel[] {
   const dots: readonly Box[] = wanted.map((one) => ({
     x: one.x - DOT_CLEARANCE, y: one.y - DOT_CLEARANCE, width: DOT_CLEARANCE * 2, height: DOT_CLEARANCE * 2,
   }));
@@ -95,6 +98,7 @@ export function placeLabels(wanted: readonly LabelRequest[], rect: Rect, lines: 
     const free = options.find((box) => within(box, rect)
       && !taken.some((other) => boxesOverlap(box, other))
       && !dots.some((dot) => boxesOverlap(box, dot))
+      && !obstacles.some((other) => boxesOverlap(box, other))
       && !crossesAny(box, lines));
     const box = free ?? (options[0] as Box);
     taken.push(box);

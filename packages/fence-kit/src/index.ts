@@ -54,6 +54,8 @@ export {
   bandColor, ledColor, wireColor, wireColorNames,
 } from './colors.ts';
 export { fit, textWidth } from './textFit.ts';
+export { placeLabels, segmentCrossesBox } from './labelPlace.ts';
+export type { Box, LabelRequest, Pixel, PlacedLabel } from './labelPlace.ts';
 export {
   REAL_INK, SMA_SIZE, bodySize, crystalCan, drawBody, drawsOwnLeads, hasBody, smaBody, transformerCore, transformerExtent,
 } from './parts/bodies.ts';

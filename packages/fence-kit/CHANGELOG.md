@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added
+
+- **名札の置き場 (`placeLabels` `segmentCrossesBox`、型 `Box` `Pixel` `LabelRequest` `PlacedLabel`)。** graph の点の名札の置き方
+  (点の周りの 8 方向を近い輪から試し、枠の内で線・ほかの名札・点に掛からない最初の所。空きが無ければ重ねて `clash` で言う) を
+  引き上げた。spectrum のマーカーの名札が 2 つ目の使い手。避ける箱 (`obstacles`、既定は空) を渡せる
+
 ## [0.38.0] - 2026-11-10
 
 ### Added

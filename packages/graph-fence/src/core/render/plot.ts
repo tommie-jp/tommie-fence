@@ -1,7 +1,6 @@
-import { BOLD_FAMILY, element, num, svgText, textWidth } from 'fence-kit';
+import { BOLD_FAMILY, element, num, placeLabels, svgText, textWidth } from 'fence-kit';
+import type { Pixel } from 'fence-kit';
 import type { Axis } from '../layout/axis.ts';
-import { placeLabels } from '../layout/labels.ts';
-import type { Pixel } from '../layout/labels.ts';
 import type { Rect } from '../layout/page.ts';
 import type { Point } from '../model/lines.ts';
 import { xAt, yAt } from './axes.ts';

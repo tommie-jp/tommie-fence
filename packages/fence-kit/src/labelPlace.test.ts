@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { placeLabels } from './labels.ts';
-import type { Box } from './labels.ts';
+import { placeLabels } from './labelPlace.ts';
+import type { Box } from './labelPlace.ts';
 
 const RECT = { x: 0, y: 0, width: 400, height: 300 };
 const SIZE = { width: 60, height: 12 };
@@ -52,6 +52,16 @@ describe('placeLabels', () => {
       expect(one.box.x).toBeGreaterThanOrEqual(0);
       expect(one.box.x + one.box.width).toBeLessThanOrEqual(62);
     }
+  });
+
+  test('keeps clear of the boxes it is told to avoid', () => {
+    // 点の真上に箱 (spectrum のマーカーの ▽ と番号)。上は塞がっているので別の向きへ。
+    const glyph = { x: 190, y: 120, width: 20, height: 30 };
+    const [placed] = placeLabels([{ x: 200, y: 150, ...SIZE }], RECT, [], [glyph]);
+    expect(placed?.clash).toBe(false);
+    expect(overlap(placed?.box as Box, glyph)).toBe(false);
+    // 箱を渡さなければ今までどおり上。
+    expect(placeLabels([{ x: 200, y: 150, ...SIZE }], RECT, [])[0]?.box.x).toBe(200 - SIZE.width / 2);
   });
 
   test('gives the same answer every time', () => {
