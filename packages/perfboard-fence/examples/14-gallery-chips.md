@@ -121,6 +121,7 @@ parts:
   U6: dip14 g2 74HC164
   U7: dip14 g11 74HC4066
   U8: dip14 g20 LM324
+  U9: dip14 g29 74LS00
 ```
 
 ![図04 DIP14 の型番 (2/2)](out/14-gallery-chips-4.svg)

@@ -66,7 +66,7 @@ parts:
 
 ```bread
 # ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
-title: 図04 DIP14 の型番 (1/4)
+title: 図04 DIP14 の型番 (1/5)
 board: full
 parts:
   U1: dip14 @ e2 CD4069UB
@@ -78,11 +78,11 @@ parts:
   U7: dip14 @ e56 CD4070B
 ```
 
-![図04 DIP14 の型番 (1/4)](out/19-gallery-chips-4.svg)
+![図04 DIP14 の型番 (1/5)](out/19-gallery-chips-4.svg)
 
 ```bread
 # ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
-title: 図05 DIP14 の型番 (2/4)
+title: 図05 DIP14 の型番 (2/5)
 board: full
 parts:
   U1: dip14 @ e2 CD40106B
@@ -94,11 +94,11 @@ parts:
   U7: dip14 @ e56 74HC74
 ```
 
-![図05 DIP14 の型番 (2/4)](out/19-gallery-chips-5.svg)
+![図05 DIP14 の型番 (2/5)](out/19-gallery-chips-5.svg)
 
 ```bread
 # ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
-title: 図06 DIP14 の型番 (3/4)
+title: 図06 DIP14 の型番 (3/5)
 board: full
 parts:
   U1: dip14 @ e2 74HC14
@@ -110,11 +110,11 @@ parts:
   U7: dip14 @ e56 74HC30
 ```
 
-![図06 DIP14 の型番 (3/4)](out/19-gallery-chips-6.svg)
+![図06 DIP14 の型番 (3/5)](out/19-gallery-chips-6.svg)
 
 ```bread
 # ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
-title: 図07 DIP14 の型番 (4/4)
+title: 図07 DIP14 の型番 (4/5)
 board: full
 parts:
   U1: dip14 @ e2 74HC132
@@ -126,7 +126,17 @@ parts:
   U7: dip14 @ e56 LM324
 ```
 
-![図07 DIP14 の型番 (4/4)](out/19-gallery-chips-7.svg)
+![図07 DIP14 の型番 (4/5)](out/19-gallery-chips-7.svg)
+
+```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
+title: 図08 DIP14 の型番 (5/5)
+board: full
+parts:
+  U1: dip14 @ e2 74LS00
+```
+
+![図08 DIP14 の型番 (5/5)](out/19-gallery-chips-8.svg)
 
 ## DIP16
 
@@ -134,7 +144,7 @@ parts:
 
 ```bread
 # ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
-title: 図08 DIP16 の型番 (1/5)
+title: 図09 DIP16 の型番 (1/5)
 board: full
 parts:
   U1: dip16 @ e2 CD4017B
@@ -145,11 +155,11 @@ parts:
   U6: dip16 @ e52 CD4511B
 ```
 
-![図08 DIP16 の型番 (1/5)](out/19-gallery-chips-8.svg)
+![図09 DIP16 の型番 (1/5)](out/19-gallery-chips-9.svg)
 
 ```bread
 # ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
-title: 図09 DIP16 の型番 (2/5)
+title: 図10 DIP16 の型番 (2/5)
 board: full
 parts:
   U1: dip16 @ e2 CD74HC283
@@ -160,11 +170,11 @@ parts:
   U6: dip16 @ e52 74HC139
 ```
 
-![図09 DIP16 の型番 (2/5)](out/19-gallery-chips-9.svg)
+![図10 DIP16 の型番 (2/5)](out/19-gallery-chips-10.svg)
 
 ```bread
 # ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
-title: 図10 DIP16 の型番 (3/5)
+title: 図11 DIP16 の型番 (3/5)
 board: full
 parts:
   U1: dip16 @ e2 74HC157
@@ -175,11 +185,11 @@ parts:
   U6: dip16 @ e52 74HC112
 ```
 
-![図10 DIP16 の型番 (3/5)](out/19-gallery-chips-10.svg)
+![図11 DIP16 の型番 (3/5)](out/19-gallery-chips-11.svg)
 
 ```bread
 # ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
-title: 図11 DIP16 の型番 (4/5)
+title: 図12 DIP16 の型番 (4/5)
 board: full
 parts:
   U1: dip16 @ e2 74HC390
@@ -190,11 +200,11 @@ parts:
   U6: dip16 @ e52 74HC85
 ```
 
-![図11 DIP16 の型番 (4/5)](out/19-gallery-chips-11.svg)
+![図12 DIP16 の型番 (4/5)](out/19-gallery-chips-12.svg)
 
 ```bread
 # ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
-title: 図12 DIP16 の型番 (5/5)
+title: 図13 DIP16 の型番 (5/5)
 board: full
 parts:
   U1: dip16 @ e2 74HC123
@@ -204,7 +214,7 @@ parts:
   U5: dip16 @ e42 ULN2003A
 ```
 
-![図12 DIP16 の型番 (5/5)](out/19-gallery-chips-12.svg)
+![図13 DIP16 の型番 (5/5)](out/19-gallery-chips-13.svg)
 
 ## DIP18
 
@@ -212,14 +222,14 @@ parts:
 
 ```bread
 # ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
-title: 図13 DIP18 の型番
+title: 図14 DIP18 の型番
 board: full
 parts:
   U1: dip18 @ e2 PIC16F84A
   U2: dip18 @ e13 PIC16F628A
 ```
 
-![図13 DIP18 の型番](out/19-gallery-chips-13.svg)
+![図14 DIP18 の型番](out/19-gallery-chips-14.svg)
 
 ## DIP20
 
@@ -227,7 +237,7 @@ parts:
 
 ```bread
 # ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
-title: 図14 DIP20 の型番 (1/2)
+title: 図15 DIP20 の型番 (1/2)
 board: full
 parts:
   U1: dip20 @ e2 74HC245
@@ -237,18 +247,18 @@ parts:
   U5: dip20 @ e50 74HC240
 ```
 
-![図14 DIP20 の型番 (1/2)](out/19-gallery-chips-14.svg)
+![図15 DIP20 の型番 (1/2)](out/19-gallery-chips-15.svg)
 
 ```bread
 # ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
-title: 図15 DIP20 の型番 (2/2)
+title: 図16 DIP20 の型番 (2/2)
 board: full
 parts:
   U1: dip20 @ e2 74HC573
   U2: dip20 @ e14 74HC574
 ```
 
-![図15 DIP20 の型番 (2/2)](out/19-gallery-chips-15.svg)
+![図16 DIP20 の型番 (2/2)](out/19-gallery-chips-16.svg)
 
 ## DIP24
 
@@ -256,14 +266,14 @@ parts:
 
 ```bread
 # ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
-title: 図16 DIP24 の型番
+title: 図17 DIP24 の型番
 board: full
 parts:
   U1: dip24 @ e2 74HC154
   U2: dip24/wide @ e16 6116
 ```
 
-![図16 DIP24 の型番](out/19-gallery-chips-16.svg)
+![図17 DIP24 の型番](out/19-gallery-chips-17.svg)
 
 ## DIP28
 
@@ -271,7 +281,7 @@ parts:
 
 ```bread
 # ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
-title: 図17 DIP28 の型番
+title: 図18 DIP28 の型番
 board: full
 parts:
   U1: dip28/wide @ e2 62256
@@ -280,7 +290,7 @@ parts:
   U4: dip28 @ e50 PIC16F57
 ```
 
-![図17 DIP28 の型番](out/19-gallery-chips-17.svg)
+![図18 DIP28 の型番](out/19-gallery-chips-18.svg)
 
 ## 1 列の型番
 
@@ -288,7 +298,7 @@ parts:
 
 ```bread
 # ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
-title: 図18 1 列の型番
+title: 図19 1 列の型番
 board: full
 parts:
   U1: sip3 @ a2 SFU455B
@@ -310,7 +320,7 @@ parts:
   U17: sip4 @ e40 OSTAMA5B31A
 ```
 
-![図18 1 列の型番](out/19-gallery-chips-18.svg)
+![図19 1 列の型番](out/19-gallery-chips-19.svg)
 
 ## DIP 化キット
 
@@ -318,7 +328,7 @@ parts:
 
 ```bread
 # ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
-title: 図19 DIP 化キット
+title: 図20 DIP 化キット
 board: full
 parts:
   U1: sip8 @ j2 AE-RJ-45-LAN-DIP-A
@@ -326,7 +336,7 @@ parts:
   U3: sip4 @ j34 AE-PHONE-JACK-DIP
 ```
 
-![図19 DIP 化キット](out/19-gallery-chips-19.svg)
+![図20 DIP 化キット](out/19-gallery-chips-20.svg)
 
 ## DIP 化した変換基板の姿
 
@@ -334,11 +344,11 @@ parts:
 
 ```bread
 # ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
-title: 図20 変換基板の姿
+title: 図21 変換基板の姿
 board: full
 parts:
   U1: dip8/sop @ e2
   U2: dip8/tssop @ e10
 ```
 
-![図20 変換基板の姿](out/19-gallery-chips-20.svg)
+![図21 変換基板の姿](out/19-gallery-chips-21.svg)
