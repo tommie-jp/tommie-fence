@@ -341,11 +341,11 @@ describe('boardChip', () => {
     // 1 番の列は y = 0、20 番は x = 380。21 番は向かいの列 (y = 140)。
     const pads = boardPads(points, 0, definition, PITCH);
 
-    // 20 番の列より 0.3 ピッチ端の側 (x = 386)。ピンの名前の縦書きに輪が重ならない。
+    // 20 番の列より 0.5 ピッチ端の側 (x = 390。縁は 0.55 ピッチ)。ピンの名前の縦書きに輪が重ならない。
     expect(pads).toEqual([
-      { name: 'SWCLK', point: { x: 386, y: 50 } },
-      { name: 'SWGND', point: { x: 386, y: 70 } },
-      { name: 'SWDIO', point: { x: 386, y: 90 } },
+      { name: 'SWCLK', point: { x: 390, y: 50 } },
+      { name: 'SWGND', point: { x: 390, y: 70 } },
+      { name: 'SWDIO', point: { x: 390, y: 90 } },
     ]);
   });
 
@@ -354,7 +354,7 @@ describe('boardChip', () => {
     const wireless = boardPads(points, 0, lookupBoardPart('pico2-w'), PITCH);
 
     // 回すと 1 番は向かいの列の端 (x = 380, y = 140)、20 番は x = 0 の列。
-    expect(turned.map((pad) => pad.point)).toEqual([{ x: -6, y: 90 }, { x: -6, y: 70 }, { x: -6, y: 50 }]);
+    expect(turned.map((pad) => pad.point)).toEqual([{ x: -10, y: 90 }, { x: -10, y: 70 }, { x: -10, y: 50 }]);
     expect(wireless[0]?.point.x).toBeLessThan(380 - 5 * PITCH);
     expect(boardPads(points, 0, lookupBoardPart('tang-nano-9k'), PITCH)).toEqual([]);
   });
@@ -363,8 +363,8 @@ describe('boardChip', () => {
     const svg = drawn(0);
 
     for (const name of ['SWCLK', 'SWGND', 'SWDIO']) expect(svg).toContain(`>${name}<`);
-    // 名前は板の端の外 (x > 386) から右へ書く。
-    expect(svg).toMatch(/<text x="392"[^>]*text-anchor="start"[^>]*>SWCLK</);
+    // 名前は板の端の外 (x > 390) から右へ書く。
+    expect(svg).toMatch(/<text x="396"[^>]*text-anchor="start"[^>]*>SWCLK</);
   });
 
   test('leaves the names to the caller when asked, so they can go above the wires', () => {

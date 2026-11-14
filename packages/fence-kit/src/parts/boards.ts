@@ -62,13 +62,14 @@ const PICO_SHAPE = { hdmi: false, rowSpan: 7, reach: 0.55 } as const;
  * (`GND3` と同じく、名前だけで指せるようにする。`SW` で始まる 3 本が書き間違いの候補にそろって出る)。
  *
  * - Pico / Pico 2 は **USB と反対の端**。データシートの寸法図で端から 1.6 mm (20 番・21 番の
- *   ピンの中心は 1.37 mm で、ほぼ同じ並び)。図では 0.3 ピッチ端へ寄せる (`along: -0.3`) —
- *   ピンと同じ位置だと、20 番・21 番のピンの名前の縦書きに輪が重なる
+ *   ピンの中心は 1.37 mm で、ほぼ同じ並び)。図では基板の縁 (0.55 ピッチ) の手前まで寄せる
+ *   (`along: -0.5`) — ピンに近いと、20 番・21 番のピンの名前の縦書きに輪と入る線が重なる
+ *   (0.3 ピッチでは重なっていた)
  * - Pico W / Pico 2 W は端にアンテナがあるので**中ほど** (端から 19.8 mm、20 番から 7.3 ピッチ)。
  *   図では 6.5 ピッチ (13 番と 14 番の間) に置く — 実物の位置だとパッドの名前が
  *   RP2040 / RP2350 の箱にかかる
  */
-const PICO_DEBUG: BoardDebug = { pads: ['SWCLK', 'SWGND', 'SWDIO'], along: -0.3 };
+const PICO_DEBUG: BoardDebug = { pads: ['SWCLK', 'SWGND', 'SWDIO'], along: -0.5 };
 const PICO_W_DEBUG: BoardDebug = { ...PICO_DEBUG, along: 6.5 };
 
 /**
