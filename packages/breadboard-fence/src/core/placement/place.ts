@@ -658,6 +658,8 @@ function placeBoard(spec: PartSpec, board: Board, base: PartBase, part: BoardPar
     // 何も書かれていなければ製品名を出す。図と部品リストに「何を挿すのか」が残る。
     label: base.label ?? (base.value === null ? part.name : null),
     pins: dualRowPins(anchor.value, oppositeRow, spun(part.pins, spec.turn)),
+    // SWD のパッドは穴に挿さらない。位置は描く側が点から決める (`render/boardPart.ts`)。
+    ...(part.debug === undefined ? {} : { pads: part.debug.pads.map((name) => ({ name, address: null })) }),
   });
 }
 

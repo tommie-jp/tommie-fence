@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Pico シリーズの絵に SWD のパッド (`SWCLK` `SWGND` `SWDIO`) が出る (fence-kit)。**線はまだ引けない** (ブレッドボードだけ)
+
 ## [0.63.0] - 2026-11-14
 
 ### Added

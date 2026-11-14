@@ -26,9 +26,11 @@ import type { NoteAnchor, ResolvedNote } from './render/notes.ts';
 import { captionDrops } from './render/captions.ts';
 import { connectorOverhang } from './render/connector.ts';
 import { partObstacles } from './render/parts.ts';
+import { boardPadPoints, padEntry } from './render/boardPart.ts';
 import { renderErrorBanner } from './render/errorHtml.ts';
 import { DEFAULT_WIRE_COLOR, wireColor as lookupWireColor, wireColorNames } from './render/palette.ts';
 import { resolveStyle } from './render/theme.ts';
+import type { RenderTheme } from './render/theme.ts';
 import { titleHeight } from './render/title.ts';
 import { HOLE_ROWS, RAIL_ROWS } from './types.ts';
 import type {
@@ -247,7 +249,7 @@ function renderOneSheet(input: string, options: OneSheetOptions): RenderResult &
   // 下げた名札の上を配線が走る (`render/captions.ts`)。
   const preDrops = captionDrops(placed, layout, style.theme);
   const preObstacles = placed.flatMap((part) => partObstacles(part, layout, style.theme, preDrops));
-  const plan = planWires(parsed.doc.wires, placed, board, layout, preObstacles);
+  const plan = planWires(parsed.doc.wires, placed, board, layout, preObstacles, style.theme);
   const relocation = relocateParts(placed, plan.ends, plan.corridor, style.check !== false);
   errors.push(...relocation.errors, ...relocation.moves);
   const parts = relocation.parts;
@@ -258,20 +260,20 @@ function renderOneSheet(input: string, options: OneSheetOptions): RenderResult &
     if (wire) wires.push(wire);
   }
 
-  const placements = layoutDevices(devices, preferredDeviceX(wires, layout.point), layout, style.theme);
+  const placements = layoutDevices(devices, preferredDeviceX(wires, layout.point, parts, layout, style.theme), layout, style.theme);
 
   const drawable = wires.flatMap((wire) => {
-    const from = pointOf(wire.from, layout.point, placements);
-    const to = pointOf(wire.to, layout.point, placements);
-    return from && to
-      ? [{
-        from, to, hints: wire.hints, color: wire.color, line: wire.line, ends: [endText(wire.from), endText(wire.to)] as const,
+    const ends = padEnds(wire, parts, layout, style.theme, placements);
+    if (!ends) return [];
+    const { from, to } = ends;
+    return [{
+        from: from.entry, to: to.entry, pads: [from.pad, to.pad] as const,
+        hints: wire.hints, color: wire.color, line: wire.line, ends: [endText(wire.from), endText(wire.to)] as const,
         // 線の始まりの導通グループ (fence-check がネットを引くのに使う)。
         strip: stripOfEndpoint(wire.from),
         // 両端の種類 (fence-check の power-branch が、機器から入れる線とレールどうしの線を除く)。
         endKinds: [endKindOf(wire.from), endKindOf(wire.to)] as const,
-      }]
-      : [];
+      }];
   });
   const drops = captionDrops(parts, layout, style.theme);
   const obstacles = [
@@ -283,7 +285,10 @@ function renderOneSheet(input: string, options: OneSheetOptions): RenderResult &
   const partHoles = parts.flatMap((part) =>
     drawnOverHoles(part).map((address) => layout.point(address)));
   const rendered: RenderedWire[] = routeWires(drawable, layout, { obstacles, partHoles }).map((points, index) => ({
-    points,
+    // パッドへの線は入口まで引き回し、そこから横にパッドへ入る (`padEnds`)。
+    points: withPads(points, drawable[index]?.pads ?? [null, null]),
+    // パッドの線は板の上に載るので、部品より上に描く (下に描くと板に隠れる)。
+    over: (drawable[index]?.pads ?? []).some((pad) => pad !== null),
     color: drawable[index]?.color ?? DEFAULT_WIRE_COLOR,
     // 掴む印は書かれた行 (1 行 = 1 本の経路)。
     line: drawable[index]?.line ?? 0,
@@ -543,7 +548,7 @@ function anchorOfPart(
 
 function netMembers(parts: readonly PlacedPart[]): NetMember[] {
   return parts.flatMap((part) =>
-    part.pins.map((pin) => ({
+    [...part.pins, ...(part.pads ?? [])].map((pin) => ({
       ref: `${part.id}.${pin.name}`,
       strip: pin.address ? stripOf(pin.address) : devicePinStrip(part.id, pin.name),
     })),
@@ -592,6 +597,7 @@ function planWires(
   board: Board,
   layout: Layout,
   obstacles: readonly Rect[],
+  theme: RenderTheme,
 ): WirePlan {
   const ends: WireEnd[] = [];
   const corridor: Address[] = [];
@@ -601,8 +607,8 @@ function planWires(
     const to = resolveEndpoint(spec.to, parts, board, spec.line);
     if (!from.ok || !to.ok) continue;
 
-    const fromPoint = endpointPoint(from.value, to.value, parts, layout);
-    const toPoint = endpointPoint(to.value, from.value, parts, layout);
+    const fromPoint = endpointPoint(from.value, to.value, parts, layout, theme);
+    const toPoint = endpointPoint(to.value, from.value, parts, layout, theme);
     const path = fromPoint && toPoint
       ? routeWire(fromPoint, toPoint, layout, { hints: spec.hints, obstacles })
       : null;
@@ -685,8 +691,16 @@ function endpointPoint(
   other: Endpoint,
   parts: readonly PlacedPart[],
   layout: Layout,
+  theme: RenderTheme,
 ): Point | null {
   if (endpoint.kind === 'hole') return layout.point(endpoint.address);
+  // パッドの端は暫定の経路でも入口を使う (本番と同じ道を通らせる)。
+  const board = padBoardOf(endpoint, parts);
+  if (board !== null) {
+    const pad = boardPadPoints(board, layout).get(endpoint.pin);
+    const otherY = other.kind === 'hole' ? layout.point(other.address).y : layout.board.y;
+    return pad === undefined ? null : padEntry(board, layout, theme, endpoint.pin, otherY < pad.y);
+  }
   const at = parts.find((part) => part.id === endpoint.partId)?.at ?? 'top';
   const band = at === 'bottom' ? layout.deviceBands.bottom : layout.deviceBands.top;
   if (!band) return null;
@@ -731,7 +745,9 @@ function resolveEndpoint(
     if (!part) return fail(`配線の端点 ${safeToken(text)}: そんな部品はありません`, line, text);
     // 名前が先、無ければ DIP の番号 (`U1.2` = `U1.TRIG`)。
     const pin = part.pins.find((candidate) => candidate.name === pinName)
-      ?? part.pins.find((candidate) => candidate.number === pinName);
+      ?? part.pins.find((candidate) => candidate.number === pinName)
+      // 穴に挿さらないパッド (Pico の SWD) は、ボード外の機器のピンと同じ端になる。
+      ?? part.pads?.find((candidate) => candidate.name === pinName);
     if (!pin) return fail(`配線の端点 ${safeToken(text)}: そのピンはありません${nearbyPins(part, pinName)}`, line, text);
     return pin.address
       ? ok({ kind: 'hole', address: pin.address, viaPin: true })
@@ -754,7 +770,7 @@ const MAX_PIN_HINTS = 4;
 
 function nearbyPins(part: PlacedPart, wanted: string): string {
   const prefix = wanted.toUpperCase();
-  const near = part.pins
+  const near = [...part.pins, ...(part.pads ?? [])]
     .filter((pin) => pin.name.toUpperCase().startsWith(prefix))
     .slice(0, MAX_PIN_HINTS)
     .map((pin) => safeToken(pin.name));
@@ -782,19 +798,83 @@ function pointOf(
   return placements.get(endpoint.partId)?.pins.get(endpoint.pin) ?? null;
 }
 
-/** ボード外の機器は、つながる穴の平均 x に置くと配線が短くなる。 */
+/** 線の端がマイコンボードのパッド (Pico の SWD) なら、そのボード。 */
+const padBoardOf = (endpoint: Endpoint, parts: readonly PlacedPart[]): PlacedPart | null => {
+  if (endpoint.kind !== 'device') return null;
+  const part = parts.find((candidate) => candidate.id === endpoint.partId);
+  return part?.kind === 'board' ? part : null;
+};
+
+/** 線の 1 つの端。`entry` は引き回しの端、`pad` はそこから横に入るパッド (無ければ null)。 */
+type PadEnd = { readonly entry: Point; readonly pad: Point | null };
+
+/**
+ * 線の両端の点。**パッドの端は入口 (`padEntry`) まで引き回し、最後に横にパッドへ入る** —
+ * パッドは板の上にあるので、線をまっすぐ降ろすと板の上の穴 (ピン) の上を通る。
+ * 入口の半列は、反対の端がパッドより上か下かで選ぶ。
+ */
+function padEnds(
+  wire: ResolvedWire,
+  parts: readonly PlacedPart[],
+  layout: Layout,
+  theme: RenderTheme,
+  placements: ReadonlyMap<string, DevicePlacement>,
+): { readonly from: PadEnd; readonly to: PadEnd } | null {
+  const plain = (endpoint: Endpoint): Point | null => {
+    const board = padBoardOf(endpoint, parts);
+    return board === null || endpoint.kind !== 'device'
+      ? pointOf(endpoint, layout.point, placements)
+      : boardPadPoints(board, layout).get(endpoint.pin) ?? null;
+  };
+  const [fromPoint, toPoint] = [plain(wire.from), plain(wire.to)];
+  if (!fromPoint || !toPoint) return null;
+
+  const end = (self: Endpoint, point: Point, other: Point): PadEnd | null => {
+    const board = padBoardOf(self, parts);
+    if (board === null || self.kind !== 'device') return { entry: point, pad: null };
+    const entry = padEntry(board, layout, theme, self.pin, other.y < point.y);
+    return entry === null ? null : { entry, pad: point };
+  };
+  const from = end(wire.from, fromPoint, toPoint);
+  const to = end(wire.to, toPoint, fromPoint);
+  return from && to ? { from, to } : null;
+}
+
+/** 引き回した折れ線の端に、パッドへ横に入る区間を足す。 */
+const withPads = (points: readonly Point[], [from, to]: readonly [Point | null, Point | null]): readonly Point[] =>
+  [...(from === null ? [] : [from]), ...points, ...(to === null ? [] : [to])];
+
+/**
+ * ボード外の機器は、つながる穴の平均 x に置くと配線が短くなる。
+ * パッドにつながる線は、パッドの入口の x を数える (入口から降りるので)。
+ */
 function preferredDeviceX(
   wires: readonly ResolvedWire[],
   holePoint: (address: Address) => Point,
+  parts: readonly PlacedPart[],
+  layout: Layout,
+  theme: RenderTheme,
 ): Map<string, number> {
   const columns = new Map<string, number[]>();
+  const push = (id: string, x: number): void => {
+    const found = columns.get(id);
+    if (found) found.push(x);
+    else columns.set(id, [x]);
+  };
 
   for (const wire of wires) {
     for (const [self, other] of [[wire.from, wire.to], [wire.to, wire.from]] as const) {
-      if (self.kind !== 'device' || other.kind !== 'hole') continue;
-      const found = columns.get(self.partId);
-      if (found) found.push(holePoint(other.address).x);
-      else columns.set(self.partId, [holePoint(other.address).x]);
+      if (self.kind !== 'device' || padBoardOf(self, parts) !== null) continue;
+      if (other.kind === 'hole') {
+        push(self.partId, holePoint(other.address).x);
+        continue;
+      }
+      const board = padBoardOf(other, parts);
+      if (board === null) continue;
+      const pad = boardPadPoints(board, layout).get(other.pin);
+      // 機器のある側は分からないので、上から来るとして入口を選ぶ (x を見るだけ)。
+      const entry = pad === undefined ? null : padEntry(board, layout, theme, other.pin, true);
+      if (entry !== null) push(self.partId, entry.x);
     }
   }
 

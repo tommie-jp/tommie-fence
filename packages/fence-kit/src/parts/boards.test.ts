@@ -54,6 +54,24 @@ describe('lookupBoardPart', () => {
     expect(lookupBoardPart('pico-w')?.name).toBe('Pico W');
   });
 
+  test('gives the pico series the three-pad SWD header in the order of the pinout, and the Tang Nano 9K none', () => {
+    // 公式のピンアウト図 (USB が上) で左から SWCLK・GND・SWDIO。SWCLK が 1〜20 番の列の側。
+    for (const type of ['pico', 'pico-w', 'pico2', 'pico2-w']) {
+      expect(lookupBoardPart(type)?.debug?.pads).toEqual(['SWCLK', 'SWGND', 'SWDIO']);
+    }
+    // Pico と Pico 2 は USB と反対の端 (20 番と 21 番の並び)。W はアンテナに端を譲って中ほど。
+    expect(lookupBoardPart('pico2')?.debug?.along).toBeLessThanOrEqual(0);
+    expect(lookupBoardPart('pico2-w')?.debug?.along).toBeGreaterThan(5);
+    expect(lookupBoardPart('tang-nano-9k')?.debug).toBeUndefined();
+  });
+
+  test('keeps the pad names apart from the 40 header pins', () => {
+    const board = lookupBoardPart('pico2');
+    const pads = board?.debug?.pads ?? [];
+
+    expect(pads.filter((name) => board?.pins.includes(name))).toEqual([]);
+  });
+
   test('returns null for a name it does not know', () => {
     expect(lookupBoardPart('pico3')).toBeNull();
     // 素の添字だと Object.prototype から拾えてしまう名前。

@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Pico シリーズの SWD のパッド** (`BoardPart.debug`)。3 つ (`SWCLK` `SWGND` `SWDIO`) を 1〜20 番の列の側から並べ、位置は 20 番のピンからの量で持つ。Pico / Pico 2 は USB と反対の端、Pico W / Pico 2 W は中ほど (アンテナが端にあるため)。並びと位置は Pico 2 / Pico W / Pico 2 W のデータシートのピンアウト図と寸法図。Tang Nano 9K には無い。`boardPads` が点から位置を出し、`boardChip` が輪と名前を描く (名前は 1 番の反対の側。`padNames: false` で呼ぶ側に任せられる)
+
 ## [0.41.0] - 2026-11-14
 
 ### Added

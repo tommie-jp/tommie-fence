@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Pico シリーズの SWD のパッドに線を引ける** (`- PROBE.SC -- MCU.SWCLK orange`)。名前は `SWCLK` `SWGND` `SWDIO` (印字の `GND` は 40 ピンの GND と重なるので `SWGND`)。穴には挿さらないので、ボード外の機器のピンと同じく線の端としてだけ指し、ネットリストにも出る。パッドは USB と反対の端 (W は中ほど) の、穴の行と行の間の高さに描き、線は板の外の半列を降りて横に入る (板の外の穴の上を走らない)。Debug Probe を UART と SWD につなぐ例を examples/07 に足した (図は `07-pico-1` `07-pico-2` に分かれた)
+
 ## [0.65.0] - 2026-11-14
 
 ### Added

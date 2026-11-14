@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { boardBox, boardChip, dipBox, dipChip, dipSocketBox, segmentFace, sipBox, sipHeader, sipLegendDepth, sipLegends } from './chips.ts';
+import { boardBox, boardChip, boardPads, dipBox, dipChip, dipSocketBox, segmentFace, sipBox, sipHeader, sipLegendDepth, sipLegends } from './chips.ts';
 import type { ChipInk, ChipPoint } from './chips.ts';
 import { lookupBoardPart } from './boards.ts';
 import { textWidth as textWidthOf } from '../textFit.ts';
@@ -335,6 +335,43 @@ describe('boardChip', () => {
 
     expect(usbX(drawn(0))).toBeLessThan(box.x);
     expect(usbX(drawn(20))).toBeGreaterThan(box.x + box.width / 2);
+  });
+
+  test('places the SWD pads between pins 20 and 21, SWCLK on the side of pins 1 to 20', () => {
+    // 1 番の列は y = 0、20 番は x = 380。21 番は向かいの列 (y = 140)。
+    const pads = boardPads(points, 0, definition, PITCH);
+
+    // 20 番の列より 0.3 ピッチ端の側 (x = 386)。ピンの名前の縦書きに輪が重ならない。
+    expect(pads).toEqual([
+      { name: 'SWCLK', point: { x: 386, y: 50 } },
+      { name: 'SWGND', point: { x: 386, y: 70 } },
+      { name: 'SWDIO', point: { x: 386, y: 90 } },
+    ]);
+  });
+
+  test('follows pin 1 when the board is turned round, and moves the pads inward on the W', () => {
+    const turned = boardPads(points, 20, definition, PITCH);
+    const wireless = boardPads(points, 0, lookupBoardPart('pico2-w'), PITCH);
+
+    // 回すと 1 番は向かいの列の端 (x = 380, y = 140)、20 番は x = 0 の列。
+    expect(turned.map((pad) => pad.point)).toEqual([{ x: -6, y: 90 }, { x: -6, y: 70 }, { x: -6, y: 50 }]);
+    expect(wireless[0]?.point.x).toBeLessThan(380 - 5 * PITCH);
+    expect(boardPads(points, 0, lookupBoardPart('tang-nano-9k'), PITCH)).toEqual([]);
+  });
+
+  test('draws the SWD pads with their names on the far side from pin 1', () => {
+    const svg = drawn(0);
+
+    for (const name of ['SWCLK', 'SWGND', 'SWDIO']) expect(svg).toContain(`>${name}<`);
+    // 名前は板の端の外 (x > 386) から右へ書く。
+    expect(svg).toMatch(/<text x="392"[^>]*text-anchor="start"[^>]*>SWCLK</);
+  });
+
+  test('leaves the names to the caller when asked, so they can go above the wires', () => {
+    const svg = boardChip({ points, names: definition?.pins ?? [], definition, pitch: PITCH, scale: 1, ink: INK, padNames: false });
+
+    expect(svg).not.toContain('>SWCLK<');
+    expect(svg.match(/<circle /g)?.length).toBe(3);
   });
 
   test('draws the aerial only on the wireless models', () => {

@@ -19,10 +19,16 @@ import type { RenderStyle } from './theme.ts';
 import { renderTitle, titleHeight } from './title.ts';
 import { STAMP_TEXT, VERSION } from '../version.ts';
 import { renderWire } from './wires.ts';
+import { renderBoardPadNames } from './boardPart.ts';
 import { crossingPoints } from './crossings.ts';
 
 export type RenderedWire = {
   readonly points: readonly Point[];
+  /**
+   * 部品より上に描く線 (マイコンボードのパッドへ入る線)。**板の上に載る**ので、
+   * 下に描くと板に隠れる。書かなければ今までどおり部品の下。
+   */
+  readonly over?: boolean;
   readonly color: string;
   /** 書かれた行 (1 始まり)。**掴むための印**に使う (1 行 = 1 本の経路)。 */
   readonly line: number;
@@ -168,15 +174,25 @@ export function renderDocument(input: DocumentInput): string {
     .map((part) => marked(renderPart(part, layout, theme, drops), { class: 'cf-chip', 'data-part': part.id }));
   // 掴むための図では名札を部品の包みから出さない (名札を掴んで部品を動かせるように)。
   const lifted = edit === null ? liftCaptions(onBoard) : { bodies: onBoard, captions: [] };
+  // 配線は細くて掴めないので、見える線に**太い透明な線**を重ねる (circuit と同じ手)。
+  const wireLayer = (over: boolean): string[] => {
+    const own = wires.flatMap((wire, index) => ((input.wires[index]?.over === true) === over ? [{ wire, index }] : []));
+    return [
+      ...own.map(({ wire }) => wire.halo),
+      ...own.map(({ wire, index }) => marked(
+        wire.line + (edit === null ? '' : hitLineOf(input.wires[index]?.points ?? [], input.wires[index]?.line ?? 0, theme)),
+        { class: 'cf-wire', 'data-line': String(input.wires[index]?.line ?? 0) },
+      )),
+    ];
+  };
   const body = [
     renderBoard(input.board, layout, theme, covered, lettered),
-    ...wires.map((wire) => wire.halo),
-    // 配線は細くて掴めないので、見える線に**太い透明な線**を重ねる (circuit と同じ手)。
-    ...wires.map((wire, index) => marked(
-      wire.line + (edit === null ? '' : hitLineOf(input.wires[index]?.points ?? [], input.wires[index]?.line ?? 0, theme)),
-      { class: 'cf-wire', 'data-line': String(input.wires[index]?.line ?? 0) },
-    )),
+    ...wireLayer(false),
     ...lifted.bodies,
+    // パッド (Pico の SWD) へ入る線は板の上に載るので、部品の上・名札の下に描く。
+    ...wireLayer(true),
+    // パッドの名前はその線より上 (線は名前の下を通り、縁取りが線を消して字を読ませる)。
+    ...input.parts.filter((part) => part.kind === 'board').map((part) => renderBoardPadNames(part, layout, theme)),
     // 名札は**すべての部品の胴の上**に描く (`liftCaptions`)。
     ...lifted.captions,
     // 基板の外の機器も**掴めるように包む** (実機で「基板外の部品も対象にする」)。

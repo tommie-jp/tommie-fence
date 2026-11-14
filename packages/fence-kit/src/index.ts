@@ -81,11 +81,11 @@ export {
   drawConnector, hasPadFeet, lookupConnector, lookupConnectorSymbol,
 } from './parts/connectors.ts';
 export type { Connector, ConnectorFacing, ConnectorShape } from './parts/connectors.ts';
-export { boardBox, boardChip, chipAlongX, dipBox, dipChip, dipSocketBox, segmentFace, sipBox, sipHeader, sipLegendDepth, sipLegends } from './parts/chips.ts';
+export { boardBox, boardChip, boardPadFont, boardPadNames, boardPads, chipAlongX, dipBox, dipChip, dipSocketBox, segmentFace, sipBox, sipHeader, sipLegendDepth, sipLegends } from './parts/chips.ts';
 export type {
-  BoardChipOptions, ChipBox, ChipInk, ChipPoint, DipOptions, SipLook, SipOptions,
+  BoardChipOptions, BoardPad, ChipBox, ChipInk, ChipPoint, DipOptions, SipLook, SipOptions,
 } from './parts/chips.ts';
-export type { BoardPart } from './parts/boards.ts';
+export type { BoardDebug, BoardPart } from './parts/boards.ts';
 export { PIN_NAME_GAP, pinNameInner, pinNameRow, pinNameWidth } from './parts/pinNameRow.ts';
 export type { PinNameRow, PinNameRowOptions } from './parts/pinNameRow.ts';
 export { drawPackage, packageExtent, packageHalfWidth, packageReach } from './parts/packages.ts';

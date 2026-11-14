@@ -708,6 +708,10 @@ export type BoardChipOptions = {
   readonly pitch: number;
   readonly scale: number;
   readonly ink: ChipInk;
+  /** パッドの位置 (書かなければ `boardPads`)。基板の都合で寄せたいときに渡す。 */
+  readonly pads?: readonly BoardPad[];
+  /** パッドの名前を描くか (既定は描く)。配線より上の層に描きたい呼び手は false にして自分で描く。 */
+  readonly padNames?: boolean;
 };
 
 /**
@@ -799,9 +803,107 @@ export function boardChip(options: BoardChipOptions): string {
     })
     .join('');
 
+  const placedPads = options.pads ?? boardPads(points, pinOne, definition, pitch);
+  const pads = drawPads(placedPads, ink)
+    + (options.padNames === false ? '' : boardPadNames(placedPads, points, pinOne, box, fontSize, ink));
   return `${usb}${hdmi(definition, box, centre, alongX, nearStart, pitch)}${shell}${antenna(definition, box, centre, alongX, nearStart, ink.pin)}`
-    + `${chip}${chipName}${stubs}${legends}`;
+    + `${chip}${chipName}${stubs}${legends}${pads}`;
 }
+
+/** デバッグ用のパッド 1 つ (名前と、画布の上の中心)。 */
+export type BoardPad = { readonly name: string; readonly point: ChipPoint };
+
+/**
+ * デバッグ用のパッド (Pico の SWD) の位置。**点から決める** — 回しても (r180)、縦に置いても
+ * 付いてくる。n/2 番のピン (Pico の 20 番) と向かいの n/2+1 番の真ん中から、1 番の側へ `along`
+ * ピッチ戻った所が真ん中のパッド。並びは n/2 番の側から (`BoardDebug.pads`)。
+ * パッドの無いボードは空。
+ */
+export function boardPads(
+  points: readonly ChipPoint[],
+  pinOne: number,
+  definition: BoardPart | null,
+  pitch: number,
+): readonly BoardPad[] {
+  const debug = definition?.debug;
+  const count = points.length;
+  if (!debug || count < 4) return [];
+  const at = (offset: number): ChipPoint | undefined => points[(pinOne + offset + count) % count];
+  const [first, last, across] = [at(0), at(count / 2 - 1), at(count / 2)];
+  if (!first || !last || !across) return [];
+
+  const unit = (from: ChipPoint, to: ChipPoint): ChipPoint => {
+    const length = Math.hypot(to.x - from.x, to.y - from.y) || 1;
+    return { x: (to.x - from.x) / length, y: (to.y - from.y) / length };
+  };
+  const inward = unit(last, first);
+  const side = unit(last, across);
+  const middle = (debug.pads.length - 1) / 2;
+  const base = {
+    x: (last.x + across.x) / 2 + inward.x * debug.along * pitch,
+    y: (last.y + across.y) / 2 + inward.y * debug.along * pitch,
+  };
+  return debug.pads.map((name, index) => ({
+    name,
+    point: {
+      x: round2(base.x + side.x * (index - middle) * pitch),
+      y: round2(base.y + side.y * (index - middle) * pitch),
+    },
+  }));
+}
+
+/** 座標の端数を 0.01 px に丸める (浮動小数の 0.30000000000000004 を図と試験に出さない)。 */
+const round2 = (value: number): number => Math.round(value * 100) / 100 + 0;
+
+/** パッドの輪の半径と、名前までの隙間 (px)。 */
+const PAD_RADIUS = 3.5;
+const PAD_NAME_GAP = 6;
+
+/** パッドの輪。名前は `boardPadNames` (呼ぶ側が層を選べるように分けてある)。 */
+function drawPads(pads: readonly BoardPad[], ink: ChipInk): string {
+  return pads.map(({ point }) => element('circle', {
+    cx: num(point.x), cy: num(point.y), r: PAD_RADIUS, fill: ink.pin, stroke: CHIP_EDGE, 'stroke-width': 0.8,
+  })).join('');
+}
+
+/**
+ * パッドの名前。**1 番の反対の側 (USB と反対の側) へ**横に書く — 1 番の側はピンの名前の
+ * 縦書きが詰まっていて、横の字を置くと必ず重なる。名前はピンと同じで、印字 (GND) ではなく
+ * 配線に書く名前 (`SWGND`)。図の字と配線の字を突き合わせられるように。
+ *
+ * 字は縁取りを敷く。板の外 (Pico の端のパッド) では板の地に、板の上 (W の中ほどのパッド) では
+ * ピンの名前の縦書きに重なるので、どちらでも下を消して読ませる。
+ * **横に置いたボードだけ** (ブレッドボードは溝をまたぐので横だけ。縦に置いた perfboard は
+ * 名前を伏せて輪だけ描く)。
+ */
+export function boardPadNames(
+  pads: readonly BoardPad[],
+  points: readonly ChipPoint[],
+  pinOne: number,
+  box: ChipBox,
+  fontSize: number,
+  ink: ChipInk,
+): string {
+  const first = points[pinOne] ?? points[0];
+  const sample = pads[0]?.point;
+  if (!first || !sample || !chipAlongX(points)) return '';
+  const out = Math.sign(sample.x - first.x) || 1;
+
+  return pads.map(({ name, point }) => {
+    const x = point.x + out * PAD_NAME_GAP;
+    const outside = out > 0 ? x >= box.x + box.width : x <= box.x;
+    return svgText(x, point.y + fontSize * 0.35, name, {
+      'font-size': num(fontSize),
+      fill: outside ? ink.outside : ink.chipText,
+      halo: outside ? ink.halo : ink.body,
+      haloWidth: ink.haloWidth,
+      anchor: out > 0 ? 'start' : 'end',
+    });
+  }).join('');
+}
+
+/** パッドの名前の字の大きさ (ピンの名前と同じ)。 */
+export const boardPadFont = (scale: number): number => scale * PIN_FONT;
 
 /** HDMI の幅 (ピッチ数) と、基板の端から外へ出る量 (px)。USB と反対の端に付く。 */
 const HDMI_WIDTH = 6;

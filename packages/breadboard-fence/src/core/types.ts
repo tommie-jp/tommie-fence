@@ -347,6 +347,12 @@ export type PlacedPart = {
   readonly variant: string | null;
   readonly kind: PartKind;
   readonly pins: readonly PlacedPin[];
+  /**
+   * 穴に挿さらないパッド (Pico の SWD の 3 つ)。**`pins` とは分けて持つ** — `pins` は
+   * 全部が穴に落ちる前提で描く所が多い。線の端としてはボード外の機器のピンと同じに扱う
+   * (`MCU.SWCLK`、導通は `pin:MCU.SWCLK`)。マイコンボードだけが持つ。
+   */
+  readonly pads?: readonly PlacedPin[];
   readonly bridges: readonly PinBridge[];
   readonly value: string | null;
   readonly label: string | null;

@@ -76,6 +76,7 @@ USB      usb-a (穴は VBUS GND D+ D- の順に 2 つから) usb-c (穴は GND D
 端子台    terminal2 terminal3 terminal4 (ねじ止め。5.08 mm ピッチなので穴は 1 つ飛ばし: J1: terminal2 a10 a12)
 まとまり  button button-nc dipN (4〜40 の偶数) sipN (2〜40)
 ボード    pico pico-w pico2 pico2-w tang-nano-9k (FPGA。列の間が 9 ピッチ: a↔h b↔i c↔j)
+          Pico の SWD のパッドは線の端だけ: - PROBE.SC -- MCU.SWCLK (SWCLK SWGND SWDIO)
 名前つき  relay photocoupler photocoupler6 seg7 seg7x4 dip-switch4 dip-switch8 (DIP 型。ピンは名前でも番号でも。K1.COM1 = K1.4)
 ボード外  device
 ```

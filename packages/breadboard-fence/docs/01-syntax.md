@@ -929,10 +929,33 @@ wires:
 | GND | `GND3` `GND8` `GND13` `GND18` `GND23` `GND28` `GND38` と `AGND` (33 番) |
 | 電源 | `3V3` (36 番) / `3V3_EN` / `VSYS` / `VBUS` |
 | その他 | `RUN` / `ADC_VREF` |
+| SWD のパッド | `SWCLK` / `SWGND` / `SWDIO` (40 ピンとは別。穴に挿さらない) |
 
 GND は 7 本あって名前が重なるので、**ピン番号を付けて区別する** (`GND3` は 3 番の GND)。
 33 番だけは実物の印字どおり `AGND`。`MCU.GND` のように書くと、
 候補を添えた行番号つきのエラーになる。
+
+### SWD のパッド (Debug Probe の D)
+
+40 ピンとは別に、**3 つのデバッグ用のパッド**がある。穴には挿さらないので、ボード外の機器の
+ピンと同じく**線の端としてだけ**書く (`@` や穴番地では書けない)。ネットリストには
+`MCU.SWCLK` の名前で出る。
+
+```yaml
+  - PROBE.SC -- MCU.SWCLK orange
+  - PROBE.GND -- MCU.SWGND black
+  - PROBE.SD -- MCU.SWDIO yellow
+```
+
+- 印字は SWCLK・GND・SWDIO。GND は 40 ピンの GND と名前が重なるので **`SWGND`** と呼ぶ。
+  40 ピンの GND とは同じネットにならない (ボードの中の導通はネットリストに入れていない)
+- 並びは公式のピンアウト図 (USB が上) で左から SWCLK・GND・SWDIO。USB が左の図では、
+  **右の端を下から SWCLK・SWGND・SWDIO** と読む (SWCLK が 1〜20 番の列の側)
+- `pico` / `pico2` は USB と反対の端、**`pico-w` / `pico2-w` は中ほど** (アンテナが端にあるため)。
+  `tang-nano-9k` には無い
+- 線は板の外の半列を降り、パッドの高さ (穴の行と行の間) で横に入る。機器を上に置くなら、
+  ピンを `[SD, GND, SC]` の順 (図の上のパッドから) に並べると線が交わらない。
+  例は [examples/07-pico.md](../examples/07-pico.md) の「Debug Probe をつなぐ」
 
 ## ピンに名前のある DIP 型 (リレー・フォトカプラ・7 セグ・DIP スイッチ)
 
@@ -1318,7 +1341,7 @@ GitHub でもそのまま読める。
 | [04-parts-list.md](../examples/04-parts-list.md) | 図の下の部品リストと、その消し方 |
 | [05-capacitors.md](../examples/05-capacitors.md) | 部品の姿を選ぶ |
 | [06-switches.md](../examples/06-switches.md) | タクトスイッチ・半固定抵抗・スライドスイッチ |
-| [07-pico.md](../examples/07-pico.md) | Raspberry Pi Pico に LED とボタンをつなぐ |
+| [07-pico.md](../examples/07-pico.md) | Raspberry Pi Pico に LED とボタンをつなぐ。Debug Probe を UART と SWD のパッドにつなぐ |
 | [08-emitter-follower.md](../examples/08-emitter-follower.md) | 2SC1815 のエミッタフォロワ |
 | [09-am-radio.md](../examples/09-am-radio.md) | 1 石中波ラジオ (高周波増幅 + 検波) |
 | [10-bh-ad2.md](../examples/10-bh-ad2.md) | B-H カーブ測定回路 (オペアンプ・測定器) |

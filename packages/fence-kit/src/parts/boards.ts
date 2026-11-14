@@ -22,7 +22,22 @@ export type BoardPart = {
   readonly mark?: string;
   /** ピンの名前。**1 番から順に** (DIP と同じ回り方: 1 列目を進み、折り返して 2 列目を戻る)。 */
   readonly pins: readonly string[];
+  /**
+   * 40 ピンとは別の、デバッグ用の 3 ピンのパッド (SWD)。**基板の穴には挿さらない**ので、
+   * ブレッドボードではボード外の機器のピンと同じく線の端としてだけ指す (`MCU.SWCLK`)。
+   * 無ければ持たない (Tang Nano 9K)。
+   */
+  readonly debug?: BoardDebug;
 };
+
+/**
+ * デバッグ用のパッドの並びと位置。
+ *
+ * - `pads` は **1〜n/2 番の列の側から**順に (Pico は SWCLK・GND・SWDIO)。間は 0.1 インチ = 1 ピッチで、
+ *   真ん中のパッドが 2 列の真ん中に来る
+ * - `along` は n/2 番 (Pico の 20 番) のピンの位置から 1 番の側へ戻る量 (ピッチ数)。負なら端の側へ出る
+ */
+export type BoardDebug = { readonly pads: readonly string[]; readonly along: number };
 
 /**
  * Raspberry Pi Pico の 40 ピンヘッダ。上から順に 1 番 (GP0) から 40 番 (VBUS) まで。
@@ -41,6 +56,22 @@ const PICO_PINS: readonly string[] = [
 const PICO_SHAPE = { hdmi: false, rowSpan: 7, reach: 0.55 } as const;
 
 /**
+ * Pico シリーズの SWD のパッド (3 ピン、0.1 インチ)。公式のピンアウト図 (USB が上) で
+ * **左から SWCLK・GND・SWDIO**、SWCLK が 1〜20 番の列の側 (Pico 2 / Pico W / Pico 2 W の
+ * データシートの Figure 2)。GND は 40 ピンの GND と名前が重なるので `SWGND` と呼ぶ
+ * (`GND3` と同じく、名前だけで指せるようにする。`SW` で始まる 3 本が書き間違いの候補にそろって出る)。
+ *
+ * - Pico / Pico 2 は **USB と反対の端**。データシートの寸法図で端から 1.6 mm (20 番・21 番の
+ *   ピンの中心は 1.37 mm で、ほぼ同じ並び)。図では 0.3 ピッチ端へ寄せる (`along: -0.3`) —
+ *   ピンと同じ位置だと、20 番・21 番のピンの名前の縦書きに輪が重なる
+ * - Pico W / Pico 2 W は端にアンテナがあるので**中ほど** (端から 19.8 mm、20 番から 7.3 ピッチ)。
+ *   図では 6.5 ピッチ (13 番と 14 番の間) に置く — 実物の位置だとパッドの名前が
+ *   RP2040 / RP2350 の箱にかかる
+ */
+const PICO_DEBUG: BoardDebug = { pads: ['SWCLK', 'SWGND', 'SWDIO'], along: -0.3 };
+const PICO_W_DEBUG: BoardDebug = { ...PICO_DEBUG, along: 6.5 };
+
+/**
  * Sipeed Tang Nano 9K (Gowin GW1NR-9) の 2×24 ヘッダ。**1 番は USB-C 側の左上**、
  * 左の列を下へ 24 本、折り返して右の列を上へ 24 本。
  * 名前は Sipeed の wiki のピン配置図の **FPGA のピン番号に `IO` を付けた物** (`IO38`)。
@@ -56,10 +87,10 @@ const TANG_NANO_9K_PINS: readonly string[] = [
 ];
 
 const BOARD_PARTS: Record<string, BoardPart> = {
-  pico: { name: 'Pico', chip: 'RP2040', wireless: false, ...PICO_SHAPE, pins: PICO_PINS },
-  'pico-w': { name: 'Pico W', chip: 'RP2040', wireless: true, ...PICO_SHAPE, pins: PICO_PINS },
-  pico2: { name: 'Pico 2', chip: 'RP2350', wireless: false, ...PICO_SHAPE, pins: PICO_PINS },
-  'pico2-w': { name: 'Pico 2 W', chip: 'RP2350', wireless: true, ...PICO_SHAPE, pins: PICO_PINS },
+  pico: { name: 'Pico', chip: 'RP2040', wireless: false, ...PICO_SHAPE, pins: PICO_PINS, debug: PICO_DEBUG },
+  'pico-w': { name: 'Pico W', chip: 'RP2040', wireless: true, ...PICO_SHAPE, pins: PICO_PINS, debug: PICO_W_DEBUG },
+  pico2: { name: 'Pico 2', chip: 'RP2350', wireless: false, ...PICO_SHAPE, pins: PICO_PINS, debug: PICO_DEBUG },
+  'pico2-w': { name: 'Pico 2 W', chip: 'RP2350', wireless: true, ...PICO_SHAPE, pins: PICO_PINS, debug: PICO_W_DEBUG },
   'tang-nano-9k': {
     name: 'Tang Nano 9K', chip: 'GW1NR-9', wireless: false, hdmi: true, rowSpan: 9, reach: 2.28, mark: 'GW1NR', pins: TANG_NANO_9K_PINS,
   },

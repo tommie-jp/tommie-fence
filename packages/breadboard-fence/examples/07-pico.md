@@ -73,7 +73,7 @@ notes:
   - source blue
 ```
 
-![図01 Pico に LED とボタンをつなぐ](out/07-pico.svg)
+![図01 Pico に LED とボタンをつなぐ](out/07-pico-1.svg)
 
 ## 読み方
 
@@ -132,3 +132,50 @@ GND はどのピンも同じところにつながっている。この図では 
 **ピン番号を付けて `GND3` `GND8` `GND13` `GND18` `GND23` `GND28` `GND38`** と呼ぶ
 (33 番は実物の印字どおり `AGND`)。電源は `3V3` `3V3_EN` `VSYS` `VBUS`、
 ほかに `RUN` と `ADC_VREF`、GPIO は `GP0`〜`GP22` と `GP26`〜`GP28`。
+
+## Debug Probe をつなぐ (UART と SWD)
+
+Raspberry Pi Debug Probe は 2 本のケーブルで Pico につなぐ。**U (UART)** は 40 ピンの
+1〜3 番 (GP0・GP1・GND) へ、**D (SWD)** は 40 ピンとは別の 3 つのパッド
+(SWCLK・GND・SWDIO) へ。パッドは**穴に挿さらない**ので、ボード外の機器のピンと同じく
+線の端としてだけ書く (`MCU.SWCLK`)。
+
+```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
+title: 図02 Debug Probe を UART と SWD につなぐ
+board: full
+parts:
+  MCU: pico2 @ g15
+  PROBE:
+    type: device
+    at: bottom
+    label: Debug Probe
+    pins: [RX, TX, UGND, SC, DGND, SD]
+wires:
+  # U (UART): Probe の TX → Pico の RX (GP1)、Probe の RX ← Pico の TX (GP0)
+  - PROBE.TX -- j16 orange
+  - PROBE.RX -- j15 yellow
+  - PROBE.UGND -- j17 black
+  # D (SWD): USB と反対の端の 3 つのパッド
+  - PROBE.SC -- MCU.SWCLK orange
+  - PROBE.DGND -- MCU.SWGND black
+  - PROBE.SD -- MCU.SWDIO yellow
+```
+
+![図02 Debug Probe を UART と SWD につなぐ](out/07-pico-2.svg)
+
+- **パッドの名前は `SWCLK` `SWGND` `SWDIO`。** 実物の印字は `GND` だが、40 ピンの GND と
+  名前が重なるので `SWGND` と呼ぶ (`GND3` と同じ考え方)。`MCU.SW` まで書いて間違えると、
+  3 つがそろって候補に出る
+- 並びは公式のピンアウト図 (USB が上) で**左から SWCLK・GND・SWDIO**。図は USB が左なので、
+  右の端を**下から SWCLK・SWGND・SWDIO** と読む (SWCLK が 1〜20 番の列の側)。
+  `r180` で回すと左の端に移り、上から SWCLK・SWGND・SWDIO になる
+- パッドは穴の行と行の間の高さに描き、線は板の外から横に入る。どの穴にも挿さっていない
+  ことが図で分かるようにするため
+- **Pico W / Pico 2 W のパッドは端ではなく中ほど** (アンテナが端にあるので、USB と反対の端から
+  19.8 mm)。図でも板の中ほど (13 番と 14 番の間の高さ) に描く
+- **UART は TX と RX を入れ違いに**つなぐ (Probe の TX → Pico の RX = GP1)。
+  色は Debug Probe のケーブルの色 (U は TX 橙・RX 黄・GND 黒、D は SC 橙・GND 黒・SD 黄)
+- ネットリストでは `UGND` (GND3 と同じネット) と `DGND` (SWGND と同じネット) が別のネットに出る。
+  Pico の中ではどちらも GND につながっているが、ボードの中の導通はネットリストに入れていない
+  (40 ピンの 7 本の GND も 1 本ずつ別に出る)

@@ -81,7 +81,7 @@ The smallest example: one resistor, one LED
 
 ### Raspberry Pi Pico
 
-[![Raspberry Pi Pico](../packages/breadboard-fence/examples/out/07-pico.png)](../packages/breadboard-fence/examples/07-pico.md)
+[![Raspberry Pi Pico](../packages/breadboard-fence/examples/out/07-pico-1.png)](../packages/breadboard-fence/examples/07-pico.md)
 
 A microcontroller board straddling the board, with an LED and a button
 ([07-pico.md](../packages/breadboard-fence/examples/07-pico.md)).

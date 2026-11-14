@@ -2,7 +2,7 @@ import { bodySize, sceneRectOf, sceneWireNames } from 'fence-kit';
 import type { Scene, SceneBody, SceneCaption, SceneEndKind, SceneRect, SceneWire } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Point } from '../types.ts';
-import { boardBodyRect } from './boardPart.ts';
+import { boardBodyRect, boardPadPoints } from './boardPart.ts';
 import { captionGlyphBoxOf } from './captions.ts';
 import { connectorBodyRect } from './connector.ts';
 import type { DevicePlacement } from './devices.ts';
@@ -38,7 +38,11 @@ export function breadboardScene(input: SceneInput, sheet: string | null = null):
   const { parts, devices, wires, wireEnds, layout, theme, drops } = input;
   const bodies: SceneBody[] = parts.flatMap((part) => {
     const rect = bodyOf(part, layout);
-    return rect === null ? [] : [{ id: part.id, rect, pins: pinPoints(part, layout) ?? [], line: part.line }];
+    // パッド (Pico の SWD) は穴ではないが線が来てよい点。端の外から入る短い区間を胴を通る線に数えない。
+    const pads = [...boardPadPoints(part, layout).values()];
+    return rect === null ? [] : [{
+      id: part.id, rect, pins: pinPoints(part, layout) ?? [], line: part.line, ...(pads.length === 0 ? {} : { joins: pads }),
+    }];
   });
   const deviceBodies: SceneBody[] = [...devices].map(([id, device]) => ({
     id,
