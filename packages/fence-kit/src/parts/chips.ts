@@ -875,6 +875,9 @@ function drawPads(pads: readonly BoardPad[], ink: ChipInk): string {
  * ピンの名前の縦書きに重なるので、どちらでも下を消して読ませる。
  * **横に置いたボードだけ** (ブレッドボードは溝をまたぐので横だけ。縦に置いた perfboard は
  * 名前を伏せて輪だけ描く)。
+ *
+ * `gap` はパッドの真ん中から名前の書き出しまで (px)。パッドへ線が入る図 (ブレッドボード) は、
+ * パッドへ降りる線より外に名前を置くために広げて渡す — 線が名前の下を通らないように。
  */
 export function boardPadNames(
   pads: readonly BoardPad[],
@@ -883,6 +886,7 @@ export function boardPadNames(
   box: ChipBox,
   fontSize: number,
   ink: ChipInk,
+  gap = PAD_NAME_GAP,
 ): string {
   const first = points[pinOne] ?? points[0];
   const sample = pads[0]?.point;
@@ -890,7 +894,7 @@ export function boardPadNames(
   const out = Math.sign(sample.x - first.x) || 1;
 
   return pads.map(({ name, point }) => {
-    const x = point.x + out * PAD_NAME_GAP;
+    const x = point.x + out * gap;
     const outside = out > 0 ? x >= box.x + box.width : x <= box.x;
     return svgText(x, point.y + fontSize * 0.35, name, {
       'font-size': num(fontSize),

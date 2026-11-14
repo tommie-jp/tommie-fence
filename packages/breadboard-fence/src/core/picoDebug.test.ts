@@ -54,6 +54,18 @@ describe('SWD のパッド', () => {
     for (const name of ['SWCLK', 'SWGND', 'SWDIO']) expect(svg).toContain(`>${name}<`);
   });
 
+  test('keeps the pad names clear of the wires: pad, then the wires going down, then the names', () => {
+    const source = fence(...probe(), ...swd);
+    const { svg } = renderBreadboard(source);
+    const wireHalf = 2; // 線の太さ 4 の半分 (既定のテーマ)
+    const wireRight = Math.max(...polylines(source).flatMap((points) => points.slice(-3).map((point) => point.x)));
+    for (const name of ['SWCLK', 'SWGND', 'SWDIO']) {
+      const x = Number(new RegExp(`<text x="(-?[\\d.]+)"[^>]*>${name}<`).exec(svg)?.[1]);
+      // 名前の書き出しは、パッドへ降りてくるどの線よりも外 (右)。線が名前の下を通らない。
+      expect(x).toBeGreaterThan(wireRight + wireHalf);
+    }
+  });
+
   test('ends each wire on its pad: SWCLK lowest, SWDIO highest, at the end away from the usb', () => {
     const lines = polylines(fence(...probe(), ...swd));
     const ends = lines.map((points) => points[points.length - 1]!);

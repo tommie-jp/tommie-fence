@@ -1,4 +1,4 @@
-import { boardBox, boardChip, boardPadFont, boardPadNames, boardPads, lookupBoardPart, textWidth } from 'fence-kit';
+import { boardBox, boardChip, boardPadFont, boardPadNames, boardPads, lookupBoardPart } from 'fence-kit';
 import { HOLE_ROWS } from '../types.ts';
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Point, Rect } from '../types.ts';
@@ -58,13 +58,17 @@ function outward(part: PlacedPart, layout: Layout, pad: Point): number {
 }
 
 /**
- * パッドの名前。**配線より上に描く** (パッドへ入る線は名前の下を通る。名前は縁取りで線を消して
- * 読ませる)。字の形は fence-kit の `boardPadNames` で、perfboard と同じ。
+ * パッドの名前。**パッドへ降りる線より外に置く** — 並びは「パッド → 降りる線 (3 本) → 名前」。
+ * 名前をパッドのすぐ脇に置くと、パッドへ横に入る線が名前の下を通り、縁取りで消しても線の端が
+ * 字に触れて読みにくかった。層は配線より上。字の形は fence-kit の `boardPadNames` で、perfboard と同じ。
  */
 export function renderBoardPadNames(part: PlacedPart, layout: Layout, theme: RenderTheme): string {
   const pads = boardPadPoints(part, layout);
   const points = pinPoints(part, layout);
-  if (pads.size === 0 || !points) return '';
+  const sample = [...pads.values()][0];
+  if (pads.size === 0 || !points || !sample) return '';
+  const outermost = laneX(part, layout, sample, pads.size - 1);
+  const gap = Math.abs(outermost - sample.x) + theme.metrics.wireWidth / 2 + LANE_NAME_CLEAR;
   return boardPadNames(
     [...pads].map(([name, point]) => ({ name, point })),
     points,
@@ -72,42 +76,46 @@ export function renderBoardPadNames(part: PlacedPart, layout: Layout, theme: Ren
     boardBodyRect(part, layout),
     boardPadFont(textScale(theme)),
     chipInk(theme),
+    gap,
   );
 }
 
-/** 名前の字の後ろから、降りる半列までに空ける量 (px)。 */
-const NAME_CLEAR = 4;
+/** いちばん外の降りる線の縁から、パッドの名前の書き出しまで (px)。字の縁取りが線にかからない量。 */
+const LANE_NAME_CLEAR = 6;
+/** パッドの輪の半径 (fence-kit と同じ) と、降りる線までに空ける量 (px)。 */
+const PAD_RADIUS = 3.5;
+const PAD_LANE_CLEAR = 2;
+
+/**
+ * パッドへ降りる線の半列 (穴の列と列の間) の x。`rank` 番目 (0 がパッドにいちばん近い)。
+ * パッドの輪のすぐ外の半列から、1 番の反対の側へ 1 列ずつ。
+ */
+function laneX(part: PlacedPart, layout: Layout, pad: Point, rank: number): number {
+  const out = outward(part, layout, pad);
+  const clear = pad.x + out * (PAD_RADIUS + PAD_LANE_CLEAR);
+  const origin = layout.colX(1);
+  const grid = (clear - origin) / layout.pitch;
+  const first = out > 0 ? Math.ceil(grid - 0.5) + 0.5 : Math.floor(grid + 0.5) - 0.5;
+  return origin + (first + out * rank) * layout.pitch;
+}
 
 /**
  * パッドへ入る線の**入口**。線は基板の外のレーンから半列 (穴の列と列の間) を縦に降り、
  * パッドの高さ (行と行の間) で横に入る。**入口は 1 番の反対の側** (USB と反対の端)。
- * 半列は**パッドの名前より外**から選ぶ — 縦の線が名前を横切らないように。
+ * 半列は**パッドのすぐ外**から選ぶ (`laneX`)。名前はその外に置くので (`renderBoardPadNames`)、
+ * 線は名前を横切らない。
  *
  * 3 本の降りる半列は 1 つずつずらす。**機器の側に近いパッドほど内側の半列**にすると、
  * 3 本の L 字が入れ子になって交わらない。
  */
-export function padEntry(part: PlacedPart, layout: Layout, theme: RenderTheme, pad: string, fromAbove: boolean): Point | null {
+export function padEntry(part: PlacedPart, layout: Layout, _theme: RenderTheme, pad: string, fromAbove: boolean): Point | null {
   const pads = boardPadPoints(part, layout);
   const point = pads.get(pad);
   if (!point) return null;
-
-  const out = outward(part, layout, point);
-  const font = boardPadFont(textScale(theme));
-  const longest = Math.max(...[...pads.keys()].map((name) => textWidth(name) * font));
-  const clear = point.x + out * (PAD_NAME_GAP + longest + NAME_CLEAR);
-  // `clear` より外の、いちばん近い半列 (穴の格子で数える。列の真ん中は k + 0.5)。
-  const origin = layout.colX(1);
-  const grid = (clear - origin) / layout.pitch;
-  const first = out > 0 ? Math.ceil(grid - 0.5) + 0.5 : Math.floor(grid + 0.5) - 0.5;
-
   // 機器の側に近い順。
   const order = [...pads].sort(([, a], [, b]) => (fromAbove ? a.y - b.y : b.y - a.y)).map(([name]) => name);
-  const rank = order.indexOf(pad);
-  return { x: origin + (first + out * rank) * layout.pitch, y: point.y };
+  return { x: laneX(part, layout, point, order.indexOf(pad)), y: point.y };
 }
-
-/** パッドと名前の間 (fence-kit の `PAD_NAME_GAP` と同じ)。 */
-const PAD_NAME_GAP = 6;
 
 /**
  * 溝をまたいで挿すマイコンボード。**姿は fence-kit にある**
