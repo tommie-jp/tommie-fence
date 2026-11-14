@@ -63,6 +63,8 @@ front of you. Open the Markdown preview (`Ctrl+Shift+V`) and the fences turn
 into drawings; you can also turn the `.md` tab itself into a drawing editor. A
 GitHub account is needed (the free tier is 120 core-hours a month).
 
+Fences are written in YAML; the essentials are in [Writing YAML](examples/yaml.md).
+
 The extension comes from the `.vsix` on the releases page. **Nothing is
 built from source there** — the demo shows a released version, not the tip of
 main.

@@ -46,6 +46,8 @@ Markdown の行番号とその行の中身で返るエラー (vna・scope・spec
 プレビュー (`Ctrl+Shift+V`) でフェンスが図になり、`.md` のタブそのものを
 図のエディタにもできる。GitHub のアカウントが要る (無料枠は月 120 コア時間)。
 
+フェンスの中身は YAML。書き方の要点は [YAML の書き方](examples/yaml.ja.md)。
+
 拡張 (`tommie-fence` の 1 つ) は Releases の `.vsix` から入る。
 **この場でソースからは組まない** —
 デモで見せるのは公開した版で、main の途中ではない。
