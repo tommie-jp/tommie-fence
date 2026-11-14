@@ -906,6 +906,13 @@ const ROWS: readonly PinoutRow[] = [
     look: { body: '#eef0f2', edge: '#a9adb3' },
     note: '`sip4` を乳白の胴で描く。`G` `B` `R` が各色のカソード、3 番 `A` が共通アノード (いちばん長い足)。足を広げて隣の 4 穴に挿す。色ごとに抵抗を入れる (Vf は赤 2.1 V、緑・青 3.1 V)',
   },
+  {
+    // TTL (LS) の NAND。ピンの並びは 74HC00 と同じ (TI SN74LS00 のデータシート SDLS025) だが、
+    // 電源は 5 V だけ・入力は TTL レベル・静止電流は mA で別の品なので、74HC00 の別名にしない。
+    // 教科書の 02-analog-discovery 7-20 (静止電流で品種を見分ける) で 74HC00 と差し替える。
+    models: ['74LS00', 'SN74LS00', 'SN74LS00N'], role: '2 入力 NAND ×4',
+    names: HC_QUAD_GATE,
+  },
 ];
 
 /** 型番 (大文字) → 行。`Map` にするのは `constructor` のような継ぎ物の名前を拾わないため。 */

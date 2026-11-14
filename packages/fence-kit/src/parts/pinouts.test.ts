@@ -160,13 +160,13 @@ describe('ピンの名前の表', () => {
 
     // 先頭の 35 行は 74HC273 まで (既存の並び。LM393 は 6 行目、そのあとに SA612・MCP6002・LM386)、
     // そのあとにロジック IC、そのあとに 3SK291、SFU455B、1 列のモジュール (KY-040・HC-SR04・SG90・DHT11・HC-SR501)、
-    // 3 本足の IC・センサ、8 ピンの温度センサ、村田のフィルタ 2 つ、RJ45・DC・オーディオの DIP 化キット、フルカラー LED。
+    // 3 本足の IC・センサ、8 ピンの温度センサ、村田のフィルタ 2 つ、RJ45・DC・オーディオの DIP 化キット、フルカラー LED、74LS00。
     expect(all.slice(0, 9)).toEqual(['NE555', 'TLC555', 'LM358', 'TL071', 'TL072', 'LM393', 'SA612', 'MCP6002', 'LM386']);
     expect(all.slice(32, 39)).toEqual(['62256', '6116', '74HC245', '74HC273', '74HC14', '74HC00', '74HC161']);
-    expect(all.slice(-24)).toEqual([
+    expect(all.slice(-25)).toEqual([
       '3SK291', 'SFU455B', 'KY-040', 'HC-SR04', 'SG90', 'DHT11', 'HC-SR501', 'GY-9833', 'ADAFRUIT-1782',
       'ADAFRUIT-2045', 'AE-SI5351A-B', 'TA7642', 'A3144', 'A1324', 'LM35', 'LM75', 'MCP9808', 'SFELF10M7', 'CFULA455', 'AE-RJ-45-LAN-DIP-A',
-      'AE-DC-POWER-JACK-DIP', 'AE-PHONE-JACK-DIP', 'OSTA5131A', 'OSTAMA5B31A',
+      'AE-DC-POWER-JACK-DIP', 'AE-PHONE-JACK-DIP', 'OSTA5131A', 'OSTAMA5B31A', '74LS00',
     ]);
     expect(new Set(all).size).toBe(all.length);
     expect(pinoutModels(3)).toEqual(['SFU455B', 'SG90', 'HC-SR501', 'TA7642', 'A3144', 'A1324', 'LM35', 'SFELF10M7', 'CFULA455']);
@@ -177,7 +177,7 @@ describe('ピンの名前の表', () => {
     ]);
     expect(pinoutModels(24)).toEqual(['74HC154', '6116']);
     expect(pinoutModels(28)).toEqual(['62256', 'ATmega328P', 'PIC16F886', 'PIC16F57']);
-    for (const model of ['74HC14', '74HC00', '74HC10', '74HC20', '74HC125', '74HC393', '74HC164', '74HC4066']) {
+    for (const model of ['74HC14', '74HC00', '74LS00', '74HC10', '74HC20', '74HC125', '74HC393', '74HC164', '74HC4066']) {
       expect(pinoutModels(14), model).toContain(model);
     }
     for (const model of ['74HC161', '74HC138', '74HC157', '74HC175', '74HC4060', '74HC85', '74HC4051']) {
@@ -404,6 +404,13 @@ describe('ゲートの回路ごとのピンの番号', () => {
       { inputs: [9, 10], output: 8 },
       { inputs: [12, 13], output: 11 },
     ]);
+  });
+
+  test('gives the TTL 74LS00 the same units as the 74HC00, as its own row', () => {
+    expect(lookupGateUnits('SN74LS00N')).toEqual(lookupGateUnits('74HC00'));
+    expect(lookupPinout('74LS00', 14)?.names).toEqual(lookupPinout('74HC00', 14)?.names);
+    expect(lookupRole('74LS00', 'en')).toBe('2-input NAND ×4');
+    expect(pinoutTable().find((row) => row.models.includes('74HC00'))?.models).not.toContain('74LS00');
   });
 
   test('puts the output of a NOR first on the package', () => {
