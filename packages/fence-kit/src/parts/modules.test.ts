@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { moduleDocTable } from './cards/docs.ts';
 import { deviceRole, lookupModule, moduleModels, moduleTable, resolveDeviceModel } from './modules.ts';
 
 /** 基板の外のモジュールの表 (52 の docs/139)。並びはヘッダ・端子の物理の並び。 */
@@ -22,14 +23,15 @@ describe('基板の外のモジュールの表', () => {
 
   test('keeps every row complete: unique spellings, unique pin names, a product, a view and a source', () => {
     const seen = new Set<string>();
-    for (const row of moduleTable()) {
+    // 文書だけの欄 (標準の品・見る向き・出典) は、束に入る表ではなく文書の表にある (52 の docs/162)。
+    for (const row of moduleDocTable()) {
       for (const model of row.models) {
         expect(seen.has(model.toUpperCase()), model).toBe(false);
         seen.add(model.toUpperCase());
       }
       expect(new Set(row.names).size, row.models[0]).toBe(row.names.length);
       expect(row.names.every((name) => /^[\w+-]+$/.test(name) && !/^\d+$/.test(name)), row.models[0]).toBe(true);
-      for (const text of [row.role, row.roleEn, row.product, row.view, row.source]) expect(text.trim(), row.models[0]).not.toBe('');
+      for (const text of [row.role, row.roleEn, row.product, row.view, row.source]) expect((text ?? '').trim(), row.models[0]).not.toBe('');
     }
     expect(moduleModels()).toEqual(moduleTable().map((row) => row.models[0]));
   });

@@ -45,23 +45,41 @@ if (failed > 0) {
   process.exit(1);
 }
 
+// 描くときに使わない欄 (出典・注・標準の品・見る向き・SPICE) は、束に入る表から外して別のファイルに置く。
+// 束の 4 分の 1 がこの字だった (52 の docs/162)。読むのは文書の書き出しと試験だけ。
+const DOC_FIELDS = ['source', 'note', 'spice', 'product', 'view'];
+const slim = (card) => Object.fromEntries(Object.entries(card).filter(([key]) => !DOC_FIELDS.includes(key)));
+const docs = (card) => Object.fromEntries(Object.entries(card).filter(([key]) => DOC_FIELDS.includes(key)));
+
 const text = [
   '// 自動で書き出したファイル。手で直さない。',
   '// 元は packages/fence-kit/parts/**/*.part.yaml、書き出すのは `npm run cards` (52 の docs/158)。',
-  "import type { PartCard } from './types.ts';",
+  '// 文書だけの欄 (出典・注など) は bundled.docs.gen.ts にある (束に入れない。52 の docs/162)。',
+  "import type { SlimCard } from './types.ts';",
   '',
   // 1 枚 1 行 (150 枚を字下げつきで書くと 5,000 行を越え、差分が読めない)。
-  `export const BUNDLED_CARDS: readonly PartCard[] = [\n${cards.map((card) => `  ${JSON.stringify(card)},`).join('\n')}\n];`,
+  `export const BUNDLED_CARDS: readonly SlimCard[] = [\n${cards.map((card) => `  ${JSON.stringify(slim(card))},`).join('\n')}\n];`,
   '',
 ].join('\n');
 
+const docsText = [
+  '// 自動で書き出したファイル。手で直さない。',
+  '// 同梱の部品カードの、文書だけの欄 (描く側は読まない)。書き出すのは `npm run cards` (52 の docs/162)。',
+  "import type { CardDocs } from './types.ts';",
+  '',
+  `export const BUNDLED_CARD_DOCS: Readonly<Record<string, CardDocs>> = {\n${cards.map((card) => `  ${JSON.stringify(`${card.kind}:${card.models[0]}`)}: ${JSON.stringify(docs(card))},`).join('\n')}\n};`,
+  '',
+].join('\n');
+const docsTarget = new URL('src/parts/cards/bundled.docs.gen.ts', root);
+
 if (process.argv.includes('--check')) {
-  if (readFileSync(target, 'utf8') !== text) {
+  if (readFileSync(target, 'utf8') !== text || readFileSync(docsTarget, 'utf8') !== docsText) {
     console.error('bundled.gen.ts がカードと食い違っています。npm run cards で焼き直します');
     process.exit(1);
   }
   console.log(`同梱のカード ${cards.length} 枚: 焼いた物と同じ`);
 } else {
   writeFileSync(target, text);
+  writeFileSync(docsTarget, docsText);
   console.log(`同梱のカード ${cards.length} 枚を焼きました → packages/fence-kit/src/parts/cards/bundled.gen.ts`);
 }

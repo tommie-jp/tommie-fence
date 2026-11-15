@@ -1,4 +1,4 @@
-import { boardPartNames, discreteTable, lookupBoardPart, lookupRole, moduleTable, pinoutTable } from 'fence-kit';
+import { boardPartNames, discreteDocTable, lookupBoardPart, lookupRole, moduleDocTable, pinoutDocTable } from 'fence-kit';
 
 /**
  * 同梱の部品の表の中身の控え (52 の docs/160 の段 0)。TS の行を部品カードへ移すあいだ、
@@ -25,9 +25,10 @@ const withoutCard = <T extends object>(row: T): Omit<T, 'card'> => {
 
 export function tableSnapshot(): TableSnapshot {
   const entries: [string, unknown][] = [
-    ...pinoutTable().map((row) => [`pin:${row.models[0]}`, { ...withoutCard(row), roleEn: lookupRole(row.models[0] ?? '', 'en') }] as [string, unknown]),
-    ...discreteTable().map((row) => [`discrete:${row.type}:${row.models[0]}`, withoutCard(row)] as [string, unknown]),
-    ...moduleTable().map((row) => [`module:${row.models[0]}`, withoutCard(row)] as [string, unknown]),
+    // ピンの名前の行は元から出典を持たない (控えも持たない)。文書の表が足す出典は外して比べる。
+    ...pinoutDocTable().map((row) => [`pin:${row.models[0]}`, { ...withoutCard(row), source: undefined, spice: undefined, roleEn: lookupRole(row.models[0] ?? '', 'en') }] as [string, unknown]),
+    ...discreteDocTable().map((row) => [`discrete:${row.type}:${row.models[0]}`, withoutCard(row)] as [string, unknown]),
+    ...moduleDocTable().map((row) => [`module:${row.models[0]}`, withoutCard(row)] as [string, unknown]),
     ...boardPartNames().map((name) => [`board:${name}`, lookupBoardPart(name)] as [string, unknown]),
   ];
   const keys = entries.map(([key]) => key);

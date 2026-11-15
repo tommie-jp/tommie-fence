@@ -24,13 +24,13 @@ export type ModuleRow = {
   /** 働きの英語 (部品表の英語版)。 */
   readonly roleEn: string;
   /** 標準に決めた品 (販売元・型番)。 */
-  readonly product: string;
+  readonly product?: string;
   /** 並びを見る向き。 */
-  readonly view: string;
+  readonly view?: string;
   /** 文書の表に添える一言。 */
   readonly note?: string;
   /** 確かめた資料。 */
-  readonly source: string;
+  readonly source?: string;
   /**
    * 図に刷る字 (配線の名前と違う物だけ)。**1 つの機器の中で名前が重なる** (Debug Probe の 2 つの GND) とき、
    * 配線の名前は分け (`UGND` `DGND`)、刷る字は実物どおりにする (コネクタの表の `silk` と同じ仕組み)。

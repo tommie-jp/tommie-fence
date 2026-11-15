@@ -1,4 +1,4 @@
-import { discreteTable, moduleTable, pinoutTable } from 'fence-kit';
+import { discreteDocTable, moduleDocTable, pinoutDocTable } from 'fence-kit';
 import type { DiscreteRow, ModuleRow, PinoutRow } from 'fence-kit';
 
 /**
@@ -45,7 +45,7 @@ const discreteRow = (row: DiscreteRow): string =>
   `| ${head(row.models)} | ${code(row.type)} | ${pinList(row.names)} | ${row.pkg}。${row.role}${row.note === undefined ? '' : `。${row.note}`} |`;
 
 const moduleRow = (row: ModuleRow): string =>
-  `| ${head(row.models)} | ${pinList(row.names)} | ${row.role}。${row.product}。並びは${row.view}${row.note === undefined ? '' : `。${row.note}`} |`;
+  `| ${head(row.models)} | ${pinList(row.names)} | ${row.role}。${row.product ?? ''}。並びは${row.view ?? ''}${row.note === undefined ? '' : `。${row.note}`} |`;
 
 const chipRow = (row: PinoutRow): string =>
   `| ${head(row.models)} | ${code(row.package ?? `dip${row.names.length}`)} | ${pinList(row.names)}${row.note === undefined ? '' : ` (${row.note})`} |`;
@@ -57,7 +57,7 @@ export const ROW_BLOCKS: readonly RowBlock[] = [
     render: () => [
       '| 型番 (別名) | 種類 | ピンの名前 (1 番から) |',
       '| --- | --- | --- |',
-      ...pinoutTable().map(chipRow),
+      ...pinoutDocTable().map(chipRow),
     ].join('\n'),
   },
   {
@@ -66,7 +66,7 @@ export const ROW_BLOCKS: readonly RowBlock[] = [
     render: () => [
       '| 型番 | 種類 | 穴の順 (印字面を手前、ピンを下にして左から) | パッケージ |',
       '| --- | --- | --- | --- |',
-      ...discreteTable().map(discreteRow),
+      ...discreteDocTable().map(discreteRow),
     ].join('\n'),
   },
   {
@@ -75,7 +75,7 @@ export const ROW_BLOCKS: readonly RowBlock[] = [
     render: () => [
       '| 型番 (別名) | ピン (並び) | 働き・標準の品・注 |',
       '| --- | --- | --- |',
-      ...moduleTable().map(moduleRow),
+      ...moduleDocTable().map(moduleRow),
     ].join('\n'),
   },
 ];

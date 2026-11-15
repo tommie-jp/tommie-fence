@@ -33,8 +33,8 @@ export type DiscreteRow = {
   readonly role: string;
   /** 文書の表に添える一言。 */
   readonly note?: string;
-  /** 確かめたデータシート。 */
-  readonly source: string;
+  /** 確かめたデータシート。**同梱のカードの行は持たない** (束に入れない。`discreteDocTable()` で引く。52 の docs/162)。 */
+  readonly source?: string;
   /** 部品カードから読んだ行。 */
   readonly card?: 'bundled' | 'local';
 };

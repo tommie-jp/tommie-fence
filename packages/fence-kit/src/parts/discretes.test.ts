@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest';
+import { discreteDocTable, moduleDocTable, pinoutDocTable } from './cards/docs.ts';
 import { VERIFY_NOTES, discreteModels, discreteTable, lookupDiscrete } from './discretes.ts';
-import { lookupModule } from './modules.ts';
-import { pinoutTable } from './pinouts.ts';
 
 /**
  * 3 ピンのディスクリートの表 (52 の docs/119)。並びは「印字面を手前、ピンを下にして左から右」で、
@@ -49,7 +48,7 @@ describe('ディスクリートのピンの名前の表', () => {
 
   test('asks to check the can of the TO-39 RF transistors with a tester', () => {
     for (const model of ['2N5109', '2N3866']) {
-      const row = discreteTable().find((one) => one.models.includes(model));
+      const row = discreteDocTable().find((one) => one.models.includes(model));
       expect(row?.pkg, model).toBe('TO-39');
       expect(row?.note, model).toContain('テスタで確かめる');
     }
@@ -74,7 +73,7 @@ describe('ディスクリートのピンの名前の表', () => {
     expect(VERIFY_NOTES['2N7000']).toContain('2007 年版の図は S G D、2022 年版の表は D G S');
     expect(VERIFY_NOTES['2SD882']).toContain('ST の資料だけ図が B C E で、他は E C B');
     for (const model of ['2N7000', '2SD882']) {
-      const row = discreteTable().find((one) => one.models.includes(model));
+      const row = discreteDocTable().find((one) => one.models.includes(model));
       const sentence = VERIFY_NOTES[model] ?? '';
       expect(row?.note, model).toContain(sentence);
       expect(sentence, model).toContain('テスタで確かめる');
@@ -82,8 +81,8 @@ describe('ディスクリートのピンの名前の表', () => {
   });
 
   test('asks to check the modules whose pin order rests on personal data, on the board print', () => {
-    expect(pinoutTable().find((row) => row.models[0] === 'GY-9833')?.note).toContain(VERIFY_NOTES['GY-9833']);
-    expect(lookupModule('TP4056-MODULE')?.note).toContain(VERIFY_NOTES['TP4056-MODULE']);
+    expect(pinoutDocTable().find((row) => row.models[0] === 'GY-9833')?.note).toContain(VERIFY_NOTES['GY-9833']);
+    expect(moduleDocTable().find((row) => row.models[0] === 'TP4056-MODULE')?.note).toContain(VERIFY_NOTES['TP4056-MODULE']);
     for (const model of ['GY-9833', 'TP4056-MODULE']) expect(VERIFY_NOTES[model], model).toContain('基板の印字で確かめる');
   });
 
@@ -99,9 +98,9 @@ describe('ディスクリートのピンの名前の表', () => {
 
   test('spells a model once, gives every row a role and a source, and 3 distinct names', () => {
     const seen = new Set<string>();
-    for (const row of discreteTable()) {
+    for (const row of discreteDocTable()) {
       expect(row.role, row.models[0]).not.toBe('');
-      expect(row.source, row.models[0]).not.toBe('');
+      expect(row.source ?? '', row.models[0]).not.toBe('');
       expect(new Set(row.names).size, row.models[0]).toBe(3);
       for (const model of row.models) {
         expect(seen.has(model.toUpperCase()), model).toBe(false);

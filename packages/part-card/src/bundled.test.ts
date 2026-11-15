@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { BUNDLED_CARDS } from 'fence-kit';
+import { BUNDLED_CARDS, CARD_DOC_FIELDS, bundledCardDocs } from 'fence-kit';
 import type { PartCard } from 'fence-kit';
 import { ROW_BLOCKS, rowBlockText } from './docRows.ts';
 import { readCardText } from './text.ts';
@@ -24,7 +24,15 @@ const cardsIn = (dir: URL): readonly [string, PartCard][] => namesIn(dir)
 
 describe('同梱の部品カード', () => {
   test('the baked table matches the cards in packages/fence-kit/parts (npm run cards)', () => {
-    expect(BUNDLED_CARDS).toEqual(cardsIn(new URL('packages/fence-kit/parts/', root)).map(([, card]) => card));
+    // 焼いた物は 2 つに分かれている: 束に入る欄 (BUNDLED_CARDS) と、文書だけの欄 (bundledCardDocs。52 の docs/162)。
+    // 合わせるとカードの全部の欄に戻る。
+    const docs = bundledCardDocs();
+    const whole = BUNDLED_CARDS.map((card) => ({ ...card, ...docs[`${card.kind}:${card.models[0]}`] }));
+    expect(whole).toEqual(cardsIn(new URL('packages/fence-kit/parts/', root)).map(([, card]) => card));
+  });
+
+  test('keeps the fields only documents use out of the table that is bundled', () => {
+    for (const card of BUNDLED_CARDS) for (const field of CARD_DOC_FIELDS) expect(card, card.models[0]).not.toHaveProperty(field);
   });
 
   test.each(ROW_BLOCKS.flatMap((block) => block.docs.map((doc) => [block.name, doc, block] as const)))(

@@ -79,6 +79,27 @@ export type BoardCard = CardCommon & {
 export type PartCard = ChipCard | DiscreteCard | ModuleCard | BoardCard;
 
 /**
+ * 描くときに使わない欄 (文書の表と出典の記録にだけ使う)。同梱のカードを焼くとき、これらは束に入れず、
+ * 別のファイル (`bundled.docs.gen.ts`) に分ける — 束の 4 分の 1 がこの字だった (実測。52 の docs/162)。
+ */
+export const CARD_DOC_FIELDS = ['source', 'note', 'spice', 'product', 'view'] as const;
+type DocField = (typeof CARD_DOC_FIELDS)[number];
+
+/** 文書だけの欄を落とせるカード (焼いた同梱のカードの形)。フルのカードもこの形に入る。 */
+export type SlimCard = PartCard extends infer Card
+  ? (Card extends PartCard ? Omit<Card, DocField> & Partial<Pick<Card, Extract<keyof Card, DocField>>> : never)
+  : never;
+
+/** 同梱のカードの、文書だけの欄。鍵は `種類:代表の型番` (`chip:74HC00` `discrete:2SC1815` `module:EC11` `board:tang-nano-9k`)。 */
+export type CardDocs = {
+  readonly source?: string;
+  readonly note?: string;
+  readonly product?: string;
+  readonly view?: string;
+  readonly spice?: CardSpice;
+};
+
+/**
  * 図を描くときに渡す表。**素のデータ** — 束ねた `core.mjs` はフェンスごとに fence-kit の写しを持つので、
  * 写しをまたいで渡っても同じに読める形にする (クラスや Map を持たない)。
  */

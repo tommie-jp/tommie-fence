@@ -78,9 +78,11 @@ export { editorWithCards } from './parts/cards/editor.ts';
 export type { CardSource } from './parts/cards/editor.ts';
 export { EMPTY_CARD_TABLE } from './parts/cards/types.ts';
 export { BUNDLED_CARDS } from './parts/cards/bundled.gen.ts';
+export { bundledCardDocs, discreteDocTable, moduleDocTable, pinoutDocTable } from './parts/cards/docs.ts';
+export { CARD_DOC_FIELDS } from './parts/cards/types.ts';
 export { FIXTURE_CARDS, fixtureCardTable } from './parts/cards/fixture.ts';
 export type {
-  BoardCard, CardIssue, CardReader, CardSpice, CardTable, ChipCard, DiscreteCard, ModuleCard, PartCard,
+  BoardCard, CardDocs, CardIssue, CardReader, CardSpice, CardTable, ChipCard, DiscreteCard, ModuleCard, PartCard, SlimCard,
 } from './parts/cards/types.ts';
 export { drawNamedChip, lookupNamedChip, namedChipBox, namedChipLooks, namedChipTypes } from './parts/namedChips.ts';
 export { lookupGateUnits, lookupPinout, lookupPinoutNames, lookupRole, pinoutModels, pinoutTable } from './parts/pinouts.ts';
