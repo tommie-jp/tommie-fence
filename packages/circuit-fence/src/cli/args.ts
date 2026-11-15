@@ -12,6 +12,9 @@ export type { ArgsResult, CliCommand } from 'fence-kit/cli';
 /** 図を描かず、手元の LaTeX に渡す `.tex` だけを書き出す指定。 */
 export const EMIT_TEX = '--emit-tex';
 
+/** 描いた図 (TeX → SVG) を控える置き場の指定。環境変数 `CIRCUIT_FENCE_CACHE` でも渡せる。 */
+export const CACHE = '--cache';
+
 /** 書き出す `.svg` に TeX のフォントを埋め込む指定。 */
 export const EMBED_FONTS = '--embed-fonts';
 
@@ -33,7 +36,10 @@ export const USAGE = `使い方:
   1 枚が 150 KB ほど大きくなります。
 
   check は何も書き出さず、読めなかった行とネットリストと ERC を出します。
-  図を描かないぶん速いので、書きながら回すときや CI で使えます。
+  --cache <dir> は、描いた図 (TeX → SVG。1 枚 0.8 秒ほど) を <dir> に控えます。同じ図は次から描き直しません
+  (環境変数 CIRCUIT_FENCE_CACHE でも渡せます。処理系の版が変わると控えは使われません)。
+
+  check は図を描かないぶん速いので、書きながら回すときや CI で使えます。
   読めなかった行が 1 つでもあれば 0 以外で終わります。
 
   --version は処理系の版を出します。図の右下にも既定で刻みます (消すなら style: stamp: off)
@@ -44,7 +50,7 @@ ${CARD_USAGE}`;
 const invalid = (message: string): ArgsResult => ({ ok: false, message });
 
 export function parseArgs(argv: readonly string[]): ArgsResult {
-  const parsed = parseCliArgs(argv, [EMIT_TEX, EMBED_FONTS, ...CARD_FLAGS], CARD_VALUES);
+  const parsed = parseCliArgs(argv, [EMIT_TEX, EMBED_FONTS, ...CARD_FLAGS], [...CARD_VALUES, CACHE]);
   if (!parsed.ok) return parsed;
 
   // check は何も書き出さないので、書き出し先を受けると嘘になる。
@@ -56,8 +62,15 @@ export function parseArgs(argv: readonly string[]): ArgsResult {
   if (parsed.value.flags.has(EMIT_TEX) && parsed.value.flags.has(EMBED_FONTS)) {
     return invalid(`${EMIT_TEX} は図を描かないので、${EMBED_FONTS} とは一緒に使えません`);
   }
+  if (parsed.value.command === 'check' && parsed.value.values?.has(CACHE) === true) {
+    return invalid(`check は図を描かないので、${CACHE} は render で使います`);
+  }
   return parsed;
 }
+
+/** 控えの置き場 (`--cache`、無ければ環境変数)。無ければ null (控えない)。 */
+export const cacheDirOf = (command: { readonly values?: ReadonlyMap<string, string> }, env: Readonly<Record<string, string | undefined>>): string | null =>
+  command.values?.get(CACHE) ?? (env['CIRCUIT_FENCE_CACHE'] !== undefined && env['CIRCUIT_FENCE_CACHE'] !== '' ? env['CIRCUIT_FENCE_CACHE'] : null);
 
 /** そのコマンドが `.tex` だけを書き出すか。 */
 export const emitsTex = (command: CliCommand): boolean => command.flags.has(EMIT_TEX);

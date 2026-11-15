@@ -110,3 +110,63 @@
   opacity: 0.6;
   font-size: 0.9em;
 }
+
+/* 図が描き上がるまでの下書き (マップのエディタと同じ自前の絵。52 の docs/163)。
+   **薄く出す** — 形と大きさは近似で、描き上がった TeX の図と入れ替わる。升目と掴むための層は出さない。
+   余白は TeX の図 (左と上に 6em) に寄せて、入れ替わったときに図が跳ばないようにする。 */
+.circuit-draft {
+  padding: 6em 0 0 6em;
+  opacity: 0.55;
+}
+.circuit-draft svg.cf-map {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.circuit-draft .cf-grid,
+.circuit-draft .cf-axes,
+.circuit-draft .cf-hits,
+.circuit-draft .cf-wire-hits,
+/* 節点とピンの丸は掴むための印 (線の端の全部に付く) なので、図としては出さない。 */
+.circuit-draft .cf-pin-hit,
+.circuit-draft .cf-marks,
+.circuit-draft .cf-pin-dot {
+  display: none;
+}
+.circuit-draft .cf-wire,
+.circuit-draft .cf-lead,
+.circuit-draft .cf-glyph-line,
+.circuit-draft .cf-pin {
+  stroke: currentColor;
+  stroke-width: 1.5;
+  fill: none;
+}
+.circuit-draft .cf-glyph {
+  fill: var(--vscode-editor-background, #ffffff);
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+.circuit-draft .cf-glyph-core {
+  fill: currentColor;
+  stroke: none;
+}
+.circuit-draft .cf-name,
+.circuit-draft .cf-mark,
+.circuit-draft .cf-note-text {
+  fill: currentColor;
+  font-size: 10px;
+}
+.circuit-draft .cf-pin-name {
+  fill: currentColor;
+  font-size: 8px;
+  opacity: 0.75;
+}
+.circuit-draft .cf-note-tag {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+}
+.circuit-draft .circuit-pending {
+  padding: 0.4em 0 0;
+}

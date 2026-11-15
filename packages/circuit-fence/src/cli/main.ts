@@ -2,7 +2,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, extname, join, resolve } from 'node:path';
 import {
-  STAMP_TEXT, attachSourceText, compileCircuit, embedFonts, extractCircuitFences, finishSvg, outputStem, shiftErrors,
+  STAMP_TEXT, VERSION, attachSourceText, compileCircuit, embedFonts, extractCircuitFences, finishSvg, outputStem, shiftErrors,
   texFontFamilies,
 } from '../core/index.ts';
 import type { CompileResult } from '../core/index.ts';
@@ -13,7 +13,10 @@ import { texErrors } from '../core/tex/texLog.ts';
 import { collectFiles, reportNetlist } from 'fence-kit/cli';
 import { withCardsUsed } from 'fence-kit';
 import { cliCards, strictCardsMessage } from 'part-card/cli';
-import { USAGE, embedsFonts, emitsTex, parseArgs } from './args.ts';
+import { USAGE, cacheDirOf, embedsFonts, emitsTex, parseArgs } from './args.ts';
+import { hashOf } from '../host/hash.ts';
+import { createDiskStore, texCacheKey } from '../host/texCache.ts';
+import type { FigureStore } from '../host/texCache.ts';
 import { checkHeading, reportErrors, reportNotices, reportProblem } from './report.ts';
 
 type Job = {
@@ -127,7 +130,7 @@ function checkJob(job: Job): number {
 }
 
 /** 1 枚描く。図にできなかった数を返す。 */
-async function runJob(job: Job, withFonts: boolean, compiled: CompileResult): Promise<number> {
+async function runJob(job: Job, withFonts: boolean, compiled: CompileResult, store: FigureStore | null): Promise<number> {
   const { tex, lineMap, netlist, theme, width, notes, errors: raw, notices, debug } = compiled;
   const errors = shiftErrors(raw, job.line);
 
@@ -147,7 +150,11 @@ async function runJob(job: Job, withFonts: boolean, compiled: CompileResult): Pr
   writeFileSync(texPath, document);
 
   // 描画は 1 枚ずつ。node-tikzjax は同時に 2 枚描くと状態が壊れる。
-  const outcome = await renderTex(tex);
+  // 控えにあれば TeX を回さない (同じ TeX なら同じ SVG。52 の docs/163)。描けた図だけを控える。
+  const hash = hashOf(tex);
+  const kept = store?.get(hash);
+  const outcome = kept === undefined ? await renderTex(tex) : { ok: true as const, svg: kept };
+  if (kept === undefined && outcome.ok) store?.put(hash, outcome.svg);
   if (!outcome.ok) {
     const failures = shiftErrors(
       attachSourceText(
@@ -196,6 +203,8 @@ async function main(argv: readonly string[]): Promise<number> {
     reportProblem(`${cards}\n\n${USAGE}`);
     return 2;
   }
+  const cacheDir = cacheDirOf(parsed.value, process.env);
+  const store = cacheDir === null || command === 'check' ? null : createDiskStore(cacheDir, texCacheKey(VERSION));
   const texOnly = emitsTex(parsed.value);
   const withFonts = embedsFonts(parsed.value);
   let failed = 0;
@@ -237,7 +246,7 @@ async function main(argv: readonly string[]): Promise<number> {
         } else {
           // TeX の描画は非同期なので、組むところ (compileCircuit) にだけカードを渡す。
           const { value, used } = withCardsUsed(table, () => compileCircuit(job.source));
-          failed += strictOf(job, used) + await runJob(job, withFonts, value);
+          failed += strictOf(job, used) + await runJob(job, withFonts, value, store);
         }
       }
     }

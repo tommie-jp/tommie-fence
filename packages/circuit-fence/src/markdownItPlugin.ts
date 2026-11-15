@@ -4,7 +4,10 @@ import {
   shiftErrors,
 } from './core/index.ts';
 import type { FenceError, Theme } from './core/index.ts';
+import { withCards } from 'fence-kit';
 import type { CardReader, CardTable } from 'fence-kit';
+import { gridMap } from './core/edit/map.ts';
+import { renderMapHtml } from './core/edit/mapSvg.ts';
 import { hashOf } from './host/hash.ts';
 
 const LANGUAGE = 'circuit';
@@ -16,6 +19,27 @@ export type FigureSource = {
 };
 
 const PENDING = '<p class="circuit-pending">図を描いています…</p>';
+
+/** 下書きの大きさ: マップの絵の 1 単位を何 em で出すか (TeX の図の部品の間とおおよそ揃う。実測で決めた)。 */
+const DRAFT_EM_PER_UNIT = 0.165;
+
+/**
+ * 図が描き上がるまでの**下書き** (52 の docs/163 の段 3)。TeX は 1 枚 0.8 秒掛かるので、待つ間は
+ * マップのエディタが使っている自前の絵 (TeX を使わない SVG。数 ms) を薄く出す。部品の位置とつながりは
+ * これで確かめられる。**形と大きさは近似** — 記号の細部と字組みは TeX の図が正で、描き上がったら入れ替わる。
+ * 下書きを組めなければ、今までどおり字だけを出す。
+ */
+function draftOf(source: string, cards: CardTable | undefined): string {
+  try {
+    const svg = withCards(cards, () => renderMapHtml(gridMap(source)));
+    const width = /viewBox="[-\d.]+ [-\d.]+ ([\d.]+) [\d.]+"/.exec(svg)?.[1];
+    if (width === undefined) return PENDING;
+    const sized = svg.replace('<svg ', `<svg style="width:${(Number(width) * DRAFT_EM_PER_UNIT).toFixed(2)}em" `);
+    return `<div class="circuit-draft">${sized}${PENDING}</div>`;
+  } catch {
+    return PENDING;
+  }
+}
 
 /**
  * ```circuit フェンスを図に差し替える markdown-it プラグイン。
@@ -84,7 +108,7 @@ function bodyOf(
   // 決めるべきではない。
   const drawing =
     figure === undefined
-      ? PENDING
+      ? draftOf(source, cards)
       : 'svg' in figure
         ? finishSvg(figure.svg, { notes, theme, width, fitToText: true })
         : '';

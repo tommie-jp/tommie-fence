@@ -2,6 +2,8 @@ import { join } from 'node:path';
 import * as vscode from 'vscode';
 import { renderTex } from 'circuit-fence/tex';
 import { createWorkerRenderer } from 'circuit-fence/tex-worker';
+import { createDiskStore, texCacheKey } from 'circuit-fence/tex-cache';
+import { VERSION as CIRCUIT_VERSION } from 'circuit-fence/src/core';
 import { activateWith } from './activate.ts';
 import { imageAfterFenceOptions } from './previewSettings.ts';
 import { registerEditorCommands } from './editor/commands.ts';
@@ -54,6 +56,8 @@ export function activate(context: vscode.ExtensionContext) {
     imageAfterFence: imageAfterFenceOptions(context, refresh),
     readers: NEIGHBOR_READERS,
     cards: cardReader,
+    // 描いた回路図は拡張の保存領域に控える (TeX は 1 枚 0.8 秒。開き直しても描き直さない。52 の docs/163)。
+    figureStore: createDiskStore(join(context.globalStorageUri.fsPath, 'tex'), texCacheKey(CIRCUIT_VERSION)),
   });
 }
 

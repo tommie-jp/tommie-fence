@@ -41,6 +41,11 @@ export type QueueOptions = {
   readonly onDrawn: () => void;
   /** 覚えておく図の枚数。 */
   readonly limit?: number;
+  /**
+   * 描いた図をしまっておく置き場 (ディスクなど。52 の docs/163)。メモリの控えに無いとき、描く前にここを見る。
+   * 描けた図はここにもしまう。**同期で読める物**を渡す (プレビューの描画は同期)。
+   */
+  readonly store?: { readonly get: (hash: string) => string | undefined; readonly put: (hash: string, svg: string) => void };
 };
 
 const DEFAULT_LIMIT = 100;
@@ -57,7 +62,7 @@ const reason = (error: unknown): string => (error instanceof Error ? error.messa
  * 別プロセスに追い出す必要があり、それは Phase 3。
  */
 export function createRenderQueue(options: QueueOptions): RenderQueue {
-  const { render, onDrawn, limit = DEFAULT_LIMIT } = options;
+  const { render, onDrawn, limit = DEFAULT_LIMIT, store } = options;
   const cache = new Map<string, CacheEntry>();
   const pending = new Set<string>();
   let chain: Promise<void> = Promise.resolve();
@@ -78,8 +83,14 @@ export function createRenderQueue(options: QueueOptions): RenderQueue {
     if (entry !== undefined) {
       cache.delete(hash);
       cache.set(hash, entry);
+      return entry;
     }
-    return entry;
+    // メモリに無ければ置き場を見る (開き直したあと・別の文書を開いたときに、描き直さずに済む)。
+    const kept = store?.get(hash);
+    if (kept === undefined) return undefined;
+    const found: CacheEntry = { svg: kept };
+    remember(hash, found);
+    return found;
   };
 
   const entryFor = (outcome: RenderOutcome, lineMap: ReadonlyMap<number, number>): CacheEntry => {
@@ -91,7 +102,10 @@ export function createRenderQueue(options: QueueOptions): RenderQueue {
 
   const draw = async (hash: string, tex: string, lineMap: ReadonlyMap<number, number>): Promise<void> => {
     try {
-      remember(hash, entryFor(await render(tex), lineMap));
+      const entry = entryFor(await render(tex), lineMap);
+      remember(hash, entry);
+      // 描けた図だけをしまう (描けなかった図は、直したら描き直す)。
+      if ('svg' in entry) store?.put(hash, entry.svg);
     } catch (error) {
       // 描けなかったことも覚える。覚えないと毎回のプレビューで描き直しにいく。
       remember(hash, { errors: [fenceError(`図を描けませんでした: ${reason(error)}`, null)] });

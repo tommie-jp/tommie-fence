@@ -5,6 +5,16 @@
 
 ## [Unreleased]
 
+### Added
+
+- `render --cache <dir>` (環境変数 `CIRCUIT_FENCE_CACHE` でも): 描いた図 (TeX → SVG。1 枚 0.8 秒ほど) を控え、同じ図は次から描き直さない。処理系の版が変わると控えは使われない。描けなかった図は控えない
+- プレビューで図が描き上がるまでの間、TeX を使わない自前の絵を下書きとして薄く出す (マップのエディタと同じ絵。数 ms)。形と大きさは近似で、描き上がった図と入れ替わる
+- 描く順番待ち (`createRenderQueue`) に置き場 (`store`) を渡せる。ディスクの置き場は `circuit-fence/tex-cache` の `createDiskStore`
+
+### Changed
+
+- ライブラリの束 (`core`) が 61 KB 小さくなった (部品カードの文書だけの欄を外した)
+
 ## [0.53.0] - 2026-11-15
 
 ### Changed

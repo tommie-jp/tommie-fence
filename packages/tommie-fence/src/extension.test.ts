@@ -1,3 +1,6 @@
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { beforeEach, describe, expect, test } from 'vitest';
 import MarkdownIt from 'markdown-it';
 import { registered } from '../test/vscodeStub.ts';
@@ -7,7 +10,11 @@ import { activate } from './extension.ts';
  * 畳んだ入口が**本当に 3 つぶんを登録するか**。型は通っても、命令の綴りや
  * 登録の数は型に出ない (52 の docs/19 — 3 つを 1 つに畳む)。
  */
-const context = { subscriptions: [] as { dispose(): void }[], extensionUri: 'file:///x' };
+// 描いた回路図の置き場 (52 の docs/163) は拡張の保存領域の下。試験は作業用の場所を渡す。
+const context = {
+  subscriptions: [] as { dispose(): void }[], extensionUri: 'file:///x',
+  globalStorageUri: { fsPath: mkdtempSync(join(tmpdir(), 'tommie-fence-test-')) },
+};
 
 describe('畳んだ拡張の入口', () => {
   beforeEach(() => {

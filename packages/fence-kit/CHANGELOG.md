@@ -9,6 +9,11 @@
 
 - `outsideNotes` — 計器の画面とグラフの外 (上か下) に置く字 (`- text below: 字` `- text above: 字`) を読み、帯の大きさを測り、描く。色と `bold`、`\n` で改行、120 字・8 行まで
 
+### Changed
+
+- 図の SVG を組む時間を縮めた。`escapeMarkup` は直す字 (5 つの実体参照の字と捨てる制御文字) の無い値をそのまま返し、属性の並びは配列を作らずに字を足す。図を描く時間の 25〜35 % がここだった。出力は変わらない
+- 同梱の部品カードを焼くとき、描くときに使わない欄 (出典・注・標準の品・見る向き・SPICE) を束に入る表から外した (`bundled.docs.gen.ts` に分ける)。文書の表と試験は `pinoutDocTable` `discreteDocTable` `moduleDocTable` で読む。3 ピンの行の `source`、モジュールの行の `product` `view` `source` は省ける欄になった
+
 ## [0.49.0] - 2026-11-15
 
 ### Changed

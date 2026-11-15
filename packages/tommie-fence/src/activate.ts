@@ -21,6 +21,11 @@ export type Wiring = {
   readonly readers?: NeighborReaders;
   /** 部品カードを訊く口 (52 の docs/158)。**デスクトップだけ** — 文書の上の `.tommie-fence/parts/` を読む。 */
   readonly cards?: CardReader;
+  /**
+   * 描いた回路図をしまう置き場 (52 の docs/163)。**デスクトップだけ** — ディスクに控えて、開き直しても描き直さない。
+   * web 版は TeX を回さないので渡さない。
+   */
+  readonly figureStore?: { readonly get: (hash: string) => string | undefined; readonly put: (hash: string, svg: string) => void };
 };
 
 /**
@@ -32,7 +37,10 @@ export type Wiring = {
  */
 export function activateWith(wiring: Wiring) {
   const refresher = createPreviewRefresher(wiring.refresh);
-  const queue = createRenderQueue({ render: wiring.render, onDrawn: refresher.request });
+  const queue = createRenderQueue({
+    render: wiring.render, onDrawn: refresher.request,
+    ...(wiring.figureStore === undefined ? {} : { store: wiring.figureStore }),
+  });
 
   return {
     extendMarkdownIt(md: MarkdownIt): MarkdownIt {

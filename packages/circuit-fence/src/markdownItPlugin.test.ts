@@ -219,4 +219,15 @@ describe('circuitPlugin', () => {
     expect(html).not.toContain('<img');
     expect(html.match(/<div/g)).toHaveLength(html.match(/<\/div>/g)?.length ?? 0);
   });
+
+  test('shows a draft drawn without TeX while the figure is pending (52 docs/163)', () => {
+    // 置き場に無い図は待ちになる。待つ間は、マップと同じ自前の絵を下書きとして出す。
+    const md = new MarkdownIt().use(circuitPlugin({ lookup: () => undefined, enqueue: () => undefined }));
+    const html = md.render('```circuit\nparts:\n  R1: resistor 1,1 3,1 1k\n```\n');
+    expect(html).toContain('class="circuit-draft"');
+    expect(html).toContain('class="cf-map"');
+    expect(html).toMatch(/<svg style="width:[\d.]+em"/);
+    // 「描いています」の字も残す (下書きであることを言う)。
+    expect(html).toContain('circuit-pending');
+  });
 });
