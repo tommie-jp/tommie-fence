@@ -1,0 +1,4514 @@
+{
+ "board:pico": {
+  "chip": "RP2040",
+  "debug": {
+   "along": -0.5,
+   "pads": [
+    "SWCLK",
+    "SWGND",
+    "SWDIO"
+   ]
+  },
+  "functions": {
+   "GP0": [
+    "UART0 TX",
+    "I2C0 SDA",
+    "SPI0 RX"
+   ],
+   "GP1": [
+    "UART0 RX",
+    "I2C0 SCL",
+    "SPI0 CSn"
+   ],
+   "GP10": [
+    "I2C1 SDA",
+    "SPI1 SCK"
+   ],
+   "GP11": [
+    "I2C1 SCL",
+    "SPI1 TX"
+   ],
+   "GP12": [
+    "UART0 TX",
+    "I2C0 SDA",
+    "SPI1 RX"
+   ],
+   "GP13": [
+    "UART0 RX",
+    "I2C0 SCL",
+    "SPI1 CSn"
+   ],
+   "GP14": [
+    "I2C1 SDA",
+    "SPI1 SCK"
+   ],
+   "GP15": [
+    "I2C1 SCL",
+    "SPI1 TX"
+   ],
+   "GP16": [
+    "UART0 TX",
+    "I2C0 SDA",
+    "SPI0 RX"
+   ],
+   "GP17": [
+    "UART0 RX",
+    "I2C0 SCL",
+    "SPI0 CSn"
+   ],
+   "GP18": [
+    "I2C1 SDA",
+    "SPI0 SCK"
+   ],
+   "GP19": [
+    "I2C1 SCL",
+    "SPI0 TX"
+   ],
+   "GP2": [
+    "I2C1 SDA",
+    "SPI0 SCK"
+   ],
+   "GP20": [
+    "I2C0 SDA"
+   ],
+   "GP21": [
+    "I2C0 SCL"
+   ],
+   "GP26": [
+    "ADC0",
+    "I2C1 SDA"
+   ],
+   "GP27": [
+    "ADC1",
+    "I2C1 SCL"
+   ],
+   "GP28": [
+    "ADC2"
+   ],
+   "GP3": [
+    "I2C1 SCL",
+    "SPI0 TX"
+   ],
+   "GP4": [
+    "UART1 TX",
+    "I2C0 SDA",
+    "SPI0 RX"
+   ],
+   "GP5": [
+    "UART1 RX",
+    "I2C0 SCL",
+    "SPI0 CSn"
+   ],
+   "GP6": [
+    "I2C1 SDA",
+    "SPI0 SCK"
+   ],
+   "GP7": [
+    "I2C1 SCL",
+    "SPI0 TX"
+   ],
+   "GP8": [
+    "UART1 TX",
+    "I2C0 SDA",
+    "SPI1 RX"
+   ],
+   "GP9": [
+    "UART1 RX",
+    "I2C0 SCL",
+    "SPI1 CSn"
+   ]
+  },
+  "hdmi": false,
+  "name": "Pico",
+  "pins": [
+   "GP0",
+   "GP1",
+   "GND3",
+   "GP2",
+   "GP3",
+   "GP4",
+   "GP5",
+   "GND8",
+   "GP6",
+   "GP7",
+   "GP8",
+   "GP9",
+   "GND13",
+   "GP10",
+   "GP11",
+   "GP12",
+   "GP13",
+   "GND18",
+   "GP14",
+   "GP15",
+   "GP16",
+   "GP17",
+   "GND23",
+   "GP18",
+   "GP19",
+   "GP20",
+   "GP21",
+   "GND28",
+   "GP22",
+   "RUN",
+   "GP26",
+   "GP27",
+   "AGND",
+   "GP28",
+   "ADC_VREF",
+   "3V3",
+   "3V3_EN",
+   "GND38",
+   "VSYS",
+   "VBUS"
+  ],
+  "reach": 0.55,
+  "rowSpan": 7,
+  "usb": "micro-b",
+  "wireless": false
+ },
+ "board:pico-w": {
+  "chip": "RP2040",
+  "debug": {
+   "along": 6.5,
+   "pads": [
+    "SWCLK",
+    "SWGND",
+    "SWDIO"
+   ]
+  },
+  "functions": {
+   "GP0": [
+    "UART0 TX",
+    "I2C0 SDA",
+    "SPI0 RX"
+   ],
+   "GP1": [
+    "UART0 RX",
+    "I2C0 SCL",
+    "SPI0 CSn"
+   ],
+   "GP10": [
+    "I2C1 SDA",
+    "SPI1 SCK"
+   ],
+   "GP11": [
+    "I2C1 SCL",
+    "SPI1 TX"
+   ],
+   "GP12": [
+    "UART0 TX",
+    "I2C0 SDA",
+    "SPI1 RX"
+   ],
+   "GP13": [
+    "UART0 RX",
+    "I2C0 SCL",
+    "SPI1 CSn"
+   ],
+   "GP14": [
+    "I2C1 SDA",
+    "SPI1 SCK"
+   ],
+   "GP15": [
+    "I2C1 SCL",
+    "SPI1 TX"
+   ],
+   "GP16": [
+    "UART0 TX",
+    "I2C0 SDA",
+    "SPI0 RX"
+   ],
+   "GP17": [
+    "UART0 RX",
+    "I2C0 SCL",
+    "SPI0 CSn"
+   ],
+   "GP18": [
+    "I2C1 SDA",
+    "SPI0 SCK"
+   ],
+   "GP19": [
+    "I2C1 SCL",
+    "SPI0 TX"
+   ],
+   "GP2": [
+    "I2C1 SDA",
+    "SPI0 SCK"
+   ],
+   "GP20": [
+    "I2C0 SDA"
+   ],
+   "GP21": [
+    "I2C0 SCL"
+   ],
+   "GP26": [
+    "ADC0",
+    "I2C1 SDA"
+   ],
+   "GP27": [
+    "ADC1",
+    "I2C1 SCL"
+   ],
+   "GP28": [
+    "ADC2"
+   ],
+   "GP3": [
+    "I2C1 SCL",
+    "SPI0 TX"
+   ],
+   "GP4": [
+    "UART1 TX",
+    "I2C0 SDA",
+    "SPI0 RX"
+   ],
+   "GP5": [
+    "UART1 RX",
+    "I2C0 SCL",
+    "SPI0 CSn"
+   ],
+   "GP6": [
+    "I2C1 SDA",
+    "SPI0 SCK"
+   ],
+   "GP7": [
+    "I2C1 SCL",
+    "SPI0 TX"
+   ],
+   "GP8": [
+    "UART1 TX",
+    "I2C0 SDA",
+    "SPI1 RX"
+   ],
+   "GP9": [
+    "UART1 RX",
+    "I2C0 SCL",
+    "SPI1 CSn"
+   ]
+  },
+  "hdmi": false,
+  "name": "Pico W",
+  "pins": [
+   "GP0",
+   "GP1",
+   "GND3",
+   "GP2",
+   "GP3",
+   "GP4",
+   "GP5",
+   "GND8",
+   "GP6",
+   "GP7",
+   "GP8",
+   "GP9",
+   "GND13",
+   "GP10",
+   "GP11",
+   "GP12",
+   "GP13",
+   "GND18",
+   "GP14",
+   "GP15",
+   "GP16",
+   "GP17",
+   "GND23",
+   "GP18",
+   "GP19",
+   "GP20",
+   "GP21",
+   "GND28",
+   "GP22",
+   "RUN",
+   "GP26",
+   "GP27",
+   "AGND",
+   "GP28",
+   "ADC_VREF",
+   "3V3",
+   "3V3_EN",
+   "GND38",
+   "VSYS",
+   "VBUS"
+  ],
+  "reach": 0.55,
+  "rowSpan": 7,
+  "usb": "micro-b",
+  "wireless": true
+ },
+ "board:pico2": {
+  "chip": "RP2350",
+  "debug": {
+   "along": -0.5,
+   "pads": [
+    "SWCLK",
+    "SWGND",
+    "SWDIO"
+   ]
+  },
+  "functions": {
+   "GP0": [
+    "UART0 TX",
+    "I2C0 SDA",
+    "SPI0 RX"
+   ],
+   "GP1": [
+    "UART0 RX",
+    "I2C0 SCL",
+    "SPI0 CSn"
+   ],
+   "GP10": [
+    "I2C1 SDA",
+    "SPI1 SCK"
+   ],
+   "GP11": [
+    "I2C1 SCL",
+    "SPI1 TX"
+   ],
+   "GP12": [
+    "UART0 TX",
+    "I2C0 SDA",
+    "SPI1 RX"
+   ],
+   "GP13": [
+    "UART0 RX",
+    "I2C0 SCL",
+    "SPI1 CSn"
+   ],
+   "GP14": [
+    "I2C1 SDA",
+    "SPI1 SCK"
+   ],
+   "GP15": [
+    "I2C1 SCL",
+    "SPI1 TX"
+   ],
+   "GP16": [
+    "UART0 TX",
+    "I2C0 SDA",
+    "SPI0 RX"
+   ],
+   "GP17": [
+    "UART0 RX",
+    "I2C0 SCL",
+    "SPI0 CSn"
+   ],
+   "GP18": [
+    "I2C1 SDA",
+    "SPI0 SCK"
+   ],
+   "GP19": [
+    "I2C1 SCL",
+    "SPI0 TX"
+   ],
+   "GP2": [
+    "I2C1 SDA",
+    "SPI0 SCK"
+   ],
+   "GP20": [
+    "I2C0 SDA"
+   ],
+   "GP21": [
+    "I2C0 SCL"
+   ],
+   "GP26": [
+    "ADC0",
+    "I2C1 SDA"
+   ],
+   "GP27": [
+    "ADC1",
+    "I2C1 SCL"
+   ],
+   "GP28": [
+    "ADC2"
+   ],
+   "GP3": [
+    "I2C1 SCL",
+    "SPI0 TX"
+   ],
+   "GP4": [
+    "UART1 TX",
+    "I2C0 SDA",
+    "SPI0 RX"
+   ],
+   "GP5": [
+    "UART1 RX",
+    "I2C0 SCL",
+    "SPI0 CSn"
+   ],
+   "GP6": [
+    "I2C1 SDA",
+    "SPI0 SCK"
+   ],
+   "GP7": [
+    "I2C1 SCL",
+    "SPI0 TX"
+   ],
+   "GP8": [
+    "UART1 TX",
+    "I2C0 SDA",
+    "SPI1 RX"
+   ],
+   "GP9": [
+    "UART1 RX",
+    "I2C0 SCL",
+    "SPI1 CSn"
+   ]
+  },
+  "hdmi": false,
+  "name": "Pico 2",
+  "pins": [
+   "GP0",
+   "GP1",
+   "GND3",
+   "GP2",
+   "GP3",
+   "GP4",
+   "GP5",
+   "GND8",
+   "GP6",
+   "GP7",
+   "GP8",
+   "GP9",
+   "GND13",
+   "GP10",
+   "GP11",
+   "GP12",
+   "GP13",
+   "GND18",
+   "GP14",
+   "GP15",
+   "GP16",
+   "GP17",
+   "GND23",
+   "GP18",
+   "GP19",
+   "GP20",
+   "GP21",
+   "GND28",
+   "GP22",
+   "RUN",
+   "GP26",
+   "GP27",
+   "AGND",
+   "GP28",
+   "ADC_VREF",
+   "3V3",
+   "3V3_EN",
+   "GND38",
+   "VSYS",
+   "VBUS"
+  ],
+  "reach": 0.55,
+  "rowSpan": 7,
+  "usb": "micro-b",
+  "wireless": false
+ },
+ "board:pico2-w": {
+  "chip": "RP2350",
+  "debug": {
+   "along": 6.5,
+   "pads": [
+    "SWCLK",
+    "SWGND",
+    "SWDIO"
+   ]
+  },
+  "functions": {
+   "GP0": [
+    "UART0 TX",
+    "I2C0 SDA",
+    "SPI0 RX"
+   ],
+   "GP1": [
+    "UART0 RX",
+    "I2C0 SCL",
+    "SPI0 CSn"
+   ],
+   "GP10": [
+    "I2C1 SDA",
+    "SPI1 SCK"
+   ],
+   "GP11": [
+    "I2C1 SCL",
+    "SPI1 TX"
+   ],
+   "GP12": [
+    "UART0 TX",
+    "I2C0 SDA",
+    "SPI1 RX"
+   ],
+   "GP13": [
+    "UART0 RX",
+    "I2C0 SCL",
+    "SPI1 CSn"
+   ],
+   "GP14": [
+    "I2C1 SDA",
+    "SPI1 SCK"
+   ],
+   "GP15": [
+    "I2C1 SCL",
+    "SPI1 TX"
+   ],
+   "GP16": [
+    "UART0 TX",
+    "I2C0 SDA",
+    "SPI0 RX"
+   ],
+   "GP17": [
+    "UART0 RX",
+    "I2C0 SCL",
+    "SPI0 CSn"
+   ],
+   "GP18": [
+    "I2C1 SDA",
+    "SPI0 SCK"
+   ],
+   "GP19": [
+    "I2C1 SCL",
+    "SPI0 TX"
+   ],
+   "GP2": [
+    "I2C1 SDA",
+    "SPI0 SCK"
+   ],
+   "GP20": [
+    "I2C0 SDA"
+   ],
+   "GP21": [
+    "I2C0 SCL"
+   ],
+   "GP26": [
+    "ADC0",
+    "I2C1 SDA"
+   ],
+   "GP27": [
+    "ADC1",
+    "I2C1 SCL"
+   ],
+   "GP28": [
+    "ADC2"
+   ],
+   "GP3": [
+    "I2C1 SCL",
+    "SPI0 TX"
+   ],
+   "GP4": [
+    "UART1 TX",
+    "I2C0 SDA",
+    "SPI0 RX"
+   ],
+   "GP5": [
+    "UART1 RX",
+    "I2C0 SCL",
+    "SPI0 CSn"
+   ],
+   "GP6": [
+    "I2C1 SDA",
+    "SPI0 SCK"
+   ],
+   "GP7": [
+    "I2C1 SCL",
+    "SPI0 TX"
+   ],
+   "GP8": [
+    "UART1 TX",
+    "I2C0 SDA",
+    "SPI1 RX"
+   ],
+   "GP9": [
+    "UART1 RX",
+    "I2C0 SCL",
+    "SPI1 CSn"
+   ]
+  },
+  "hdmi": false,
+  "name": "Pico 2 W",
+  "pins": [
+   "GP0",
+   "GP1",
+   "GND3",
+   "GP2",
+   "GP3",
+   "GP4",
+   "GP5",
+   "GND8",
+   "GP6",
+   "GP7",
+   "GP8",
+   "GP9",
+   "GND13",
+   "GP10",
+   "GP11",
+   "GP12",
+   "GP13",
+   "GND18",
+   "GP14",
+   "GP15",
+   "GP16",
+   "GP17",
+   "GND23",
+   "GP18",
+   "GP19",
+   "GP20",
+   "GP21",
+   "GND28",
+   "GP22",
+   "RUN",
+   "GP26",
+   "GP27",
+   "AGND",
+   "GP28",
+   "ADC_VREF",
+   "3V3",
+   "3V3_EN",
+   "GND38",
+   "VSYS",
+   "VBUS"
+  ],
+  "reach": 0.55,
+  "rowSpan": 7,
+  "usb": "micro-b",
+  "wireless": true
+ },
+ "board:tang-nano-9k": {
+  "chip": "GW1NR-9",
+  "hdmi": true,
+  "mark": "GW1NR",
+  "name": "Tang Nano 9K",
+  "pins": [
+   "IO38",
+   "IO37",
+   "IO36",
+   "IO39",
+   "IO25",
+   "IO26",
+   "IO27",
+   "IO28",
+   "IO29",
+   "IO30",
+   "IO33",
+   "IO34",
+   "IO40",
+   "IO35",
+   "IO41",
+   "IO42",
+   "IO51",
+   "IO53",
+   "IO54",
+   "IO55",
+   "IO56",
+   "IO57",
+   "IO68",
+   "IO69",
+   "3V3",
+   "GND",
+   "IO32",
+   "IO31",
+   "IO49",
+   "IO48",
+   "5V",
+   "IO70",
+   "IO71",
+   "IO72",
+   "IO73",
+   "IO74",
+   "IO75",
+   "IO76",
+   "IO77",
+   "IO79",
+   "IO80",
+   "IO81",
+   "IO82",
+   "IO83",
+   "IO84",
+   "IO85",
+   "IO86",
+   "IO63"
+  ],
+  "reach": 2.28,
+  "rowSpan": 9,
+  "usb": "usb-c",
+  "wireless": false
+ },
+ "discrete:regulator:7805": {
+  "kind": "regulator",
+  "models": [
+   "7805",
+   "L7805",
+   "L7805CV",
+   "LM7805",
+   "MC7805",
+   "UA7805",
+   "7809",
+   "7812",
+   "7815",
+   "L7809",
+   "L7812",
+   "L7815"
+  ],
+  "names": [
+   "IN",
+   "GND",
+   "OUT"
+  ],
+  "note": "78L05 (TO-92) は逆の並び",
+  "pkg": "TO-220",
+  "role": "三端子レギュレータ (正電圧)",
+  "source": "TI uA78xx SLVS056P (2015-01)、KCS/KCT の 1 INPUT・2 COMMON・3 OUTPUT",
+  "type": "regulator"
+ },
+ "discrete:regulator:78L05": {
+  "kind": "regulator",
+  "models": [
+   "78L05",
+   "L78L05",
+   "UA78L05",
+   "MC78L05",
+   "78L33",
+   "78L09",
+   "78L12"
+  ],
+  "names": [
+   "OUT",
+   "GND",
+   "IN"
+  ],
+  "note": "7805 (TO-220) は逆の並び",
+  "pkg": "TO-92",
+  "role": "三端子レギュレータ (正電圧、100 mA)",
+  "source": "TI uA78L SLVS010X (2023-06)、Figure 5-2 (LP) の 1 OUTPUT・2 COMMON・3 INPUT",
+  "type": "regulator"
+ },
+ "discrete:regulator:7905": {
+  "kind": "regulator",
+  "models": [
+   "7905",
+   "L7905",
+   "L7905CV",
+   "LM7905",
+   "MC7905",
+   "UA7905",
+   "UA79M05",
+   "79M05",
+   "7912",
+   "7915",
+   "L7912",
+   "L7915",
+   "MC7912"
+  ],
+  "names": [
+   "GND",
+   "IN",
+   "OUT"
+  ],
+  "note": "**7805 と並びが違う** (1 番が GND、2 番が IN)。**タブは IN (7805 の GND ではない)**。入力・出力とも負の電圧",
+  "pkg": "TO-220",
+  "role": "三端子レギュレータ (負電圧)",
+  "source": "TI uA79M00 SLVS060K (2005-04)、KC/KCS の TOP VIEW (タブが INPUT、ピンは上から OUTPUT・INPUT・COMMON。タブを上・ピンを下に回すと左から COMMON・INPUT・OUTPUT)",
+  "type": "regulator"
+ },
+ "discrete:regulator:79L05": {
+  "kind": "regulator",
+  "models": [
+   "79L05",
+   "L79L05",
+   "LM79L05",
+   "MC79L05",
+   "MC79L05A",
+   "UA79L05",
+   "79L12",
+   "79L15",
+   "LM79L12",
+   "LM79L15"
+  ],
+  "names": [
+   "GND",
+   "IN",
+   "OUT"
+  ],
+  "note": "**78L05 (OUT GND IN) と並びが違う**。TI の図は底面 (Bottom View、平らな面が上) で、左から GND・-VIN・-VOUT。平らな面を手前にしても左右は同じ",
+  "pkg": "TO-92",
+  "role": "三端子レギュレータ (負電圧、100 mA)",
+  "source": "TI LM79L05 SNOSBR8K (2013-04)、Figure 4 (LP、Bottom View)",
+  "type": "regulator"
+ },
+ "discrete:regulator:LM317": {
+  "kind": "regulator",
+  "models": [
+   "LM317",
+   "LM317T",
+   "LM317MP"
+  ],
+  "names": [
+   "ADJ",
+   "OUT",
+   "IN"
+  ],
+  "note": "`GND` ではなく `ADJ`。タブは OUT",
+  "pkg": "TO-220",
+  "role": "可変三端子レギュレータ",
+  "source": "TI LM317 SLVS044Z (2025-04)、KCS/KCT の 1 ADJUST・2 OUTPUT・3 INPUT",
+  "type": "regulator"
+ },
+ "discrete:transistor:2N2222A": {
+  "kind": "npn",
+  "models": [
+   "2N2222A",
+   "2N2222",
+   "PN2222A",
+   "PN2222"
+  ],
+  "names": [
+   "E",
+   "B",
+   "C"
+  ],
+  "note": "**onsemi の `P2N2222A` は C B E (STYLE 17) で逆**。金属缶 TO-18 は番号 (1=E 2=B 3=C) を穴の順に書く",
+  "pkg": "TO-92 / TO-18",
+  "role": "NPN 40 V 600 mA",
+  "source": "Fairchild PN2222A (Rev. A1、2004-08) の図 E B C と、TO-18 の 1 E・2 B・3 C (CDIL・Microsemi)",
+  "type": "transistor"
+ },
+ "discrete:transistor:2N3866": {
+  "kind": "npn",
+  "models": [
+   "2N3866",
+   "2N3866A"
+  ],
+  "names": [
+   "E",
+   "B",
+   "C"
+  ],
+  "note": "金属缶。番号 (1=E 2=B 3=C、出っ張りの隣が 1) を穴の順に書く。**缶がどの足とつながるかは資料に書かれていないので、テスタで確かめる**。2N3866A は fT 800 MHz",
+  "pkg": "TO-39",
+  "role": "NPN 高周波 小電力の送信 30 V 400 mA (fT 500 MHz)",
+  "source": "Central Semiconductor 2N3866 series R2 (2010-09-15)、TO-39 の外形図 (出っ張りの隣が LEAD #1) と LEAD CODE 1) Emitter 2) Base 3) Collector。Advanced Power Technology 2N3866/2N3866A (2003-04) も同じ",
+  "type": "transistor"
+ },
+ "discrete:transistor:2N3904": {
+  "kind": "npn",
+  "models": [
+   "2N3904"
+  ],
+  "names": [
+   "E",
+   "B",
+   "C"
+  ],
+  "pkg": "TO-92",
+  "role": "NPN 汎用 40 V 200 mA",
+  "source": "onsemi 2N3903/D Rev. 9 (2021-08)、CASE 29-11 STYLE 1 (1 E・2 B・3 C)",
+  "type": "transistor"
+ },
+ "discrete:transistor:2N3906": {
+  "kind": "pnp",
+  "models": [
+   "2N3906"
+  ],
+  "names": [
+   "E",
+   "B",
+   "C"
+  ],
+  "pkg": "TO-92",
+  "role": "PNP 汎用 -40 V -200 mA",
+  "source": "onsemi 2N3906/D Rev. 4 (2010-02)、CASE 29 STYLE 1",
+  "type": "transistor"
+ },
+ "discrete:transistor:2N5109": {
+  "kind": "npn",
+  "models": [
+   "2N5109"
+  ],
+  "names": [
+   "E",
+   "B",
+   "C"
+  ],
+  "note": "金属缶。番号 (1=E 2=B 3=C、出っ張りの隣が 1) を穴の順に書く。**缶がどの足とつながるかは資料に書かれていないので、テスタで確かめる**",
+  "pkg": "TO-39",
+  "role": "NPN 高周波 広帯域増幅 20 V 400 mA (fT 1.2 GHz)",
+  "source": "Advanced Power Technology 2N5109 Rev. - (2004-06)、1 Emitter・2 Base・3 Collector (TO-39)",
+  "type": "transistor"
+ },
+ "discrete:transistor:2N7000": {
+  "kind": "nch-mos",
+  "models": [
+   "2N7000"
+  ],
+  "names": [
+   "S",
+   "G",
+   "D"
+  ],
+  "note": "**BS170 は D G S で逆**。**実物で確かめる: onsemi の 2007 年版の図は S G D、2022 年版の表は D G S で食い違い、表は 2007 年版 (S G D) に従う。実物はテスタで確かめる**",
+  "pkg": "TO-92",
+  "role": "N チャネル MOSFET 60 V 200 mA",
+  "source": "ON Semi 2N7000/D Rev. 7 (2007-10)、印字面の図 (CASE 29 STYLE 22: 1 S・2 G・3 D)",
+  "type": "transistor"
+ },
+ "discrete:transistor:2N7002": {
+  "kind": "nch-mos",
+  "models": [
+   "2N7002",
+   "2N7002K",
+   "2N7002A"
+  ],
+  "names": [
+   "G",
+   "S",
+   "D"
+  ],
+  "note": "**面実装 (SOT-23)**。穴の順は端子の番号 1 G・2 S・3 D とみなす (SOT-23 を挿せる変換基板の穴の並びは基板ごとに違うので、買った基板で確かめる)。ブレッドボードには `transistor/sot23-dip`",
+  "pkg": "SOT-23",
+  "role": "N チャネル MOSFET 60 V 300 mA (面実装)",
+  "source": "Nexperia 2N7002 Rev. 7 (2011-09)、Table 2 Pinning (SOT23: 1 G・2 S・3 D)。Diodes 2N7002 DS11303 Rev. 33-2 (2013-07) の Top View も同じ (D が頂点、G が左下、S が右下)",
+  "type": "transistor"
+ },
+ "discrete:transistor:2SA1015": {
+  "kind": "pnp",
+  "models": [
+   "2SA1015",
+   "2SA1015Y",
+   "2SA1015GR",
+   "2SA1015-Y",
+   "2SA1015-GR"
+  ],
+  "names": [
+   "E",
+   "C",
+   "B"
+  ],
+  "pkg": "TO-92",
+  "role": "PNP 汎用 -50 V -150 mA",
+  "source": "東芝 2SA1015 (2007-11-01)、2-5F1B",
+  "type": "transistor"
+ },
+ "discrete:transistor:2SA1020": {
+  "kind": "pnp",
+  "models": [
+   "2SA1020",
+   "2SA1020Y",
+   "2SA1020O",
+   "2SA1020-Y",
+   "2SA1020-O"
+  ],
+  "names": [
+   "E",
+   "C",
+   "B"
+  ],
+  "note": "太い TO-92 (2-5J1A)",
+  "pkg": "TO-92MOD",
+  "role": "PNP -50 V -2 A",
+  "source": "東芝 2SA1020 (2010-11-09)、2-5J1A",
+  "type": "transistor"
+ },
+ "discrete:transistor:2SA950": {
+  "kind": "pnp",
+  "models": [
+   "2SA950",
+   "2SA950Y",
+   "2SA950O",
+   "2SA950-Y",
+   "2SA950-O"
+  ],
+  "names": [
+   "E",
+   "C",
+   "B"
+  ],
+  "pkg": "TO-92",
+  "role": "PNP -30 V -800 mA",
+  "source": "東芝 2SA950 (2007-11-01、秋月の配布)、2-5F1B",
+  "type": "transistor"
+ },
+ "discrete:transistor:2SB772": {
+  "kind": "pnp",
+  "models": [
+   "2SB772"
+  ],
+  "names": [
+   "E",
+   "C",
+   "B"
+  ],
+  "pkg": "TO-126",
+  "role": "PNP -30 V -3 A",
+  "source": "Blue Rocket 2SB772 Rev. F (2016-03)、Inchange 2SB772 の 1 E・2 C・3 B",
+  "type": "transistor"
+ },
+ "discrete:transistor:2SC1008": {
+  "kind": "npn",
+  "models": [
+   "2SC1008"
+  ],
+  "names": [
+   "E",
+   "B",
+   "C"
+  ],
+  "note": "同世代の 2SC1815 (E C B) と違い E B C。**原典の資料は見つからず JCET 製の資料による**",
+  "pkg": "TO-92",
+  "role": "NPN 60 V 700 mA",
+  "source": "JCET 2SC1008 (E 版、2017-08)、印字面の E B C",
+  "type": "transistor"
+ },
+ "discrete:transistor:2SC1815": {
+  "kind": "npn",
+  "models": [
+   "2SC1815",
+   "2SC1815Y",
+   "2SC1815GR",
+   "2SC1815BL",
+   "2SC1815-Y",
+   "2SC1815-GR",
+   "2SC2458"
+  ],
+  "names": [
+   "E",
+   "C",
+   "B"
+  ],
+  "pkg": "TO-92",
+  "role": "NPN 汎用 50 V 150 mA",
+  "source": "東芝 2SC1815 (2007-11-01)、外形図 2-5F1B の端子 (1 EMITTER・2 COLLECTOR・3 BASE)",
+  "type": "transistor"
+ },
+ "discrete:transistor:2SC2120": {
+  "kind": "npn",
+  "models": [
+   "2SC2120",
+   "2SC2120Y",
+   "2SC2120O",
+   "2SC2120-Y",
+   "2SC2120-O"
+  ],
+  "names": [
+   "E",
+   "C",
+   "B"
+  ],
+  "pkg": "TO-92",
+  "role": "NPN 30 V 800 mA",
+  "source": "東芝 2SC2120 (2002-01-30、秋月の配布)、2-5F1B",
+  "type": "transistor"
+ },
+ "discrete:transistor:2SC2655": {
+  "kind": "npn",
+  "models": [
+   "2SC2655",
+   "2SC2655Y",
+   "2SC2655O",
+   "2SC2655-Y",
+   "2SC2655-O"
+  ],
+  "names": [
+   "E",
+   "C",
+   "B"
+  ],
+  "note": "太い TO-92 (2-5J1A)",
+  "pkg": "TO-92MOD",
+  "role": "NPN 50 V 2 A",
+  "source": "東芝 2SC2655 (2009-12-21)、2-5J1A",
+  "type": "transistor"
+ },
+ "discrete:transistor:2SC3355": {
+  "kind": "npn",
+  "models": [
+   "2SC3355",
+   "2SC3355L",
+   "2SC3355G",
+   "2SC3355L-T92",
+   "2SC3355G-T92"
+  ],
+  "names": [
+   "B",
+   "E",
+   "C"
+  ],
+  "note": "**B E C** (ベースが左)。2SC1815 (E C B) とも 2N3904 (E B C) とも違う",
+  "pkg": "TO-92",
+  "role": "NPN 高周波 低雑音 (fT 6.5 GHz)",
+  "source": "NEC 2SC3355 P10355EJ3V1DS00 (1997-03)、PACKAGE DIMENSIONS (底面図。1 Base・2 Emitter・3 Collector)。UTC 2SC3355 QW-R201-036.G (2017) の TO-92 も 1 B・2 E・3 C",
+  "type": "transistor"
+ },
+ "discrete:transistor:2SD882": {
+  "kind": "npn",
+  "models": [
+   "2SD882"
+  ],
+  "names": [
+   "E",
+   "C",
+   "B"
+  ],
+  "note": "**実物で確かめる: ST の資料だけ図が B C E で、他は E C B。表は E C B。実物はテスタで確かめる**",
+  "pkg": "TO-126",
+  "role": "NPN 30 V 3 A",
+  "source": "Inchange 2SD882 の 1 E・2 C・3 B (文字のみ)。ST 2SD882 Rev 3 の内部図は B C E",
+  "type": "transistor"
+ },
+ "discrete:transistor:2SJ74": {
+  "kind": "pch-jfet",
+  "models": [
+   "2SJ74",
+   "2SJ74-BL",
+   "2SJ74-GR",
+   "2SJ74-V",
+   "2SJ74BL",
+   "2SJ74GR",
+   "2SJ74V"
+  ],
+  "names": [
+   "D",
+   "G",
+   "S"
+  ],
+  "note": "2SK170 の相補品。並びも同じ",
+  "pkg": "TO-92",
+  "role": "P チャネル JFET (低雑音)",
+  "source": "東芝 2SJ74 (1997-04-10)、2-5F1D",
+  "type": "transistor"
+ },
+ "discrete:transistor:2SK117": {
+  "kind": "nch-jfet",
+  "models": [
+   "2SK117",
+   "2SK117-BL",
+   "2SK117-GR",
+   "2SK117-Y"
+  ],
+  "names": [
+   "D",
+   "G",
+   "S"
+  ],
+  "pkg": "TO-92",
+  "role": "N チャネル JFET (低雑音)",
+  "source": "東芝 2SK117 (1997-04-10)、2-5F1D",
+  "type": "transistor"
+ },
+ "discrete:transistor:2SK170": {
+  "kind": "nch-jfet",
+  "models": [
+   "2SK170",
+   "2SK170-BL",
+   "2SK170-GR",
+   "2SK170-V",
+   "2SK170BL",
+   "2SK170GR",
+   "2SK170V"
+  ],
+  "names": [
+   "D",
+   "G",
+   "S"
+  ],
+  "note": "2SK30A は S G D で S と D が逆",
+  "pkg": "TO-92",
+  "role": "N チャネル JFET (低雑音)",
+  "source": "東芝 2SK170 (2003-03-25)、外形 2-5F1D の 1 D・2 G・3 S (底面から見た図の番号。印字面を手前にしても左右は同じ)",
+  "type": "transistor"
+ },
+ "discrete:transistor:2SK2231": {
+  "kind": "nch-mos",
+  "models": [
+   "2SK2231"
+  ],
+  "names": [
+   "G",
+   "D",
+   "S"
+  ],
+  "note": "**TO-220 ではなく面実装 (DPAK 相当)**。タブは D。基板に挿すには変換基板が要る",
+  "pkg": "PW-Mold (面実装)",
+  "role": "N チャネル MOSFET 60 V 5 A",
+  "source": "東芝 2SK2231 (1998-11-12)、2-7B1B の 1 G・2 D・3 S",
+  "type": "transistor"
+ },
+ "discrete:transistor:2SK30A": {
+  "kind": "nch-jfet",
+  "models": [
+   "2SK30A",
+   "2SK30ATM",
+   "2SK30A-Y",
+   "2SK30A-GR",
+   "2SK30ATM-Y",
+   "2SK30ATM-GR"
+  ],
+  "names": [
+   "S",
+   "G",
+   "D"
+  ],
+  "note": "2SK170・2SK117 は D G S で S と D が逆",
+  "pkg": "TO-92",
+  "role": "N チャネル JFET (低雑音・汎用)",
+  "source": "東芝 2SK30ATM (1997-04-10)、外形 2-5F1C の 1 S・2 G・3 D",
+  "type": "transistor"
+ },
+ "discrete:transistor:BS170": {
+  "kind": "nch-mos",
+  "models": [
+   "BS170"
+  ],
+  "names": [
+   "D",
+   "G",
+   "S"
+  ],
+  "note": "**2N7000 は S G D で逆**",
+  "pkg": "TO-92",
+  "role": "N チャネル MOSFET 60 V 500 mA",
+  "source": "ON Semi BS170/D Rev. 5 (2005-08)、印字面の図 (CASE 29 STYLE 30: 1 D・2 G・3 S)",
+  "type": "transistor"
+ },
+ "discrete:transistor:BSS84": {
+  "kind": "pch-mos",
+  "models": [
+   "BSS84",
+   "BSS84-7-F",
+   "BSS84-13-F"
+  ],
+  "names": [
+   "G",
+   "S",
+   "D"
+  ],
+  "note": "**面実装 (SOT-23)**。並びは 2N7002 と同じ 1 G・2 S・3 D とみなす (SOT-23 を挿せる変換基板の穴の並びは基板ごとに違うので、買った基板で確かめる)。ブレッドボードには `transistor/sot23-dip`",
+  "pkg": "SOT-23",
+  "role": "P チャネル MOSFET -50 V 130 mA (面実装)",
+  "source": "Diodes BSS84 DS30149 Rev. 27-2 (2026-05)、SOT23 の Top View (D が頂点、G が左下、S が右下。番号は SOT-23 の標準の 1 左下・2 右下・3 頂点に当てた)",
+  "type": "transistor"
+ },
+ "discrete:transistor:IRF520": {
+  "kind": "nch-mos",
+  "models": [
+   "IRF520",
+   "IRF520N",
+   "IRF540",
+   "IRF540N",
+   "IRLZ44N",
+   "IRLZ44",
+   "IRL540N",
+   "IRF3205"
+  ],
+  "names": [
+   "G",
+   "D",
+   "S"
+  ],
+  "note": "タブは D。IRLZ44N は Vgs 最大 ±16 V",
+  "pkg": "TO-220",
+  "role": "N チャネルパワー MOSFET",
+  "source": "Vishay IRF520 (Doc 91017 Rev. C)、Infineon IRF540NPbF (Rev. 2.1)、IR IRLZ44N (PD-94831) の 1 G・2 D・3 S",
+  "type": "transistor"
+ },
+ "discrete:transistor:IRF9540": {
+  "kind": "pch-mos",
+  "models": [
+   "IRF9540",
+   "IRF9540N",
+   "IRF9Z34N"
+  ],
+  "names": [
+   "G",
+   "D",
+   "S"
+  ],
+  "note": "並びは N チャネルと同じ G D S。タブは D",
+  "pkg": "TO-220",
+  "role": "P チャネルパワー MOSFET",
+  "source": "Vishay IRF9540 (Doc 91078 Rev. C) の 1 G・2 D・3 S",
+  "type": "transistor"
+ },
+ "discrete:transistor:J310": {
+  "kind": "nch-jfet",
+  "models": [
+   "J310",
+   "J309"
+  ],
+  "names": [
+   "D",
+   "S",
+   "G"
+  ],
+  "note": "**ゲートは端 (3 番)**。InterFET 品は S D G で D と S が逆 (D と S は入れ替えて使える)。Fairchild 品は図に番号が無い",
+  "pkg": "TO-92",
+  "role": "N チャネル JFET (VHF・UHF の増幅)",
+  "source": "onsemi J309/D Rev. 1 (2006-03)、TO-92 CASE 29-11 STYLE 5 (1 DRAIN・2 SOURCE・3 GATE)",
+  "type": "transistor"
+ },
+ "discrete:transistor:P2N2222A": {
+  "kind": "npn",
+  "models": [
+   "P2N2222A"
+  ],
+  "names": [
+   "C",
+   "B",
+   "E"
+  ],
+  "note": "onsemi の STYLE 17。`PN2222A` (E B C) と C と E が逆",
+  "pkg": "TO-92",
+  "role": "NPN 40 V 600 mA",
+  "source": "onsemi P2N2222A/D Rev. 7 (2013-01)、CASE 29-11 STYLE 17",
+  "type": "transistor"
+ },
+ "module:28BYJ-48": {
+  "models": [
+   "28BYJ-48",
+   "28BYJ48",
+   "28BYJ-48-5V"
+  ],
+  "names": [
+   "BLUE",
+   "PINK",
+   "YELLOW",
+   "ORANGE",
+   "RED"
+  ],
+  "note": "**ピンは線の色で呼ぶ** (相の名前 A〜D の割り当ては資料で逆になる)。`RED` は共通 (+5 V)。1 相励磁は ORANGE → YELLOW → PINK → BLUE の順で、軸側から見て反時計回り。秋月の写真の線の並びは図と食い違うので、実物で確かめる",
+  "product": "秋月 113256 (28BYJ-48 5V、XH 5P のコネクタつき)",
+  "role": "ステッピングモータ (5 V、ユニポーラ 4 相)",
+  "roleEn": "stepper motor (5 V, unipolar 4-phase)",
+  "source": "28BYJ48-W01 (2019-11-13、秋月の配布 https://akizukidenshi.com/goodsaffix/28BYJ48-W01.pdf)、p6 の Connector pin No. / Lead wire color と分配順序の表",
+  "view": "コネクタの 1〜5 番 (線の色で呼ぶ)"
+ },
+ "module:DRV8833-POLOLU": {
+  "models": [
+   "DRV8833-POLOLU",
+   "POLOLU-2130",
+   "POLOLU2130"
+  ],
+  "names": [
+   "GND",
+   "VMM",
+   "BIN1",
+   "BIN2",
+   "AIN2",
+   "AIN1",
+   "SLP",
+   "FLT",
+   "GND2",
+   "VIN",
+   "BOUT1",
+   "BOUT2",
+   "AOUT2",
+   "AOUT1",
+   "AISEN",
+   "BISEN"
+  ],
+  "note": "2 列 × 8 本、列の間は 0.4 インチ = 10.16 mm (ブレッドボードの溝 0.3 インチより広い)。右の列の GND は `GND2` (基板の中で GND とつながる)。`SLP` (nSLEEP) は H で動く。`VIN` が電源の入力で、`VMM` は逆接保護を通した後",
+  "product": "Pololu 2130 (DRV8833 Dual Motor Driver Carrier、0.5 × 0.8 インチ)",
+  "role": "モータドライバ (DRV8833、2 回路の H ブリッジ)",
+  "roleEn": "motor driver (DRV8833, dual H-bridge)",
+  "source": "Pololu 2130 の製品ページ (https://www.pololu.com/product/2130) の上面のピン配置の図 0J3866。列の間は Pololu の寸法図 drv8833-dual-motor-driver-carrier-dimensions.pdf (https://www.pololu.com/file/0J1615/、2018-10-26) の Connector callouts",
+  "view": "部品面を上にして、左の列を上から (GND〜FLT)、続けて右の列を上から (GND2〜BISEN)"
+ },
+ "module:EC11": {
+  "models": [
+   "EC11",
+   "EC11E",
+   "EC11E15244G1"
+  ],
+  "names": [
+   "A",
+   "C",
+   "B",
+   "D",
+   "E"
+  ],
+  "note": "`A` `B` が 2 相の出力、`C` が共通。`D` `E` が押しスイッチ。**列の間 14.5 mm は 2.54 mm の格子に乗らない**ので、穴に挿す形は無い (挿せるのはモジュールの `KY-040`)",
+  "product": "Alps Alpine EC11E15244G1 (縦型、軸 20 mm、30 クリック 15 パルス、押しスイッチつき)",
+  "role": "ロータリーエンコーダ (押しスイッチつき)",
+  "roleEn": "rotary encoder (with push switch)",
+  "source": "Alps Alpine EC11E Series のカタログ (Update 2510)、p2 の Drawing No.2 Mounting Hole Dimensions。KiCad 公式 Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm のパッドの座標も同じ",
+  "view": "取付面から見て: 一列に A・C・B (2.5 mm 間隔)、14.5 mm 離れた列に D・E (5 mm 間隔、D が A の側)"
+ },
+ "module:MBC2596-01": {
+  "models": [
+   "MBC2596-01",
+   "MBC2596",
+   "LM2596-01"
+  ],
+  "names": [
+   "IN+",
+   "IN-",
+   "OUT+",
+   "OUT-"
+  ],
+  "note": "端子は四隅のスルーホール (ピンヘッダは付かない)。出力は青い多回転トリマで決める。入力は出力より 1.5 V 以上高く (4〜35 V)",
+  "product": "秋月 131750 (TAEJIN MBC2596-01。2026-03 に LM2596-01 から改称)",
+  "role": "降圧 DC-DC モジュール (可変 1.25〜30 V 3 A)",
+  "roleEn": "buck DC-DC module (adjustable 1.25–30 V, 3 A)",
+  "source": "HTC MBC2596-01 R1.1 (2025-12、秋月の配布 https://akizukidenshi.com/goodsaffix/MBC2596-01.pdf)、p3 の I/O PORT CONFIGURATION と上面の写真",
+  "view": "部品面を上、入力を左にして: 左上 IN+・左下 IN-・右上 OUT+・右下 OUT-"
+ },
+ "module:NRF24L01+": {
+  "models": [
+   "NRF24L01+",
+   "NRF24L01",
+   "NRF24L01P"
+  ],
+  "names": [
+   "GND",
+   "VCC",
+   "CE",
+   "CSN",
+   "SCK",
+   "MOSI",
+   "MISO",
+   "IRQ"
+  ],
+  "note": "**2 列が 2.54 mm で隣り合うので、ブレッドボードに挿すと向かいのピンがつながる**。線でつなぐ。電源は 3.3 V (5 V は不可)。`CSN` は L で選ぶ",
+  "product": "PCB アンテナの小型品 (2 × 4 のピンヘッダ)",
+  "role": "2.4 GHz の無線モジュール (nRF24L01+、SPI)",
+  "roleEn": "2.4 GHz radio module (nRF24L01+, SPI)",
+  "source": "KiCad 公式ライブラリ RF_Module:nRF24L01_Breakout (footprint、2026-02-06 版) と RF:NRF24L01_Breakout (symbol) のピンの番号・名前とパッドの座標",
+  "view": "ピンの番号順 (1 番 GND は角パッド。奇数 1・3・5・7 と偶数 2・4・6・8 が 2 列に分かれ、列の間も 2.54 mm)"
+ },
+ "module:RPI-DEBUG-PROBE": {
+  "look": "rpi-debug-probe",
+  "models": [
+   "RPI-DEBUG-PROBE",
+   "RASPBERRY-PI-DEBUG-PROBE"
+  ],
+  "name": "Raspberry Pi Debug Probe",
+  "names": [
+   "TX",
+   "UGND",
+   "RX",
+   "SC",
+   "DGND",
+   "SD"
+  ],
+  "note": "名前は **Probe の側から見た名前** (`TX` は Probe から出る) なので、U の `TX` を相手の RX (Pico の GP1) へ、`RX` を相手の TX (GP0) へ。D の `SC` `GND` `SD` は Pico の SWCLK・GND・SWDIO へ。GND は 2 つあるので `UGND` `DGND` と呼び、図には GND と刷る。**線の色を書かなければ付属のケーブルの色** (橙 = TX・SC、黒 = GND、黄 = RX・SD)。I/O は 3.3 V",
+  "product": "Raspberry Pi Debug Probe (ケースと 3 種のケーブルつき。USB の口は micro-B)",
+  "role": "デバッグプローブ (Raspberry Pi、SWD と UART)",
+  "roleEn": "debug probe (Raspberry Pi, SWD and UART)",
+  "silk": {
+   "DGND": "GND",
+   "UGND": "GND"
+  },
+  "source": "Raspberry Pi の Debug Probe の文書 (https://www.raspberrypi.com/documentation/microcontrollers/debug-probe.html) のケーブルの色 (orange TX/SC・black GND・yellow RX/SD)、3 ピンのデバッグコネクタの仕様 RP-003139-SP (1 番 SC/TX・2 番 GND・3 番 SD/RX。JST SH 1.0 mm)、寸法図 RP-008192-DS (32 × 22 mm、USB と 3 ピンの口は反対の短辺)。2026-11-15",
+  "view": "USB を上、3 ピンの口を下にして上から見て: 左の口 U (左から TX・GND・RX)、右の口 D (左から SC・GND・SD)",
+  "wireColors": {
+   "DGND": "black",
+   "RX": "yellow",
+   "SC": "orange",
+   "SD": "yellow",
+   "TX": "orange",
+   "UGND": "black"
+  }
+ },
+ "module:TP4056-MODULE": {
+  "models": [
+   "TP4056-MODULE",
+   "03962A",
+   "TP4056-PROTECT"
+  ],
+  "names": [
+   "IN+",
+   "IN-",
+   "OUT+",
+   "B+",
+   "B-",
+   "OUT-"
+  ],
+  "note": "`B+` `B-` に電池、`OUT+` `OUT-` に負荷 (**OUT- は保護の FET を通る**ので B- と直結でない)。`IN+` `IN-` は USB の 5 V と並ぶ。**実物で確かめる: 製造元の図が無く、パッドの位置は個人のデータ 3 つの一致による。実物は基板の印字で確かめる**",
+  "product": "03962A 系の保護つき基板 (TP4056 + DW01A + FS8205A。27.9 × 17.2 mm)",
+  "role": "Li-ion の充電モジュール (TP4056、保護つき)",
+  "roleEn": "Li-ion charger module (TP4056, with protection)",
+  "source": "lilka-dev/lilka の Charge_Controller_TP4056.kicad_mod と connector.kicad_sym、ccadic/TP4056-18650 の TP4056-18650.kicad_mod (シルクに名前)、saivittalb/sunrise-simulation-alarm の Fritzing の TP4056_Module (2026-10-22) のパッドの位置と名前が一致",
+  "view": "USB を左にして上から見て: 左上 IN+・左下 IN-、右の辺を上から OUT+・B+・B-・OUT-"
+ },
+ "module:ULN2003-BOARD": {
+  "models": [
+   "ULN2003-BOARD",
+   "ULN2003-STEPPER",
+   "ULN2003-DRIVER"
+  ],
+  "names": [
+   "IN1",
+   "IN2",
+   "IN3",
+   "IN4",
+   "VCC",
+   "GND",
+   "A",
+   "B",
+   "C",
+   "D",
+   "V+"
+  ],
+  "note": "モータのコネクタは 28BYJ-48 のコネクタがそのまま挿さる (A=BLUE・B=PINK・C=YELLOW・D=ORANGE・V+=RED)。電源のヘッダの印字 `-` `+` は `GND` `VCC` と呼ぶ (配線の `--` と紛れないため)。電源は 5〜12 V、1 出力 500 mA まで。入力のヘッダは版により 4 本の物と、7 位置のうち 4 本だけピンの物がある。電源のヘッダの隣に ON/OFF のジャンパがある版もある",
+  "product": "28BYJ-48 と組で売られる緑の基板 (ULN2003AN・XH 5P・表示 LED 4 個・ON/OFF ジャンパ)",
+  "role": "ステッピングモータの駆動基板 (ULN2003)",
+  "roleEn": "stepper motor driver board (ULN2003)",
+  "source": "Makerguides の資料 ULN2003-Stepper-Motor-Driver-PCB.pdf (2019-04、https://www.makerguides.com/wp-content/uploads/2019/04/ULN2003-Stepper-Motor-Driver-PCB.pdf)、p1 の基板の写真と Typical Connections の表。電源のヘッダの向きは Fritzing の部品 2 つ (mgesteiro/fritzing-parts の 28BYJ-48 Driver Module、Elegoo の X113647 Stepper Driver Board) で一致 (2026-10-22)",
+  "view": "入力のヘッダを下の辺に置いて: 入力 (左から IN1〜IN4)・電源のヘッダ (右の辺に縦、上が + = VCC、下が - = GND)・モータのコネクタ (上の辺、左から A B C D V+)"
+ },
+ "pin:3SK291": {
+  "chip": {
+   "lead": 0.4,
+   "length": 2.9,
+   "mark": "U.F",
+   "pitch": 1.9,
+   "span": 2.9,
+   "wide": {
+    "lead": 0.6,
+    "pin": 4
+   },
+   "width": 1.5
+  },
+  "models": [
+   "3SK291"
+  ],
+  "names": [
+   "G1",
+   "G2",
+   "D",
+   "S"
+  ],
+  "role": "デュアルゲート MOSFET (N)",
+  "roleEn": "dual-gate MOSFET (N)"
+ },
+ "pin:6116": {
+  "models": [
+   "6116",
+   "IDT6116SA",
+   "IDT6116LA",
+   "HM6116",
+   "HM6116P"
+  ],
+  "names": [
+   "A7",
+   "A6",
+   "A5",
+   "A4",
+   "A3",
+   "A2",
+   "A1",
+   "A0",
+   "IO0",
+   "IO1",
+   "IO2",
+   "GND",
+   "IO3",
+   "IO4",
+   "IO5",
+   "IO6",
+   "IO7",
+   "CS",
+   "A10",
+   "OE",
+   "WE",
+   "A9",
+   "A8",
+   "VCC"
+  ],
+  "role": "SRAM 2K×8",
+  "roleEn": "SRAM 2K×8"
+ },
+ "pin:62256": {
+  "models": [
+   "62256",
+   "AS6C62256",
+   "AS6C62256-55PCN",
+   "AS6C62256-55PIN",
+   "HM62256",
+   "HM62256B",
+   "CY62256",
+   "CY62256N"
+  ],
+  "names": [
+   "A14",
+   "A12",
+   "A7",
+   "A6",
+   "A5",
+   "A4",
+   "A3",
+   "A2",
+   "A1",
+   "A0",
+   "DQ0",
+   "DQ1",
+   "DQ2",
+   "VSS",
+   "DQ3",
+   "DQ4",
+   "DQ5",
+   "DQ6",
+   "DQ7",
+   "CE",
+   "A10",
+   "OE",
+   "A11",
+   "A9",
+   "A8",
+   "A13",
+   "WE",
+   "VCC"
+  ],
+  "role": "SRAM 32K×8",
+  "roleEn": "SRAM 32K×8"
+ },
+ "pin:74HC00": {
+  "models": [
+   "74HC00",
+   "SN74HC00",
+   "SN74HC00N"
+  ],
+  "names": [
+   "1A",
+   "1B",
+   "1Y",
+   "2A",
+   "2B",
+   "2Y",
+   "GND",
+   "3Y",
+   "3A",
+   "3B",
+   "4Y",
+   "4A",
+   "4B",
+   "VCC"
+  ],
+  "role": "2 入力 NAND ×4",
+  "roleEn": "2-input NAND ×4"
+ },
+ "pin:74HC02": {
+  "models": [
+   "74HC02",
+   "SN74HC02",
+   "SN74HC02N"
+  ],
+  "names": [
+   "1Y",
+   "1A",
+   "1B",
+   "2Y",
+   "2A",
+   "2B",
+   "GND",
+   "3A",
+   "3B",
+   "3Y",
+   "4A",
+   "4B",
+   "4Y",
+   "VCC"
+  ],
+  "role": "2 入力 NOR ×4",
+  "roleEn": "2-input NOR ×4"
+ },
+ "pin:74HC04": {
+  "models": [
+   "74HC04",
+   "SN74HC04",
+   "SN74HC04N"
+  ],
+  "names": [
+   "1A",
+   "1Y",
+   "2A",
+   "2Y",
+   "3A",
+   "3Y",
+   "GND",
+   "4Y",
+   "4A",
+   "5Y",
+   "5A",
+   "6Y",
+   "6A",
+   "VCC"
+  ],
+  "role": "NOT ×6",
+  "roleEn": "NOT ×6"
+ },
+ "pin:74HC08": {
+  "models": [
+   "74HC08",
+   "SN74HC08",
+   "SN74HC08N"
+  ],
+  "names": [
+   "1A",
+   "1B",
+   "1Y",
+   "2A",
+   "2B",
+   "2Y",
+   "GND",
+   "3Y",
+   "3A",
+   "3B",
+   "4Y",
+   "4A",
+   "4B",
+   "VCC"
+  ],
+  "role": "2 入力 AND ×4",
+  "roleEn": "2-input AND ×4"
+ },
+ "pin:74HC10": {
+  "models": [
+   "74HC10",
+   "SN74HC10",
+   "SN74HC10N"
+  ],
+  "names": [
+   "1A",
+   "1B",
+   "2A",
+   "2B",
+   "2C",
+   "2Y",
+   "GND",
+   "3Y",
+   "3A",
+   "3B",
+   "3C",
+   "1Y",
+   "1C",
+   "VCC"
+  ],
+  "note": "1 回路目の `1C` `1Y` は 13・12 番に離れて出る",
+  "role": "3 入力 NAND ×3",
+  "roleEn": "3-input NAND ×3"
+ },
+ "pin:74HC11": {
+  "models": [
+   "74HC11",
+   "SN74HC11",
+   "SN74HC11N"
+  ],
+  "names": [
+   "1A",
+   "1B",
+   "2A",
+   "2B",
+   "2C",
+   "2Y",
+   "GND",
+   "3Y",
+   "3A",
+   "3B",
+   "3C",
+   "1Y",
+   "1C",
+   "VCC"
+  ],
+  "note": "並びは 74HC10 と同じ",
+  "role": "3 入力 AND ×3",
+  "roleEn": "3-input AND ×3"
+ },
+ "pin:74HC112": {
+  "models": [
+   "74HC112",
+   "SN74HC112",
+   "SN74HC112N"
+  ],
+  "names": [
+   "1CLK",
+   "1K",
+   "1J",
+   "1PRE",
+   "1Q",
+   "/1Q",
+   "/2Q",
+   "GND",
+   "2Q",
+   "2PRE",
+   "2J",
+   "2K",
+   "2CLK",
+   "2CLR",
+   "1CLR",
+   "VCC"
+  ],
+  "note": "`CLK` `PRE` `CLR` は上に線 (CLK は立ち下がりで動く)。`/Q` は Q の上に線",
+  "role": "JK フリップフロップ ×2 (プリセット・クリア付き)",
+  "roleEn": "JK flip-flop ×2 (with preset and clear)"
+ },
+ "pin:74HC123": {
+  "models": [
+   "74HC123",
+   "CD74HC123",
+   "CD74HC123E"
+  ],
+  "names": [
+   "1A",
+   "1B",
+   "1R",
+   "/1Q",
+   "2Q",
+   "2CX",
+   "2RXCX",
+   "GND",
+   "2A",
+   "2B",
+   "2R",
+   "/2Q",
+   "1Q",
+   "1CX",
+   "1RXCX",
+   "VCC"
+  ],
+  "note": "`A` `R` は上に線。`/Q` は Q の上に線。`R` はリセット、`CX` `RXCX` は外付けの C と R",
+  "role": "再トリガ単安定マルチバイブレータ ×2",
+  "roleEn": "retriggerable monostable multivibrator ×2"
+ },
+ "pin:74HC125": {
+  "models": [
+   "74HC125",
+   "SN74HC125",
+   "SN74HC125N"
+  ],
+  "names": [
+   "1OE",
+   "1A",
+   "1Y",
+   "2OE",
+   "2A",
+   "2Y",
+   "GND",
+   "3Y",
+   "3A",
+   "3OE",
+   "4Y",
+   "4A",
+   "4OE",
+   "VCC"
+  ],
+  "note": "`OE` は上に線",
+  "role": "3 ステート バッファ ×4 (OE が L で有効)",
+  "roleEn": "3-state buffer ×4 (OE active low)"
+ },
+ "pin:74HC126": {
+  "models": [
+   "74HC126",
+   "SN74HC126",
+   "SN74HC126N"
+  ],
+  "names": [
+   "1OE",
+   "1A",
+   "1Y",
+   "2OE",
+   "2A",
+   "2Y",
+   "GND",
+   "3Y",
+   "3A",
+   "3OE",
+   "4Y",
+   "4A",
+   "4OE",
+   "VCC"
+  ],
+  "note": "並びは 74HC125 と同じ。`OE` の極性だけ違う",
+  "role": "3 ステート バッファ ×4 (OE が H で有効)",
+  "roleEn": "3-state buffer ×4 (OE active high)"
+ },
+ "pin:74HC132": {
+  "models": [
+   "74HC132",
+   "SN74HC132",
+   "SN74HC132N"
+  ],
+  "names": [
+   "1A",
+   "1B",
+   "1Y",
+   "2A",
+   "2B",
+   "2Y",
+   "GND",
+   "3Y",
+   "3A",
+   "3B",
+   "4Y",
+   "4A",
+   "4B",
+   "VCC"
+  ],
+  "note": "並びは 74HC08 と同じ",
+  "role": "シュミット トリガ 2 入力 NAND ×4",
+  "roleEn": "Schmitt-trigger 2-input NAND ×4"
+ },
+ "pin:74HC138": {
+  "models": [
+   "74HC138",
+   "SN74HC138",
+   "SN74HC138N"
+  ],
+  "names": [
+   "A",
+   "B",
+   "C",
+   "G2A",
+   "G2B",
+   "G1",
+   "Y7",
+   "GND",
+   "Y6",
+   "Y5",
+   "Y4",
+   "Y3",
+   "Y2",
+   "Y1",
+   "Y0",
+   "VCC"
+  ],
+  "note": "`G2A` `G2B` `Y0`〜`Y7` は上に線",
+  "role": "3 → 8 デコーダ",
+  "roleEn": "3-to-8 decoder"
+ },
+ "pin:74HC139": {
+  "models": [
+   "74HC139",
+   "SN74HC139",
+   "SN74HC139N"
+  ],
+  "names": [
+   "1G",
+   "1A",
+   "1B",
+   "1Y0",
+   "1Y1",
+   "1Y2",
+   "1Y3",
+   "GND",
+   "2Y3",
+   "2Y2",
+   "2Y1",
+   "2Y0",
+   "2B",
+   "2A",
+   "2G",
+   "VCC"
+  ],
+  "note": "`G` と `Y` は上に線",
+  "role": "2 → 4 デコーダ ×2",
+  "roleEn": "2-to-4 decoder ×2"
+ },
+ "pin:74HC14": {
+  "models": [
+   "74HC14",
+   "SN74HC14",
+   "SN74HC14N"
+  ],
+  "names": [
+   "1A",
+   "1Y",
+   "2A",
+   "2Y",
+   "3A",
+   "3Y",
+   "GND",
+   "4Y",
+   "4A",
+   "5Y",
+   "5A",
+   "6Y",
+   "6A",
+   "VCC"
+  ],
+  "role": "シュミット トリガ インバータ ×6",
+  "roleEn": "Schmitt-trigger inverter ×6"
+ },
+ "pin:74HC151": {
+  "models": [
+   "74HC151",
+   "SN74HC151",
+   "SN74HC151N"
+  ],
+  "names": [
+   "D3",
+   "D2",
+   "D1",
+   "D0",
+   "Y",
+   "W",
+   "G",
+   "GND",
+   "C",
+   "B",
+   "A",
+   "D7",
+   "D6",
+   "D5",
+   "D4",
+   "VCC"
+  ],
+  "note": "`W` は `Y` の反転。`A` `B` `C` が選択。`G` は上に線",
+  "role": "8 入力データセレクタ",
+  "roleEn": "8-input data selector"
+ },
+ "pin:74HC153": {
+  "models": [
+   "74HC153",
+   "SN74HC153",
+   "SN74HC153N"
+  ],
+  "names": [
+   "1G",
+   "B",
+   "1C3",
+   "1C2",
+   "1C1",
+   "1C0",
+   "1Y",
+   "GND",
+   "2Y",
+   "2C0",
+   "2C1",
+   "2C2",
+   "2C3",
+   "A",
+   "2G",
+   "VCC"
+  ],
+  "note": "`A` `B` が選択。`G` は上に線",
+  "role": "4 入力データセレクタ ×2",
+  "roleEn": "4-input data selector ×2"
+ },
+ "pin:74HC154": {
+  "models": [
+   "74HC154",
+   "SN74HC154",
+   "SN74HC154N",
+   "74HC154N",
+   "CD74HC154",
+   "CD74HC154E"
+  ],
+  "names": [
+   "Y0",
+   "Y1",
+   "Y2",
+   "Y3",
+   "Y4",
+   "Y5",
+   "Y6",
+   "Y7",
+   "Y8",
+   "Y9",
+   "Y10",
+   "GND",
+   "Y11",
+   "Y12",
+   "Y13",
+   "Y14",
+   "Y15",
+   "E1",
+   "E2",
+   "A3",
+   "A2",
+   "A1",
+   "A0",
+   "VCC"
+  ],
+  "role": "4 → 16 デコーダ",
+  "roleEn": "4-to-16 decoder"
+ },
+ "pin:74HC157": {
+  "models": [
+   "74HC157",
+   "SN74HC157",
+   "SN74HC157N"
+  ],
+  "names": [
+   "A/B",
+   "1A",
+   "1B",
+   "1Y",
+   "2A",
+   "2B",
+   "2Y",
+   "GND",
+   "3Y",
+   "3B",
+   "3A",
+   "4Y",
+   "4B",
+   "4A",
+   "G",
+   "VCC"
+  ],
+  "note": "`A/B` が選択 (L で A)。`G` は上に線",
+  "role": "2 入力データセレクタ ×4",
+  "roleEn": "2-input data selector ×4"
+ },
+ "pin:74HC161": {
+  "models": [
+   "74HC161",
+   "SN74HC161",
+   "SN74HC161N"
+  ],
+  "names": [
+   "CLR",
+   "CLK",
+   "A",
+   "B",
+   "C",
+   "D",
+   "ENP",
+   "GND",
+   "LOAD",
+   "ENT",
+   "QD",
+   "QC",
+   "QB",
+   "QA",
+   "RCO",
+   "VCC"
+  ],
+  "note": "`CLR` `LOAD` は上に線。クリアは非同期。並びは 74HC163 と同じ",
+  "role": "4 ビット同期カウンタ (非同期クリア)",
+  "roleEn": "4-bit synchronous counter (async clear)"
+ },
+ "pin:74HC163": {
+  "models": [
+   "74HC163",
+   "SN74HC163",
+   "SN74HC163N",
+   "74HC163N",
+   "CD74HC163",
+   "CD74HC163E"
+  ],
+  "names": [
+   "CLR",
+   "CLK",
+   "A",
+   "B",
+   "C",
+   "D",
+   "ENP",
+   "GND",
+   "LOAD",
+   "ENT",
+   "QD",
+   "QC",
+   "QB",
+   "QA",
+   "RCO",
+   "VCC"
+  ],
+  "role": "4 ビット同期カウンタ (同期クリア)",
+  "roleEn": "4-bit synchronous counter (sync clear)"
+ },
+ "pin:74HC164": {
+  "models": [
+   "74HC164",
+   "SN74HC164",
+   "SN74HC164N"
+  ],
+  "names": [
+   "A",
+   "B",
+   "QA",
+   "QB",
+   "QC",
+   "QD",
+   "GND",
+   "CLK",
+   "CLR",
+   "QE",
+   "QF",
+   "QG",
+   "QH",
+   "VCC"
+  ],
+  "note": "`CLR` は上に線",
+  "role": "8 ビット 直列入力・並列出力 シフトレジスタ",
+  "roleEn": "8-bit serial-in parallel-out shift register"
+ },
+ "pin:74HC165": {
+  "models": [
+   "74HC165",
+   "SN74HC165",
+   "SN74HC165N"
+  ],
+  "names": [
+   "SH/LD",
+   "CLK",
+   "E",
+   "F",
+   "G",
+   "H",
+   "/QH",
+   "GND",
+   "QH",
+   "SER",
+   "A",
+   "B",
+   "C",
+   "D",
+   "CLKINH",
+   "VCC"
+  ],
+  "note": "`SH/LD` は LD の上に線。`/QH` は `QH` の上に線。`CLKINH` は印字の `CLK INH`",
+  "role": "8 ビット 並列入力・直列出力 シフトレジスタ",
+  "roleEn": "8-bit parallel-in serial-out shift register"
+ },
+ "pin:74HC174": {
+  "models": [
+   "74HC174",
+   "SN74HC174",
+   "SN74HC174N"
+  ],
+  "names": [
+   "CLR",
+   "1Q",
+   "1D",
+   "2D",
+   "2Q",
+   "3D",
+   "3Q",
+   "GND",
+   "CLK",
+   "4Q",
+   "4D",
+   "5Q",
+   "5D",
+   "6Q",
+   "6D",
+   "VCC"
+  ],
+  "note": "`CLR` は上に線",
+  "role": "D フリップフロップ ×6 (共通クリア)",
+  "roleEn": "D flip-flop ×6 (common clear)"
+ },
+ "pin:74HC175": {
+  "models": [
+   "74HC175",
+   "SN74HC175",
+   "SN74HC175N"
+  ],
+  "names": [
+   "CLR",
+   "1Q",
+   "/1Q",
+   "1D",
+   "2D",
+   "/2Q",
+   "2Q",
+   "GND",
+   "CLK",
+   "3Q",
+   "/3Q",
+   "3D",
+   "4D",
+   "/4Q",
+   "4Q",
+   "VCC"
+  ],
+  "note": "`CLR` は上に線。`/Q` は Q の上に線",
+  "role": "D フリップフロップ ×4 (共通クリア、相補出力)",
+  "roleEn": "D flip-flop ×4 (common clear, complementary outputs)"
+ },
+ "pin:74HC193": {
+  "models": [
+   "74HC193",
+   "SN74HC193",
+   "SN74HC193N"
+  ],
+  "names": [
+   "B",
+   "QB",
+   "QA",
+   "DOWN",
+   "UP",
+   "QC",
+   "QD",
+   "GND",
+   "D",
+   "C",
+   "LOAD",
+   "CO",
+   "BO",
+   "CLR",
+   "A",
+   "VCC"
+  ],
+  "note": "`LOAD` `CO` `BO` は上に線。`CLR` は H でクリア",
+  "role": "4 ビット アップダウン カウンタ",
+  "roleEn": "4-bit up/down counter"
+ },
+ "pin:74HC194": {
+  "models": [
+   "74HC194",
+   "CD74HC194",
+   "CD74HC194E"
+  ],
+  "names": [
+   "MR",
+   "DSR",
+   "D0",
+   "D1",
+   "D2",
+   "D3",
+   "DSL",
+   "GND",
+   "S0",
+   "S1",
+   "CP",
+   "Q3",
+   "Q2",
+   "Q1",
+   "Q0",
+   "VCC"
+  ],
+  "note": "`MR` は上に線",
+  "role": "4 ビット双方向シフトレジスタ",
+  "roleEn": "4-bit bidirectional shift register"
+ },
+ "pin:74HC20": {
+  "models": [
+   "74HC20",
+   "SN74HC20",
+   "SN74HC20N"
+  ],
+  "names": [
+   "1A",
+   "1B",
+   "NC",
+   "1C",
+   "1D",
+   "1Y",
+   "GND",
+   "2Y",
+   "2A",
+   "2B",
+   "NC",
+   "2C",
+   "2D",
+   "VCC"
+  ],
+  "note": "`NC` は 3・11 番。名前では指せず番号で呼ぶ",
+  "role": "4 入力 NAND ×2",
+  "roleEn": "4-input NAND ×2"
+ },
+ "pin:74HC240": {
+  "models": [
+   "74HC240",
+   "SN74HC240",
+   "SN74HC240N"
+  ],
+  "names": [
+   "1OE",
+   "1A1",
+   "2Y4",
+   "1A2",
+   "2Y3",
+   "1A3",
+   "2Y2",
+   "1A4",
+   "2Y1",
+   "GND",
+   "2A1",
+   "1Y4",
+   "2A2",
+   "1Y3",
+   "2A3",
+   "1Y2",
+   "2A4",
+   "1Y1",
+   "2OE",
+   "VCC"
+  ],
+  "note": "並びは 74HC244 と同じ。`OE` は上に線",
+  "role": "8 ビット 3 ステート バッファ (反転)",
+  "roleEn": "8-bit 3-state buffer (inverting)"
+ },
+ "pin:74HC244": {
+  "models": [
+   "74HC244",
+   "SN74HC244",
+   "SN74HC244N"
+  ],
+  "names": [
+   "1OE",
+   "1A1",
+   "2Y4",
+   "1A2",
+   "2Y3",
+   "1A3",
+   "2Y2",
+   "1A4",
+   "2Y1",
+   "GND",
+   "2A1",
+   "1Y4",
+   "2A2",
+   "1Y3",
+   "2A3",
+   "1Y2",
+   "2A4",
+   "1Y1",
+   "2OE",
+   "VCC"
+  ],
+  "note": "`OE` は上に線",
+  "role": "8 ビット 3 ステート バッファ",
+  "roleEn": "8-bit 3-state buffer"
+ },
+ "pin:74HC245": {
+  "models": [
+   "74HC245",
+   "SN74HC245",
+   "SN74HC245N",
+   "74HC245N",
+   "CD74HC245",
+   "CD74HC245E"
+  ],
+  "names": [
+   "DIR",
+   "A1",
+   "A2",
+   "A3",
+   "A4",
+   "A5",
+   "A6",
+   "A7",
+   "A8",
+   "GND",
+   "B8",
+   "B7",
+   "B6",
+   "B5",
+   "B4",
+   "B3",
+   "B2",
+   "B1",
+   "OE",
+   "VCC"
+  ],
+  "role": "8 ビット バス トランシーバ",
+  "roleEn": "8-bit bus transceiver"
+ },
+ "pin:74HC27": {
+  "models": [
+   "74HC27",
+   "SN74HC27",
+   "SN74HC27N"
+  ],
+  "names": [
+   "1A",
+   "1B",
+   "2A",
+   "2B",
+   "2C",
+   "2Y",
+   "GND",
+   "3Y",
+   "3A",
+   "3B",
+   "3C",
+   "1Y",
+   "1C",
+   "VCC"
+  ],
+  "note": "並びは 74HC10 と同じ",
+  "role": "3 入力 NOR ×3",
+  "roleEn": "3-input NOR ×3"
+ },
+ "pin:74HC273": {
+  "models": [
+   "74HC273",
+   "SN74HC273",
+   "SN74HC273N",
+   "74HC273N",
+   "CD74HC273",
+   "CD74HC273E"
+  ],
+  "names": [
+   "CLR",
+   "1Q",
+   "1D",
+   "2D",
+   "2Q",
+   "3Q",
+   "3D",
+   "4D",
+   "4Q",
+   "GND",
+   "CLK",
+   "5Q",
+   "5D",
+   "6D",
+   "6Q",
+   "7Q",
+   "7D",
+   "8D",
+   "8Q",
+   "VCC"
+  ],
+  "role": "8 ビット D フリップフロップ (クリア付き)",
+  "roleEn": "8-bit D flip-flop (with clear)"
+ },
+ "pin:74HC30": {
+  "models": [
+   "74HC30",
+   "CD74HC30",
+   "CD74HC30E"
+  ],
+  "names": [
+   "A",
+   "B",
+   "C",
+   "D",
+   "E",
+   "F",
+   "GND",
+   "Y",
+   "NC",
+   "NC",
+   "G",
+   "H",
+   "NC",
+   "VCC"
+  ],
+  "note": "`NC` は 9・10・13 番。番号で呼ぶ",
+  "role": "8 入力 NAND",
+  "roleEn": "8-input NAND"
+ },
+ "pin:74HC32": {
+  "models": [
+   "74HC32",
+   "SN74HC32",
+   "SN74HC32N"
+  ],
+  "names": [
+   "1A",
+   "1B",
+   "1Y",
+   "2A",
+   "2B",
+   "2Y",
+   "GND",
+   "3Y",
+   "3A",
+   "3B",
+   "4Y",
+   "4A",
+   "4B",
+   "VCC"
+  ],
+  "role": "2 入力 OR ×4",
+  "roleEn": "2-input OR ×4"
+ },
+ "pin:74HC390": {
+  "models": [
+   "74HC390",
+   "CD74HC390",
+   "CD74HC390E"
+  ],
+  "names": [
+   "1CLKA",
+   "1CLR",
+   "1QA",
+   "1CLKB",
+   "1QB",
+   "1QC",
+   "1QD",
+   "GND",
+   "2QD",
+   "2QC",
+   "2QB",
+   "2CLKB",
+   "2QA",
+   "2CLR",
+   "2CLKA",
+   "VCC"
+  ],
+  "note": "`CLKA` `CLKB` `CLR` は上に線",
+  "role": "10 進カウンタ ×2 (2 分周と 5 分周)",
+  "roleEn": "decade counter ×2 (divide by 2 and 5)"
+ },
+ "pin:74HC393": {
+  "models": [
+   "74HC393",
+   "SN74HC393",
+   "SN74HC393N"
+  ],
+  "names": [
+   "1CLK",
+   "1CLR",
+   "1QA",
+   "1QB",
+   "1QC",
+   "1QD",
+   "GND",
+   "2QD",
+   "2QC",
+   "2QB",
+   "2QA",
+   "2CLR",
+   "2CLK",
+   "VCC"
+  ],
+  "note": "`CLR` は H でクリア",
+  "role": "4 ビット 2 進カウンタ ×2",
+  "roleEn": "4-bit binary counter ×2"
+ },
+ "pin:74HC4040": {
+  "models": [
+   "74HC4040",
+   "SN74HC4040",
+   "SN74HC4040N"
+  ],
+  "names": [
+   "QL",
+   "QF",
+   "QE",
+   "QG",
+   "QD",
+   "QC",
+   "QB",
+   "GND",
+   "QA",
+   "CLK",
+   "CLR",
+   "QI",
+   "QH",
+   "QJ",
+   "QK",
+   "VCC"
+  ],
+  "note": "`QA` が 2 分周 (CD4040B の `Q1`)、`QL` が 4096 分周 (`Q12`)。`CLR` は H でクリア",
+  "role": "12 段 2 進カウンタ",
+  "roleEn": "12-stage binary counter"
+ },
+ "pin:74HC4051": {
+  "models": [
+   "74HC4051",
+   "CD74HC4051",
+   "CD74HC4051E"
+  ],
+  "names": [
+   "A4",
+   "A6",
+   "A",
+   "A7",
+   "A5",
+   "E",
+   "VEE",
+   "GND",
+   "S2",
+   "S1",
+   "S0",
+   "A3",
+   "A0",
+   "A1",
+   "A2",
+   "VCC"
+  ],
+  "note": "`A` が共通、`A0`〜`A7` がチャネル、`S0`〜`S2` が選択。`E` は上に線。電源は `VCC` `VEE` `GND`",
+  "role": "8 チャネル アナログ マルチプレクサ",
+  "roleEn": "8-channel analog multiplexer"
+ },
+ "pin:74HC4052": {
+  "models": [
+   "74HC4052",
+   "CD74HC4052",
+   "CD74HC4052E"
+  ],
+  "names": [
+   "B0",
+   "B2",
+   "BN",
+   "B3",
+   "B1",
+   "E",
+   "VEE",
+   "GND",
+   "S1",
+   "S0",
+   "A3",
+   "A0",
+   "AN",
+   "A1",
+   "A2",
+   "VCC"
+  ],
+  "note": "`AN` `BN` が共通、`A0`〜`A3` `B0`〜`B3` がチャネル。`E` は上に線",
+  "role": "4 チャネル アナログ マルチプレクサ ×2",
+  "roleEn": "4-channel analog multiplexer ×2"
+ },
+ "pin:74HC4053": {
+  "models": [
+   "74HC4053",
+   "CD74HC4053",
+   "CD74HC4053E"
+  ],
+  "names": [
+   "B1",
+   "B0",
+   "C1",
+   "CN",
+   "C0",
+   "E",
+   "VEE",
+   "GND",
+   "S2",
+   "S1",
+   "S0",
+   "A0",
+   "A1",
+   "AN",
+   "BN",
+   "VCC"
+  ],
+  "note": "`AN` `BN` `CN` が共通、`A0` `A1` …がチャネル。`E` は上に線",
+  "role": "2 チャネル アナログ マルチプレクサ ×3",
+  "roleEn": "2-channel analog multiplexer ×3"
+ },
+ "pin:74HC4060": {
+  "models": [
+   "74HC4060",
+   "SN74HC4060",
+   "SN74HC4060N"
+  ],
+  "names": [
+   "QL",
+   "QM",
+   "QN",
+   "QF",
+   "QE",
+   "QG",
+   "QD",
+   "GND",
+   "CLKO",
+   "/CLKO",
+   "CLKI",
+   "CLR",
+   "QI",
+   "QH",
+   "QJ",
+   "VCC"
+  ],
+  "note": "`QD` が 16 分周 … `QN` が 16384 分周 (`Q14`)。`/CLKO` は `CLKO` の上に線",
+  "role": "14 段 2 進カウンタ (発振器付き)",
+  "roleEn": "14-stage binary counter (with oscillator)"
+ },
+ "pin:74HC4066": {
+  "models": [
+   "74HC4066",
+   "CD74HC4066",
+   "CD74HC4066E"
+  ],
+  "names": [
+   "1Y",
+   "1Z",
+   "2Z",
+   "2Y",
+   "2E",
+   "3E",
+   "GND",
+   "3Y",
+   "3Z",
+   "4Z",
+   "4Y",
+   "4E",
+   "1E",
+   "VCC"
+  ],
+  "note": "`Y` `Z` は双方向。`E` が制御 (H で導通)。端子図は D・PW の 14 ピンから (PDIP も同じ番号)",
+  "role": "アナログ スイッチ ×4",
+  "roleEn": "analog switch ×4"
+ },
+ "pin:74HC541": {
+  "models": [
+   "74HC541",
+   "SN74HC541",
+   "SN74HC541N"
+  ],
+  "names": [
+   "OE1",
+   "A1",
+   "A2",
+   "A3",
+   "A4",
+   "A5",
+   "A6",
+   "A7",
+   "A8",
+   "GND",
+   "Y8",
+   "Y7",
+   "Y6",
+   "Y5",
+   "Y4",
+   "Y3",
+   "Y2",
+   "Y1",
+   "OE2",
+   "VCC"
+  ],
+  "note": "`OE1` `OE2` は上に線",
+  "role": "8 ビット 3 ステート バッファ (入力が片側)",
+  "roleEn": "8-bit 3-state buffer (inputs on one side)"
+ },
+ "pin:74HC573": {
+  "models": [
+   "74HC573",
+   "CD74HC573",
+   "CD74HC573E"
+  ],
+  "names": [
+   "OE",
+   "1D",
+   "2D",
+   "3D",
+   "4D",
+   "5D",
+   "6D",
+   "7D",
+   "8D",
+   "GND",
+   "LE",
+   "8Q",
+   "7Q",
+   "6Q",
+   "5Q",
+   "4Q",
+   "3Q",
+   "2Q",
+   "1Q",
+   "VCC"
+  ],
+  "note": "`OE` は上に線。`LE` が H の間つながる",
+  "role": "8 ビット D ラッチ (3 ステート)",
+  "roleEn": "8-bit D latch (3-state)"
+ },
+ "pin:74HC574": {
+  "models": [
+   "74HC574",
+   "SN74HC574",
+   "SN74HC574N"
+  ],
+  "names": [
+   "OE",
+   "1D",
+   "2D",
+   "3D",
+   "4D",
+   "5D",
+   "6D",
+   "7D",
+   "8D",
+   "GND",
+   "CLK",
+   "8Q",
+   "7Q",
+   "6Q",
+   "5Q",
+   "4Q",
+   "3Q",
+   "2Q",
+   "1Q",
+   "VCC"
+  ],
+  "note": "`OE` は上に線。並びは 74HC573 と同じ (`LE` が `CLK`)",
+  "role": "8 ビット D フリップフロップ (3 ステート)",
+  "roleEn": "8-bit D flip-flop (3-state)"
+ },
+ "pin:74HC595": {
+  "models": [
+   "74HC595",
+   "SN74HC595",
+   "SN74HC595N"
+  ],
+  "names": [
+   "QB",
+   "QC",
+   "QD",
+   "QE",
+   "QF",
+   "QG",
+   "QH",
+   "GND",
+   "QH'",
+   "SRCLR",
+   "SRCLK",
+   "RCLK",
+   "OE",
+   "SER",
+   "QA",
+   "VCC"
+  ],
+  "role": "8 bit シフトレジスタ",
+  "roleEn": "8-bit shift register"
+ },
+ "pin:74HC74": {
+  "models": [
+   "74HC74",
+   "SN74HC74",
+   "SN74HC74N"
+  ],
+  "names": [
+   "1CLR",
+   "1D",
+   "1CLK",
+   "1PRE",
+   "1Q",
+   "/1Q",
+   "GND",
+   "/2Q",
+   "2Q",
+   "2PRE",
+   "2CLK",
+   "2D",
+   "2CLR",
+   "VCC"
+  ],
+  "role": "D フリップフロップ ×2",
+  "roleEn": "D flip-flop ×2"
+ },
+ "pin:74HC85": {
+  "models": [
+   "74HC85",
+   "CD74HC85",
+   "CD74HC85E"
+  ],
+  "names": [
+   "B3",
+   "LTIN",
+   "EQIN",
+   "GTIN",
+   "GTOUT",
+   "EQOUT",
+   "LTOUT",
+   "GND",
+   "B0",
+   "A0",
+   "B1",
+   "A1",
+   "A2",
+   "B2",
+   "A3",
+   "VCC"
+  ],
+  "note": "`LTIN` `EQIN` `GTIN` は印字の `(A < B) IN` `(A = B) IN` `(A > B) IN`、`GTOUT` `EQOUT` `LTOUT` は `(A > B) OUT` …",
+  "role": "4 ビット 比較器",
+  "roleEn": "4-bit comparator"
+ },
+ "pin:74HC86": {
+  "models": [
+   "74HC86",
+   "SN74HC86",
+   "SN74HC86N"
+  ],
+  "names": [
+   "1A",
+   "1B",
+   "1Y",
+   "2A",
+   "2B",
+   "2Y",
+   "GND",
+   "3Y",
+   "3A",
+   "3B",
+   "4Y",
+   "4A",
+   "4B",
+   "VCC"
+  ],
+  "role": "2 入力 XOR ×4",
+  "roleEn": "2-input XOR ×4"
+ },
+ "pin:74LS00": {
+  "models": [
+   "74LS00",
+   "SN74LS00",
+   "SN74LS00N"
+  ],
+  "names": [
+   "1A",
+   "1B",
+   "1Y",
+   "2A",
+   "2B",
+   "2Y",
+   "GND",
+   "3Y",
+   "3A",
+   "3B",
+   "4Y",
+   "4A",
+   "4B",
+   "VCC"
+  ],
+  "note": "TTL。並びは `74HC00` と同じだが、電源は 5 V だけ・静止電流は mA で別の品",
+  "role": "2 入力 NAND ×4",
+  "roleEn": "2-input NAND ×4"
+ },
+ "pin:A1324": {
+  "look": {
+   "body": "#2b2b2b",
+   "edge": "#111111"
+  },
+  "models": [
+   "A1324",
+   "A1324LUA-T",
+   "A1325",
+   "A1326"
+  ],
+  "names": [
+   "VCC",
+   "GND",
+   "VOUT"
+  ],
+  "note": "`sip3` (`ic3`) を黒い胴で描く。**出力は 3 番** (2 番は GND)。磁界が無いと VCC の半分を出す",
+  "role": "リニアホールセンサ (アナログ出力)",
+  "roleEn": "linear Hall-effect sensor (analog output)"
+ },
+ "pin:A3144": {
+  "look": {
+   "body": "#2b2b2b",
+   "edge": "#111111"
+  },
+  "models": [
+   "A3144",
+   "A3144E",
+   "A3144EUA",
+   "OH3144"
+  ],
+  "names": [
+   "VCC",
+   "GND",
+   "OUT"
+  ],
+  "note": "`sip3` (`ic3`) を黒い胴で描く (実物は TO-92 より小さい UA)。OUT は開放コレクタで、プルアップが要る",
+  "role": "ホールスイッチ (開放コレクタ)",
+  "roleEn": "Hall-effect switch (open collector)"
+ },
+ "pin:ADAFRUIT-1782": {
+  "look": {
+   "body": "#1f2a44",
+   "edge": "#111827"
+  },
+  "models": [
+   "ADAFRUIT-1782",
+   "MCP9808-BREAKOUT"
+  ],
+  "names": [
+   "VDD",
+   "GND",
+   "SCL",
+   "SDA",
+   "ALERT",
+   "A0",
+   "A1",
+   "A2"
+  ],
+  "note": "`sip8` を濃い青の帯で描く (基板のピンヘッダだけ)。SCL・SDA は基板に 10 kΩ のプルアップがある。アドレスは既定 0x18 (A0〜A2 で 0x18〜0x1F)",
+  "role": "I2C 温度センサのブレークアウト (MCP9808)",
+  "roleEn": "I2C temperature sensor breakout (MCP9808)"
+ },
+ "pin:ADAFRUIT-2045": {
+  "look": {
+   "body": "#1f2a44",
+   "edge": "#111827"
+  },
+  "models": [
+   "ADAFRUIT-2045",
+   "SI5351A-BREAKOUT",
+   "CJMCU-5351"
+  ],
+  "names": [
+   "CLK0",
+   "CLK1",
+   "CLK2",
+   "SCL",
+   "SDA",
+   "GND",
+   "VIN"
+  ],
+  "note": "`sip7` を濃い青の帯で描く (基板のピンヘッダだけ)。出力の印字は `0` `1` `2` (番号と割れないよう `CLK0`〜`CLK2` で呼ぶ)。VIN は 3〜5 V (基板に 3.3 V のレギュレータ)、SCL・SDA は基板でレベル変換 (10 kΩ のプルアップつき)。出力は 3 Vpp の方形波、アドレスは 0x60。紫の互換基板 (`CJMCU-5351`) も同じ印字",
+  "role": "I2C クロック発生器のブレークアウト (Si5351A)",
+  "roleEn": "I2C clock generator breakout (Si5351A)"
+ },
+ "pin:AE-DC-POWER-JACK-DIP": {
+  "look": {
+   "body": "#b9bec5",
+   "edge": "#7a8089"
+  },
+  "models": [
+   "AE-DC-POWER-JACK-DIP",
+   "AE-DC-POWER-JACK-DIP-KIT",
+   "105148",
+   "114610"
+  ],
+  "module": {
+   "across": 15.24,
+   "along": 15.24,
+   "inset": 1.27,
+   "jack": {
+    "along": 9,
+    "from": 3,
+    "to": 16
+   },
+   "mark": "DC"
+  },
+  "names": [
+   "GND",
+   "NC",
+   "NC",
+   "VIN"
+  ],
+  "note": "`sip4` を銀の帯で描き、キットの基板とジャックを帯の脇へ描く (胴の寸法は目安)。1 番 `GND` (シルク −)・4 番 `VIN` (シルク +、中心ピン)。2・3 番は使わない (番号で呼ぶ)。**実物で確かめる: 秋月の図は線画だけで、2・3 番がどちらにつながるかは読み取れない。シルクのある 1 番 (−) と 4 番 (+) だけを使い、実物はテスタで確かめる**",
+  "role": "2.1 mm DC ジャックの DIP 化キット",
+  "roleEn": "2.1 mm DC jack DIP breakout kit"
+ },
+ "pin:AE-PHONE-JACK-DIP": {
+  "look": {
+   "body": "#b9bec5",
+   "edge": "#7a8089"
+  },
+  "models": [
+   "AE-PHONE-JACK-DIP",
+   "AE-PHONE-JACK-DIP-KIT",
+   "105363",
+   "105707"
+  ],
+  "module": {
+   "across": 18,
+   "along": 18,
+   "inset": 1.34,
+   "jack": {
+    "along": 6,
+    "from": 4,
+    "to": 18
+   },
+   "mark": "3.5"
+  },
+  "names": [
+   "R",
+   "GND",
+   "GND",
+   "L"
+  ],
+  "note": "`sip4` を銀の帯で描き、キットの基板とジャックを帯の脇へ描く (胴の寸法は目安)。シルクの `G` (スリーブ) は `GND` で、2 本あるので番号で呼ぶ。`R` は右・`L` は左。切替の端子は出ていない",
+  "role": "3.5 mm ステレオミニジャックの DIP 化キット",
+  "roleEn": "3.5 mm stereo mini jack DIP breakout kit"
+ },
+ "pin:AE-RJ-45-LAN-DIP-A": {
+  "look": {
+   "body": "#b9bec5",
+   "edge": "#7a8089"
+  },
+  "models": [
+   "AE-RJ-45-LAN-DIP-A",
+   "AE-RJ-45-LAN-DIP-A-KIT",
+   "105404"
+  ],
+  "module": {
+   "across": 15,
+   "along": 25.36,
+   "inset": 1.27,
+   "jack": {
+    "along": 16,
+    "from": 2.5,
+    "to": 15
+   },
+   "mark": "RJ45"
+  },
+  "names": [
+   "P1",
+   "P2",
+   "P3",
+   "P4",
+   "P5",
+   "P6",
+   "P7",
+   "P8"
+  ],
+  "note": "`sip8` を銀の帯で描き、キットの基板とジャックを帯の脇の基板の縁に近い側へ描く (胴の寸法は目安)。`Pn` は RJ45 の n 番。10BASE-T の端末 (MDI) は P1・P2 で送り P3・P6 で受ける。ヘッダとジャックの対応は導通で確かめる",
+  "role": "RJ45 モジュラージャックの DIP 化キット",
+  "roleEn": "RJ45 modular jack DIP breakout kit"
+ },
+ "pin:AE-SI5351A-B": {
+  "models": [
+   "AE-SI5351A-B",
+   "AE-SI5351A",
+   "110679"
+  ],
+  "names": [
+   "VDDO",
+   "SCL",
+   "SDA",
+   "GND",
+   "CLK0",
+   "CLK1",
+   "CLK2",
+   "VDD"
+  ],
+  "note": "秋月の 10 mm 角の基板 (`dip8` で置く)。**電源は 3.3 V** — `VDD` (コア) は 2.5〜3.3 V、`VDDO` (出力) は 1.8〜3.3 V で、5 V は掛けられない。レベル変換もプルアップも無いので SCL・SDA は 3.3 V に吊る。アドレスは 0x60",
+  "role": "クロック発生器のモジュール (Si5351A、DIP8 形)",
+  "roleEn": "clock generator module (Si5351A, DIP-8 shape)"
+ },
+ "pin:ATmega328P": {
+  "models": [
+   "ATmega328P",
+   "ATmega328P-PU",
+   "ATmega328",
+   "ATmega168",
+   "ATmega88"
+  ],
+  "names": [
+   "PC6",
+   "PD0",
+   "PD1",
+   "PD2",
+   "PD3",
+   "PD4",
+   "VCC",
+   "GND",
+   "PB6",
+   "PB7",
+   "PD5",
+   "PD6",
+   "PD7",
+   "PB0",
+   "PB1",
+   "PB2",
+   "PB3",
+   "PB4",
+   "PB5",
+   "AVCC",
+   "AREF",
+   "GND",
+   "PC0",
+   "PC1",
+   "PC2",
+   "PC3",
+   "PC4",
+   "PC5"
+  ],
+  "note": "1 番 `PC6` は RESET 兼用。8 番と 22 番は GND (番号で指す)。PB6・PB7 は水晶 (XTAL1・XTAL2)",
+  "role": "AVR マイコン (28 ピン)",
+  "roleEn": "AVR microcontroller (28-pin)"
+ },
+ "pin:ATtiny85": {
+  "models": [
+   "ATtiny85",
+   "ATtiny85-20PU",
+   "ATtiny45",
+   "ATtiny25"
+  ],
+  "names": [
+   "PB5",
+   "PB3",
+   "PB4",
+   "GND",
+   "PB0",
+   "PB1",
+   "PB2",
+   "VCC"
+  ],
+  "note": "1 番 `PB5` は RESET 兼用。PB0=MOSI/SDA、PB1=MISO、PB2=SCK/SCL、PB3=XTAL1、PB4=XTAL2",
+  "role": "AVR マイコン (8 ピン)",
+  "roleEn": "AVR microcontroller (8-pin)"
+ },
+ "pin:CD4001B": {
+  "models": [
+   "CD4001B",
+   "CD4001",
+   "CD4001BE"
+  ],
+  "names": [
+   "A",
+   "B",
+   "J",
+   "K",
+   "C",
+   "D",
+   "VSS",
+   "E",
+   "F",
+   "L",
+   "M",
+   "G",
+   "H",
+   "VDD"
+  ],
+  "role": "2 入力 NOR ×4",
+  "roleEn": "2-input NOR ×4"
+ },
+ "pin:CD40106B": {
+  "models": [
+   "CD40106B",
+   "CD40106",
+   "CD40106BE"
+  ],
+  "names": [
+   "A",
+   "G",
+   "B",
+   "H",
+   "C",
+   "I",
+   "VSS",
+   "J",
+   "D",
+   "K",
+   "E",
+   "L",
+   "F",
+   "VDD"
+  ],
+  "role": "シュミット NOT ×6",
+  "roleEn": "Schmitt NOT ×6"
+ },
+ "pin:CD4011B": {
+  "models": [
+   "CD4011B",
+   "CD4011",
+   "CD4011BE"
+  ],
+  "names": [
+   "A",
+   "B",
+   "J",
+   "K",
+   "C",
+   "D",
+   "VSS",
+   "E",
+   "F",
+   "L",
+   "M",
+   "G",
+   "H",
+   "VDD"
+  ],
+  "role": "2 入力 NAND ×4",
+  "roleEn": "2-input NAND ×4"
+ },
+ "pin:CD4013B": {
+  "models": [
+   "CD4013B",
+   "CD4013",
+   "CD4013BE"
+  ],
+  "names": [
+   "Q1",
+   "/Q1",
+   "CLOCK1",
+   "RESET1",
+   "D1",
+   "SET1",
+   "VSS",
+   "SET2",
+   "D2",
+   "RESET2",
+   "CLOCK2",
+   "/Q2",
+   "Q2",
+   "VDD"
+  ],
+  "role": "D フリップフロップ ×2",
+  "roleEn": "D flip-flop ×2"
+ },
+ "pin:CD4017B": {
+  "models": [
+   "CD4017B",
+   "CD4017",
+   "CD4017BE"
+  ],
+  "names": [
+   "Q5",
+   "Q1",
+   "Q0",
+   "Q2",
+   "Q6",
+   "Q7",
+   "Q3",
+   "VSS",
+   "Q8",
+   "Q4",
+   "Q9",
+   "CO",
+   "INH",
+   "CLOCK",
+   "RESET",
+   "VDD"
+  ],
+  "role": "10 進カウンタ",
+  "roleEn": "decade counter"
+ },
+ "pin:CD4040B": {
+  "models": [
+   "CD4040B",
+   "CD4040",
+   "CD4040BE"
+  ],
+  "names": [
+   "Q12",
+   "Q6",
+   "Q5",
+   "Q7",
+   "Q4",
+   "Q3",
+   "Q2",
+   "VSS",
+   "Q1",
+   "CLOCK",
+   "R",
+   "Q9",
+   "Q8",
+   "Q10",
+   "Q11",
+   "VDD"
+  ],
+  "role": "12 段 2 進カウンタ",
+  "roleEn": "12-stage binary counter"
+ },
+ "pin:CD4069UB": {
+  "models": [
+   "CD4069UB",
+   "CD4069",
+   "CD4069UBE"
+  ],
+  "names": [
+   "A",
+   "G",
+   "B",
+   "H",
+   "C",
+   "I",
+   "VSS",
+   "J",
+   "D",
+   "K",
+   "E",
+   "L",
+   "F",
+   "VDD"
+  ],
+  "role": "NOT ×6",
+  "roleEn": "NOT ×6"
+ },
+ "pin:CD4070B": {
+  "models": [
+   "CD4070B",
+   "CD4070",
+   "CD4070BE"
+  ],
+  "names": [
+   "A",
+   "B",
+   "J",
+   "K",
+   "C",
+   "D",
+   "VSS",
+   "E",
+   "F",
+   "L",
+   "M",
+   "G",
+   "H",
+   "VDD"
+  ],
+  "role": "2 入力 XOR ×4",
+  "roleEn": "2-input XOR ×4"
+ },
+ "pin:CD4071B": {
+  "models": [
+   "CD4071B",
+   "CD4071",
+   "CD4071BE"
+  ],
+  "names": [
+   "A",
+   "B",
+   "J",
+   "K",
+   "C",
+   "D",
+   "VSS",
+   "E",
+   "F",
+   "L",
+   "M",
+   "G",
+   "H",
+   "VDD"
+  ],
+  "role": "2 入力 OR ×4",
+  "roleEn": "2-input OR ×4"
+ },
+ "pin:CD4081B": {
+  "models": [
+   "CD4081B",
+   "CD4081",
+   "CD4081BE"
+  ],
+  "names": [
+   "A",
+   "B",
+   "J",
+   "K",
+   "C",
+   "D",
+   "VSS",
+   "E",
+   "F",
+   "L",
+   "M",
+   "G",
+   "H",
+   "VDD"
+  ],
+  "role": "2 入力 AND ×4",
+  "roleEn": "2-input AND ×4"
+ },
+ "pin:CD4511B": {
+  "models": [
+   "CD4511B",
+   "CD4511",
+   "CD4511BE"
+  ],
+  "names": [
+   "INB",
+   "INC",
+   "LT",
+   "BL",
+   "LE/STROBE",
+   "IND",
+   "INA",
+   "VSS",
+   "Oe",
+   "Od",
+   "Oc",
+   "Ob",
+   "Oa",
+   "Og",
+   "Of",
+   "VDD"
+  ],
+  "role": "BCD → 7 セグ デコーダ",
+  "roleEn": "BCD to 7-segment decoder"
+ },
+ "pin:CD74HC283": {
+  "models": [
+   "CD74HC283",
+   "CD74HC283E",
+   "74HC283"
+  ],
+  "names": [
+   "S1",
+   "B1",
+   "A1",
+   "S0",
+   "A0",
+   "B0",
+   "CIN",
+   "GND",
+   "COUT",
+   "S3",
+   "B3",
+   "A3",
+   "S2",
+   "A2",
+   "B2",
+   "VCC"
+  ],
+  "role": "4 bit 全加算器",
+  "roleEn": "4-bit full adder"
+ },
+ "pin:CFULA455": {
+  "look": {
+   "body": "#3a3a3a",
+   "edge": "#1c1c1c"
+  },
+  "models": [
+   "CFULA455",
+   "CFULA455KE4A",
+   "CFULA455KE4A-B0"
+  ],
+  "names": [
+   "IN",
+   "GND",
+   "OUT"
+  ],
+  "note": "`sip3` を暗い色の胴で描く。**実物の足は三角の配置で、一直線の図は目安** (ブレッドボードには挿しにくい)。入出力 1.5 kΩ",
+  "role": "セラミックフィルタ 455 kHz (4 素子)",
+  "roleEn": "ceramic filter 455 kHz (4 elements)"
+ },
+ "pin:DHT11": {
+  "look": {
+   "body": "#2f7fc1",
+   "edge": "#1d5a8f"
+  },
+  "models": [
+   "DHT11"
+  ],
+  "names": [
+   "VCC",
+   "DATA",
+   "NC",
+   "GND"
+  ],
+  "note": "`sip4` を青の胴で描く。3 番は NC (番号で呼ぶ)。DATA は 4.7 kΩ〜10 kΩ で VCC へ。4 本足の単体の並び (3 本足の基板 (秋月 AE-DHT11-BO など) は並びが違う)",
+  "role": "温湿度センサ",
+  "roleEn": "temperature and humidity sensor"
+ },
+ "pin:GY-9833": {
+  "look": {
+   "body": "#6b3fa0",
+   "edge": "#47296b"
+  },
+  "models": [
+   "GY-9833",
+   "GY9833"
+  ],
+  "names": [
+   "VCC",
+   "DGND",
+   "SDATA",
+   "SCLK",
+   "FSYNC",
+   "AGND",
+   "OUT"
+  ],
+  "note": "`sip7` を紫の帯で描く (基板のピンヘッダだけ)。SPI (SDATA・SCLK・FSYNC)。印字に `DGND` と `AGND` がある版。**実物で確かめる: 製造元の図が無く、並びは個人の KiCad データ 5 つの一致による。CJMCU-9833 の名の基板は REF VCC GND DAT CLK FNC OUT の別の並びが多い。実物は基板の印字で確かめる**",
+  "role": "DDS の信号発生モジュール (AD9833)",
+  "roleEn": "DDS signal generator module (AD9833)"
+ },
+ "pin:HC-SR04": {
+  "look": {
+   "body": "#2b6cb0",
+   "edge": "#1c4a7d"
+  },
+  "models": [
+   "HC-SR04",
+   "HCSR04"
+  ],
+  "names": [
+   "VCC",
+   "TRIG",
+   "ECHO",
+   "GND"
+  ],
+  "note": "`sip4` を青の帯で描く (基板のピンヘッダだけ)。センサの筒の面から見て左から VCC TRIG ECHO GND (裏から見ると逆)。Echo は 5 V 出力",
+  "role": "超音波距離センサのモジュール",
+  "roleEn": "ultrasonic distance sensor module"
+ },
+ "pin:HC-SR501": {
+  "look": {
+   "body": "#2f7d4f",
+   "edge": "#1d5434"
+  },
+  "models": [
+   "HC-SR501",
+   "HCSR501"
+  ],
+  "names": [
+   "VCC",
+   "OUT",
+   "GND"
+  ],
+  "note": "`sip3` を緑の帯で描く (基板のピンヘッダだけ)。電源は 4.5〜20 V、OUT は 3.3 V の H。見る向きで左右が逆になるので、基板の印字で確かめる",
+  "role": "人感 (焦電) センサのモジュール",
+  "roleEn": "PIR motion sensor module"
+ },
+ "pin:KY-040": {
+  "look": {
+   "body": "#2f7d4f",
+   "edge": "#1d5434"
+  },
+  "models": [
+   "KY-040",
+   "KY040"
+  ],
+  "names": [
+   "CLK",
+   "DT",
+   "SW",
+   "VCC",
+   "GND"
+  ],
+  "note": "`sip5` を緑の帯で描く (基板のピンヘッダだけ)。印字の `+` は `VCC`。CLK=A 相、DT=B 相、SW=押しボタン。部品面を上にしてピンを手前に向けると、左から GND + SW DT CLK (1 番の CLK が右端)",
+  "role": "ロータリーエンコーダのモジュール",
+  "roleEn": "rotary encoder module"
+ },
+ "pin:L293D": {
+  "models": [
+   "L293D",
+   "L293DNE",
+   "L293",
+   "L293NE"
+  ],
+  "names": [
+   "12EN",
+   "1A",
+   "1Y",
+   "GROUND",
+   "GROUND",
+   "2Y",
+   "2A",
+   "VCC2",
+   "34EN",
+   "3A",
+   "3Y",
+   "GROUND",
+   "GROUND",
+   "4Y",
+   "4A",
+   "VCC1"
+  ],
+  "role": "ハーフ H ブリッジ ×4",
+  "roleEn": "half H-bridge ×4"
+ },
+ "pin:LM324": {
+  "models": [
+   "LM324",
+   "LM324N",
+   "LM324AN",
+   "LM2902",
+   "LM2902N",
+   "LM224",
+   "LM124"
+  ],
+  "names": [
+   "1OUT",
+   "1IN-",
+   "1IN+",
+   "VCC+",
+   "2IN+",
+   "2IN-",
+   "2OUT",
+   "3OUT",
+   "3IN-",
+   "3IN+",
+   "VCC-",
+   "4IN+",
+   "4IN-",
+   "4OUT"
+  ],
+  "role": "オペアンプ ×4",
+  "roleEn": "op-amp ×4"
+ },
+ "pin:LM35": {
+  "look": {
+   "body": "#2b2b2b",
+   "edge": "#111111"
+  },
+  "models": [
+   "LM35",
+   "LM35DZ",
+   "LM35CZ",
+   "LM35CAZ"
+  ],
+  "names": [
+   "VS",
+   "VOUT",
+   "GND"
+  ],
+  "note": "`sip3` (`ic3`) を黒い TO-92 の胴で描く。印字の `+VS` は `VS`。TO-92 の並び (TO-220 と SO8 は違う)",
+  "role": "温度センサ (10 mV/℃)",
+  "roleEn": "temperature sensor (10 mV/°C)"
+ },
+ "pin:LM358": {
+  "models": [
+   "LM358",
+   "LM358P",
+   "LM358N",
+   "LM358A",
+   "LM358AP",
+   "LM358B",
+   "LM358BP",
+   "LM2904",
+   "LM2904P",
+   "LM258",
+   "LM258P"
+  ],
+  "names": [
+   "OUT1",
+   "IN1-",
+   "IN1+",
+   "V-",
+   "IN2+",
+   "IN2-",
+   "OUT2",
+   "V+"
+  ],
+  "role": "オペアンプ ×2",
+  "roleEn": "op-amp ×2"
+ },
+ "pin:LM386": {
+  "models": [
+   "LM386",
+   "LM386N",
+   "LM386N-1",
+   "LM386N-3",
+   "LM386N-4",
+   "LM386M-1",
+   "LM386MX-1"
+  ],
+  "names": [
+   "GAIN1",
+   "-INPUT",
+   "+INPUT",
+   "GND",
+   "VOUT",
+   "VS",
+   "BYPASS",
+   "GAIN8"
+  ],
+  "note": "印字は 1・8 番とも `GAIN` (番号を付けて分けた)。`BYPASS` は C で GND へ",
+  "role": "低電圧のオーディオ パワー アンプ",
+  "roleEn": "low-voltage audio power amplifier"
+ },
+ "pin:LM393": {
+  "models": [
+   "LM393",
+   "LM393P",
+   "LM393N",
+   "LM393A",
+   "LM393AP",
+   "LM393B",
+   "LM393BP",
+   "LM2903",
+   "LM2903P",
+   "LM293",
+   "LM193"
+  ],
+  "names": [
+   "1OUT",
+   "1IN-",
+   "1IN+",
+   "GND",
+   "2IN+",
+   "2IN-",
+   "2OUT",
+   "VCC"
+  ],
+  "role": "コンパレータ ×2",
+  "roleEn": "comparator ×2"
+ },
+ "pin:LM741": {
+  "models": [
+   "LM741",
+   "LM741CN",
+   "LM741N",
+   "UA741",
+   "UA741CP"
+  ],
+  "names": [
+   "OFFSET1",
+   "IN-",
+   "IN+",
+   "V-",
+   "OFFSET2",
+   "OUT",
+   "V+",
+   "NC"
+  ],
+  "note": "1・5 番はオフセット調整。8 番は NC",
+  "role": "オペアンプ",
+  "roleEn": "op-amp"
+ },
+ "pin:LM75": {
+  "models": [
+   "LM75",
+   "LM75B",
+   "LM75C",
+   "LM75A"
+  ],
+  "names": [
+   "SDA",
+   "SCL",
+   "OS",
+   "GND",
+   "A2",
+   "A1",
+   "A0",
+   "VS"
+  ],
+  "note": "印字の `+VS` は `VS`、`O.S.` は `OS`。A2〜A0 でアドレスを決める",
+  "role": "I2C 温度センサ",
+  "roleEn": "I2C temperature sensor"
+ },
+ "pin:MCP3008": {
+  "models": [
+   "MCP3008"
+  ],
+  "names": [
+   "CH0",
+   "CH1",
+   "CH2",
+   "CH3",
+   "CH4",
+   "CH5",
+   "CH6",
+   "CH7",
+   "DGND",
+   "CS/SHDN",
+   "DIN",
+   "DOUT",
+   "CLK",
+   "AGND",
+   "VREF",
+   "VDD"
+  ],
+  "role": "10 bit A/D 変換 8 ch",
+  "roleEn": "10-bit ADC, 8 ch"
+ },
+ "pin:MCP6002": {
+  "models": [
+   "MCP6002",
+   "MCP6002-I/P",
+   "MCP6002-E/P",
+   "MCP6002-I/SN",
+   "MCP6002-E/SN",
+   "MCP6002-I/MS"
+  ],
+  "names": [
+   "VOUTA",
+   "VINA-",
+   "VINA+",
+   "VSS",
+   "VINB+",
+   "VINB-",
+   "VOUTB",
+   "VDD"
+  ],
+  "role": "オペアンプ ×2 (CMOS・レール ツー レール)",
+  "roleEn": "op-amp ×2 (CMOS, rail-to-rail)"
+ },
+ "pin:MCP9808": {
+  "models": [
+   "MCP9808"
+  ],
+  "names": [
+   "SDA",
+   "SCL",
+   "ALERT",
+   "GND",
+   "A2",
+   "A1",
+   "A0",
+   "VDD"
+  ],
+  "note": "チップの並び。ブレークアウト基板のヘッダは基板ごとに違うので `pins:` で書く。アドレスは 0x18〜0x1F",
+  "role": "I2C 温度センサ (±0.5 ℃)",
+  "roleEn": "I2C temperature sensor (±0.5 °C)"
+ },
+ "pin:NE5532": {
+  "models": [
+   "NE5532",
+   "NE5532P",
+   "NE5532AP",
+   "SA5532",
+   "SA5532P"
+  ],
+  "names": [
+   "1OUT",
+   "1IN-",
+   "1IN+",
+   "VCC-",
+   "2IN+",
+   "2IN-",
+   "2OUT",
+   "VCC+"
+  ],
+  "role": "オペアンプ ×2 (低雑音・オーディオ)",
+  "roleEn": "op-amp ×2 (low noise, audio)"
+ },
+ "pin:NE555": {
+  "models": [
+   "NE555",
+   "NE555P",
+   "SA555",
+   "SA555P",
+   "SE555",
+   "SE555P"
+  ],
+  "names": [
+   "GND",
+   "TRIG",
+   "OUT",
+   "RESET",
+   "CONT",
+   "THRES",
+   "DISCH",
+   "VCC"
+  ],
+  "role": "タイマー",
+  "roleEn": "timer"
+ },
+ "pin:NJM4556A": {
+  "models": [
+   "NJM4556A",
+   "NJM4556AD"
+  ],
+  "names": [
+   "AOUT",
+   "AIN-",
+   "AIN+",
+   "V-",
+   "BIN+",
+   "BIN-",
+   "BOUT",
+   "V+"
+  ],
+  "role": "オペアンプ ×2 (大出力電流)",
+  "roleEn": "op-amp ×2 (high output current)"
+ },
+ "pin:OSTA5131A": {
+  "look": {
+   "body": "#eef0f2",
+   "edge": "#a9adb3"
+  },
+  "models": [
+   "OSTA5131A",
+   "OSTA5131A-R/PG/B",
+   "102476"
+  ],
+  "names": [
+   "G",
+   "B",
+   "K",
+   "R"
+  ],
+  "note": "`sip4` を乳白の胴で描く。`G` `B` `R` が各色のアノード、3 番 `K` が共通カソード (いちばん長い足)。足を広げて隣の 4 穴に挿す。色ごとに抵抗を入れる (Vf は赤 2.0 V、緑・青 3.6 V)",
+  "role": "フルカラー LED 5 mm (カソードコモン)",
+  "roleEn": "RGB LED 5 mm (common cathode)"
+ },
+ "pin:OSTAMA5B31A": {
+  "look": {
+   "body": "#eef0f2",
+   "edge": "#a9adb3"
+  },
+  "models": [
+   "OSTAMA5B31A",
+   "112167"
+  ],
+  "names": [
+   "G",
+   "B",
+   "A",
+   "R"
+  ],
+  "note": "`sip4` を乳白の胴で描く。`G` `B` `R` が各色のカソード、3 番 `A` が共通アノード (いちばん長い足)。足を広げて隣の 4 穴に挿す。色ごとに抵抗を入れる (Vf は赤 2.1 V、緑・青 3.1 V)",
+  "role": "フルカラー LED 5 mm (アノードコモン)",
+  "roleEn": "RGB LED 5 mm (common anode)"
+ },
+ "pin:PIC12F1822": {
+  "models": [
+   "PIC12F1822",
+   "PIC12F1822-I/P",
+   "PIC12LF1822"
+  ],
+  "names": [
+   "VDD",
+   "RA5",
+   "RA4",
+   "RA3",
+   "RA2",
+   "RA1",
+   "RA0",
+   "VSS"
+  ],
+  "note": "4 番 `RA3` は MCLR 兼用の入力専用。RA5=OSC1、RA4=OSC2、RA0=ICSPDAT、RA1=ICSPCLK",
+  "role": "PIC マイコン (8 ピン)",
+  "roleEn": "PIC microcontroller (8-pin)"
+ },
+ "pin:PIC12F683": {
+  "models": [
+   "PIC12F683",
+   "PIC12F683-I/P",
+   "PIC12F675",
+   "PIC12F675-I/P",
+   "PIC12F629"
+  ],
+  "names": [
+   "VDD",
+   "GP5",
+   "GP4",
+   "GP3",
+   "GP2",
+   "GP1",
+   "GP0",
+   "VSS"
+  ],
+  "note": "4 番 `GP3` は MCLR 兼用の入力専用。GP5=OSC1、GP4=OSC2、GP0=ICSPDAT、GP1=ICSPCLK",
+  "role": "PIC マイコン (8 ピン)",
+  "roleEn": "PIC microcontroller (8-pin)"
+ },
+ "pin:PIC16F57": {
+  "models": [
+   "PIC16F57",
+   "PIC16F57-I/P",
+   "PIC16F57-I/SP"
+  ],
+  "names": [
+   "T0CKI",
+   "VDD",
+   "NC",
+   "VSS",
+   "NC",
+   "RA0",
+   "RA1",
+   "RA2",
+   "RA3",
+   "RB0",
+   "RB1",
+   "RB2",
+   "RB3",
+   "RB4",
+   "RB5",
+   "RB6",
+   "RB7",
+   "RC0",
+   "RC1",
+   "RC2",
+   "RC3",
+   "RC4",
+   "RC5",
+   "RC6",
+   "RC7",
+   "OSC2",
+   "OSC1",
+   "MCLR"
+  ],
+  "note": "電源は 2 番 `VDD`・4 番 `VSS` (ほかの 28 ピンと違う)。3・5 番は NC (番号で呼ぶ)。`T0CKI` は使わなくても VSS か VDD へ。28 番 `MCLR` は専用。600 mil (-I/P) と 300 mil (-I/SP) がある",
+  "role": "PIC マイコン (28 ピン)",
+  "roleEn": "PIC microcontroller (28-pin)"
+ },
+ "pin:PIC16F628A": {
+  "models": [
+   "PIC16F628A",
+   "PIC16F628A-I/P",
+   "PIC16F627A",
+   "PIC16F648A",
+   "PIC16F88",
+   "PIC16F88-I/P",
+   "PIC16F87",
+   "PIC16F1827",
+   "PIC16F1827-I/P",
+   "PIC16F1826",
+   "PIC16LF1827",
+   "PIC16LF1826"
+  ],
+  "names": [
+   "RA2",
+   "RA3",
+   "RA4",
+   "RA5",
+   "VSS",
+   "RB0",
+   "RB1",
+   "RB2",
+   "RB3",
+   "RB4",
+   "RB5",
+   "RB6",
+   "RB7",
+   "VDD",
+   "RA6",
+   "RA7",
+   "RA0",
+   "RA1"
+  ],
+  "note": "4 番 `RA5` は MCLR 兼用。RA7=OSC1、RA6=OSC2、RB6=ICSPCLK (PGC)、RB7=ICSPDAT (PGD)",
+  "role": "PIC マイコン (18 ピン)",
+  "roleEn": "PIC microcontroller (18-pin)"
+ },
+ "pin:PIC16F84A": {
+  "models": [
+   "PIC16F84A",
+   "PIC16F84A-04/P",
+   "PIC16F84A-20/P"
+  ],
+  "names": [
+   "RA2",
+   "RA3",
+   "RA4",
+   "MCLR",
+   "VSS",
+   "RB0",
+   "RB1",
+   "RB2",
+   "RB3",
+   "RB4",
+   "RB5",
+   "RB6",
+   "RB7",
+   "VDD",
+   "OSC2",
+   "OSC1",
+   "RA0",
+   "RA1"
+  ],
+  "note": "4 番 `MCLR`、15 番 `OSC2`・16 番 `OSC1` は専用ピン。RB6=書き込みのクロック、RB7=データ。`RA4` はオープンドレイン",
+  "role": "PIC マイコン (18 ピン)",
+  "roleEn": "PIC microcontroller (18-pin)"
+ },
+ "pin:PIC16F886": {
+  "models": [
+   "PIC16F886",
+   "PIC16F886-I/SP",
+   "PIC16F883",
+   "PIC16F882",
+   "PIC16F1938",
+   "PIC16F1938-I/SP",
+   "PIC16LF1938",
+   "PIC16F18857",
+   "PIC16F18857-I/SP",
+   "PIC16LF18857",
+   "PIC16F18856",
+   "PIC16LF18856"
+  ],
+  "names": [
+   "RE3",
+   "RA0",
+   "RA1",
+   "RA2",
+   "RA3",
+   "RA4",
+   "RA5",
+   "VSS",
+   "RA7",
+   "RA6",
+   "RC0",
+   "RC1",
+   "RC2",
+   "RC3",
+   "RC4",
+   "RC5",
+   "RC6",
+   "RC7",
+   "VSS",
+   "VDD",
+   "RB0",
+   "RB1",
+   "RB2",
+   "RB3",
+   "RB4",
+   "RB5",
+   "RB6",
+   "RB7"
+  ],
+  "note": "1 番 `RE3` は MCLR 兼用の入力専用。8 番と 19 番は VSS (番号で指す)。RA7=OSC1、RA6=OSC2、RB6=ICSPCLK、RB7=ICSPDAT",
+  "role": "PIC マイコン (28 ピン)",
+  "roleEn": "PIC microcontroller (28-pin)"
+ },
+ "pin:SA612": {
+  "models": [
+   "SA612",
+   "SA612A",
+   "SA612AD",
+   "NE612",
+   "NE612A",
+   "NE612AN",
+   "NE612AD",
+   "SA602",
+   "SA602A",
+   "NE602",
+   "NE602A",
+   "NE602AN",
+   "NE602AD"
+  ],
+  "names": [
+   "IN_A",
+   "IN_B",
+   "GND",
+   "OUT_A",
+   "OUT_B",
+   "OSC_B",
+   "OSC_E",
+   "VCC"
+  ],
+  "note": "`IN_A` `IN_B` が RF の入力、`OSC_B` が発振のベース (外の LO の入口)、`OSC_E` が発振のエミッタ",
+  "role": "ミキサ + 発振器 (ダブルバランスド)",
+  "roleEn": "mixer + oscillator (double balanced)"
+ },
+ "pin:SFELF10M7": {
+  "look": {
+   "body": "#3a3a3a",
+   "edge": "#1c1c1c"
+  },
+  "models": [
+   "SFELF10M7",
+   "SFELF10M7FA00",
+   "SFELF10M7GA00",
+   "SFELF10M7HA00",
+   "SFELF10M7FA00-B0"
+  ],
+  "names": [
+   "IN",
+   "GND",
+   "OUT"
+  ],
+  "note": "`sip3` を暗い色の胴で描く。入出力 330 Ω",
+  "role": "セラミックフィルタ 10.7 MHz",
+  "roleEn": "ceramic filter 10.7 MHz"
+ },
+ "pin:SFU455B": {
+  "look": {
+   "body": "#e8842a",
+   "edge": "#a85a12"
+  },
+  "models": [
+   "SFU455B",
+   "SFU455A",
+   "SFU455"
+  ],
+  "names": [
+   "IN",
+   "GND",
+   "OUT"
+  ],
+  "note": "`sip3` を橙の胴で描く",
+  "role": "セラミックフィルタ 455 kHz",
+  "roleEn": "ceramic filter 455 kHz"
+ },
+ "pin:SG90": {
+  "look": {
+   "body": "#3a6ea5",
+   "edge": "#254a73"
+  },
+  "models": [
+   "SG90",
+   "SG92R",
+   "MG90S"
+  ],
+  "names": [
+   "GND",
+   "VCC",
+   "SIG"
+  ],
+  "note": "`sip3` を青の胴で描く。コネクタの線は茶 (GND)・赤 (VCC)・橙 (SIG)",
+  "role": "RC サーボ",
+  "roleEn": "RC servo"
+ },
+ "pin:TA7642": {
+  "look": {
+   "body": "#2b2b2b",
+   "edge": "#111111"
+  },
+  "models": [
+   "TA7642",
+   "7642",
+   "UTC7642"
+  ],
+  "names": [
+   "GND",
+   "IN",
+   "OUT"
+  ],
+  "note": "`sip3` (`ic3`) を黒い TO-92 の胴で描く。OUT は抵抗を通して電源へ (電源のピンは無い)。**東芝の原本の資料は無く、互換品 (UTC 7642) の資料による**",
+  "role": "AM ラジオ IC (ストレート)",
+  "roleEn": "AM radio IC (TRF)"
+ },
+ "pin:TL071": {
+  "models": [
+   "TL071",
+   "TL071CP",
+   "TL071ACP",
+   "TL071BCP",
+   "TL071H"
+  ],
+  "names": [
+   "NC",
+   "IN-",
+   "IN+",
+   "VCC-",
+   "NC",
+   "OUT",
+   "VCC+",
+   "NC"
+  ],
+  "role": "オペアンプ",
+  "roleEn": "op-amp"
+ },
+ "pin:TL072": {
+  "models": [
+   "TL072",
+   "TL072CP",
+   "TL072ACP",
+   "TL072BCP",
+   "TL072H",
+   "TL082",
+   "TL082CP",
+   "TL082ACP",
+   "TL082BCP"
+  ],
+  "names": [
+   "1OUT",
+   "1IN-",
+   "1IN+",
+   "VCC-",
+   "2IN+",
+   "2IN-",
+   "2OUT",
+   "VCC+"
+  ],
+  "role": "オペアンプ ×2",
+  "roleEn": "op-amp ×2"
+ },
+ "pin:TLC555": {
+  "models": [
+   "TLC555",
+   "TLC555CP",
+   "TLC555IP"
+  ],
+  "names": [
+   "GND",
+   "TRIG",
+   "OUT",
+   "RESET",
+   "CONT",
+   "THRES",
+   "DISCH",
+   "VDD"
+  ],
+  "role": "タイマー (CMOS)",
+  "roleEn": "timer (CMOS)"
+ },
+ "pin:ULN2003A": {
+  "models": [
+   "ULN2003A",
+   "ULN2003",
+   "ULN2003APG",
+   "ULN2003AN"
+  ],
+  "names": [
+   "1B",
+   "2B",
+   "3B",
+   "4B",
+   "5B",
+   "6B",
+   "7B",
+   "GND",
+   "COM",
+   "7C",
+   "6C",
+   "5C",
+   "4C",
+   "3C",
+   "2C",
+   "1C"
+  ],
+  "note": "`COM` は負荷の電源側へつなぐ (誘導負荷のクランプ)。出力は吸い込み (シンク) だけ",
+  "role": "7 回路のダーリントン (シンクドライバ)",
+  "roleEn": "7-channel Darlington (sink driver)"
+ }
+}
