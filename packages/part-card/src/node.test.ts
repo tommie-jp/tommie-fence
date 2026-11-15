@@ -71,3 +71,36 @@ describe('loadCardDir', () => {
     expect(loadCardsFor(join(root, 'book'), root)).toBeNull();
   });
 });
+
+describe('守り (安全の点検の指摘)', () => {
+  test('refuses a card file larger than the limit before reading it', () => {
+    writeFileSync(join(cards, 'big.part.yaml'), `# ${'x'.repeat(70 * 1024)}\n`);
+    expect(loadCardDir(cards).files[0]?.issues[0]?.message).toContain('大きすぎ');
+  });
+
+  test('keeps the other cards when one card is an alias bomb', () => {
+    writeFileSync(join(cards, 'a.part.yaml'), CARD('XA1'));
+    const levels = ['a: &a [x, x, x, x, x, x, x, x, x, x]'];
+    for (let index = 1; index < 6; index += 1) levels.push(`l${index}: &l${index} [${Array(10).fill(index === 1 ? '*a' : `*l${index - 1}`).join(', ')}]`);
+    writeFileSync(join(cards, 'bomb.part.yaml'), `${levels.join('\n')}\n`);
+    const read = loadCardDir(cards);
+    expect(read.table.pinouts.map((row) => row.models[0])).toEqual(['XA1']);
+    expect(read.files.find((file) => file.name === 'bomb.part.yaml')?.issues[0]?.message).toContain('YAML として読めません');
+  });
+
+  test('does not use a card folder that is a link to somewhere else', () => {
+    rmSync(cards, { recursive: true });
+    const elsewhere = mkdtempSync(join(tmpdir(), 'part-card-elsewhere-'));
+    symlinkSync(elsewhere, cards);
+    try {
+      expect(findCardDir(join(root, 'book'), root)).toBeNull();
+    } finally {
+      rmSync(elsewhere, { recursive: true, force: true });
+    }
+  });
+
+  test('stops at the root of a git repository when no stop is given', () => {
+    mkdirSync(join(root, 'book', '.git'));
+    expect(findCardDir(join(root, 'book', 'chapter'))).toBeNull();
+  });
+});

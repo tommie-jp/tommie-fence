@@ -9,7 +9,7 @@
     "models": {
       "description": "書ける型番。先頭が代表の綴り (お知らせと部品表に出る)。大文字小文字は問わない。board では型番がそのまま種類の名前になる (小文字と -)。",
       "type": "array", "minItems": 1, "maxItems": 40,
-      "items": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_+\\-./#]*$" }
+      "items": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_+\\-./]*$" }
     },
     "package": {
       "description": "フェンスの「種類/姿」の綴り。dipN (dip28/wide・dip8/sop)・sipN・transistor/to92・regulator/to220・device・board。",

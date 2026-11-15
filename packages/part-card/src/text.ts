@@ -18,11 +18,14 @@ export type CardTextRead = { readonly card: PartCard | null; readonly issues: re
 /** 1 枚の字の上限。部品 1 つのカードがこれを越えることはない (大きな字で詰まらせない)。 */
 export const MAX_CARD_BYTES = 64 * 1024;
 
+/** 大きすぎるときの文 (ファイルを読む前に断る側も使う)。 */
+export const cardTooLarge = (): string => TOO_LARGE_TEXT;
+
+const TOO_LARGE_TEXT = `部品カードが大きすぎます (${MAX_CARD_BYTES / 1024} KB まで)`;
+
 /** 字を読んで部品カードにする。読めなければ card は null で、行番号つきの理由が並ぶ。 */
 export function readCardText(text: string): CardTextRead {
-  if (text.length > MAX_CARD_BYTES) {
-    return { card: null, issues: [{ line: 1, message: `部品カードが大きすぎます (${MAX_CARD_BYTES / 1024} KB まで)`, severity: 'error' }] };
-  }
+  if (text.length > MAX_CARD_BYTES) return { card: null, issues: [{ line: 1, message: TOO_LARGE_TEXT, severity: 'error' }] };
   const lineCounter = new LineCounter();
   const doc = parseDocument(text, { lineCounter, prettyErrors: false, uniqueKeys: true });
   if (doc.errors.length > 0) {
@@ -45,7 +48,15 @@ export function readCardText(text: string): CardTextRead {
     return 1;
   };
 
-  const { card, issues } = readCard(doc.toJS({ maxAliasCount: 50 }));
+  // 別名 (`&a` `*a`) を重ねて膨らませる字は、toJS が数えて投げる。そのカードだけを誤りにする
+  // (投げたままにすると、同じ置き場のほかのカードまで読めなくなる)。
+  let value: unknown;
+  try {
+    value = doc.toJS({ maxAliasCount: 50 });
+  } catch (error) {
+    return { card: null, issues: [{ line: 1, message: `YAML として読めません: ${error instanceof Error ? error.message : String(error)}`, severity: 'error' }] };
+  }
+  const { card, issues } = readCard(value);
   return {
     card,
     issues: issues.map((issue) => ({ line: lineOf(issue.path), message: issue.message, severity: issue.severity })),

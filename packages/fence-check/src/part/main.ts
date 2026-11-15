@@ -1,11 +1,12 @@
 #!/usr/bin/env node
-import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { compileCircuit, finishSvg } from 'circuit-fence/src/core';
 import { renderTex } from 'circuit-fence/tex';
 import { withCards } from 'fence-kit';
 import type { CardTable } from 'fence-kit';
 import { CARD_SUFFIX } from 'part-card/node';
+import { MAX_CARD_BYTES, cardTooLarge } from 'part-card';
 import { checkCardText } from './run.ts';
 import type { CheckedCard } from './run.ts';
 
@@ -72,6 +73,10 @@ async function circuitSvg(source: string, cards: CardTable): Promise<string | nu
 
 async function writePreview(path: string, checked: CheckedCard, out: string | null): Promise<readonly string[]> {
   const directory = out ?? join(dirname(path), 'preview');
+  // 既定の置き場 (カードの隣) がリンクなら書かない (カードの置き場から外へ書き出させない)。
+  if (out === null && existsSync(directory) && lstatSync(directory).isSymbolicLink()) {
+    throw new Error(`${directory} はリンクなので書きません (--out で出力先を書きます)`);
+  }
   mkdirSync(directory, { recursive: true });
   const written: string[] = [];
   for (const figure of checked.figures) {
@@ -95,6 +100,11 @@ async function main(argv: readonly string[]): Promise<number> {
   let failed = 0;
   try {
     for (const path of args.targets.flatMap(cardFiles)) {
+      if (statSync(path).size > MAX_CARD_BYTES) {
+        console.error(`${path}:1: 誤り: ${cardTooLarge()}`);
+        failed += 1;
+        continue;
+      }
       const checked = checkCardText(readFileSync(path, 'utf8'), path);
       for (const line of checked.lines) console.error(line.text);
       const errors = checked.lines.filter((line) => line.severity === 'error').length;

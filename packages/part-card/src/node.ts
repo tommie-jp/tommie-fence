@@ -2,7 +2,7 @@ import { existsSync, lstatSync, readdirSync, readFileSync, realpathSync, statSyn
 import { dirname, join, parse, relative, resolve, sep } from 'node:path';
 import { EMPTY_CARD_TABLE, buildCardTable } from 'fence-kit';
 import type { CardTable, CardTableNotice, PartCard } from 'fence-kit';
-import { readCardText } from './text.ts';
+import { MAX_CARD_BYTES, cardTooLarge, readCardText } from './text.ts';
 import type { CardTextIssue } from './text.ts';
 
 /**
@@ -44,7 +44,13 @@ const isInside = (child: string, parent: string): boolean => {
 
 /**
  * `start` (ファイルかディレクトリ) から上へ辿って、`.tommie-fence/parts/` を探す。
- * `stop` を渡せば、そこより上へは行かない (ワークスペースの外を読まない)。見つからなければ null。
+ *
+ * - `stop` を渡せば、そこより上へは行かない (VS Code はワークスペースのフォルダを渡す)
+ * - 渡さなければ (CLI)、**git のリポジトリの根** (`.git` のあるディレクトリ) で止まる。根の外の
+ *   共有の場所 (`/tmp/.tommie-fence/parts`) に他人が置いたカードを拾わないため。リポジトリの外なら上まで辿る
+ * - 置き場そのものが辿った場所の外を指すリンクなら、使わない (ワークスペースの外のファイルを図に出さない)
+ *
+ * 見つからなければ null。
  */
 export function findCardDir(start: string, stop: string | null = null): string | null {
   let here = resolve(start);
@@ -52,8 +58,11 @@ export function findCardDir(start: string, stop: string | null = null): string |
   const limit = stop === null ? null : resolve(stop);
   for (;;) {
     const candidate = join(here, CARD_DIR);
-    if (existsSync(candidate) && statSync(candidate).isDirectory()) return candidate;
+    if (existsSync(candidate) && statSync(candidate).isDirectory()) {
+      return isInside(realpathSync(candidate), realpathSync(here)) ? candidate : null;
+    }
     if (limit !== null && (here === limit || !isInside(here, limit))) return null;
+    if (limit === null && existsSync(join(here, '.git'))) return null;
     const up = dirname(here);
     if (up === here) return null;
     here = up;
@@ -76,8 +85,12 @@ export function loadCardDir(dir: string): CardDirRead {
       problems.push(`${name} は置き場の外を指すリンクなので読みません`);
       continue;
     }
-    if (!statSync(path).isFile()) continue;
-    const { card, issues } = readCardText(readFileSync(path, 'utf8'));
+    const info = statSync(path);
+    if (!info.isFile()) continue;
+    // 読む前に大きさで断る (数 GB の字を丸ごと読んで止まらない)。
+    const { card, issues } = info.size > MAX_CARD_BYTES
+      ? { card: null, issues: [{ line: 1, message: cardTooLarge(), severity: 'error' as const }] }
+      : readCardText(readFileSync(path, 'utf8'));
     files.push({ name, path, card, issues });
   }
 

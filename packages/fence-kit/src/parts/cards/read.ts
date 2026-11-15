@@ -176,8 +176,8 @@ function readModels(reader: Reader, fields: Fields): readonly string[] | undefin
   if (models.length > MAX_MODELS) reader.error(['models'], `models: は ${MAX_MODELS} 個までです`);
   const seen = new Set<string>();
   models.forEach((model, index) => {
-    if (!/^[A-Za-z0-9][A-Za-z0-9_+\-./#]*$/.test(model)) {
-      reader.error(['models', index], `型番 ${model} は英数字で始め、英数字と _ + - . / # だけで書きます`);
+    if (!/^[A-Za-z0-9][A-Za-z0-9_+\-./]*$/.test(model)) {
+      reader.error(['models', index], `型番 ${model} は英数字で始め、英数字と _ + - . / だけで書きます`);
     }
     if (seen.has(model.toUpperCase())) reader.error(['models', index], `型番 ${model} が 2 度あります`);
     seen.add(model.toUpperCase());

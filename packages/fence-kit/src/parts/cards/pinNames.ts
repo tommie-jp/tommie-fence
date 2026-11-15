@@ -5,8 +5,11 @@ import type { CardIssue } from './types.ts';
  * 並びが正しいかは見られない — それは焼いた図とデータシートの端子図を人が見比べる。
  */
 
-/** 書ける字。印字の `QH'` `CS/SHDN` `IN+` `3V3_EN` を通し、空白・`,`・en dash を断る。 */
-const TYPEABLE = /^[A-Za-z0-9_+\-/.'#*~]+$/;
+/**
+ * 書ける字。印字の `QH'` `CS/SHDN` `IN+` `3V3_EN` を通し、空白・`,`・en dash を断る。
+ * `#` `~` は通さない — 回路図を LaTeX へ書き出すと TeX の字 (`#` は誤り、`~` は空白) になる。
+ */
+const TYPEABLE = /^[A-Za-z0-9_+\-/.'*]+$/;
 
 /** 何本にあってもよい名前 (どこにも結ばない・同じ電源や GND)。 */
 const SHARED = /^(NC|N\.C\.|GND|GROUND|VSS|VCC|VDD|VEE|V\+|V-)$/i;
@@ -21,7 +24,7 @@ function nameProblem(name: string): string | null {
   if (/\s/.test(name)) return `ピンの名前 ${name} に空白があります。略して詰めます (CARRY OUT → CO)`;
   if (name.includes(',')) return `ピンの名前 ${name} に , があります。落とします (1,2EN → 12EN)`;
   if (/^\d+$/.test(name)) return `ピンの名前 ${name} が数字だけです。ピンの番号と取り違えるので字を前に付けます (0 → Q0)`;
-  if (!TYPEABLE.test(name)) return `ピンの名前 ${name} にキーボードで打てない字があります (書けるのは英数字と _ + - / . ' # * ~)`;
+  if (!TYPEABLE.test(name)) return `ピンの名前 ${name} に使えない字があります (書けるのは英数字と _ + - / . ' *)`;
   return null;
 }
 

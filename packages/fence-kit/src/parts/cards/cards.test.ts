@@ -109,7 +109,7 @@ describe('checkPinNames', () => {
     ['CARRY OUT', '空白'],
     ['1,2EN', ', があります'],
     ['5', '数字だけ'],
-    ['ゲート', '打てない字'],
+    ['ゲート', '使えない字'],
   ])('refuses %s', (name, word) => {
     expect(checkPinNames(['A', name])[0]?.message).toContain(word);
   });
@@ -222,5 +222,11 @@ describe('同梱の表 (TS の行と同梱のカード)', () => {
     expect(pinoutTable().find((row) => row.models[0] === '74LS00')?.card).toBe('bundled');
     expect(lookupPinout('74LS00', 14)?.names[13]).toBe('VCC');
     expect(lookupRole('74LS00', 'en')).toBe(lookupRole('74HC00', 'en'));
+  });
+});
+
+describe('TeX の字を通さない', () => {
+  test.each(['B#', 'A~'])('refuses %s, which LaTeX would read as a TeX character', (name) => {
+    expect(checkPinNames(['A', name])[0]?.message).toContain('使えない字');
   });
 });
