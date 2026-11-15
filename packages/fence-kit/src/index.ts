@@ -20,7 +20,7 @@ export { SHEETS_ADVISED, SHEET_TOP_KEYS, hasSheets, mergeNetlists, renderSheets,
 export { linkColorOf } from './sheetLinks.ts';
 export type { LinkLook, SheetPoint } from './sheetLinks.ts';
 export type { SheetExtras, SheetKit, SheetOptions, SheetRenderOptions, SheetSource, SheetSplit, StackOptions } from './sheets.ts';
-export { rememberRecent } from './rememberRecent.ts';
+export { rememberRecent, rememberRecentPerCards } from './rememberRecent.ts';
 export { extractFences, outputStem } from './fences.ts';
 export { fenceNames, isFenceOf } from './fenceNames.ts';
 export { stampText } from './stamp.ts';
@@ -65,7 +65,21 @@ export {
 } from './parts/toroids.ts';
 export type { ToroidCore, ToroidMaterial, ToroidValue } from './parts/toroids.ts';
 export type { TransformerLook } from './parts/bodies.ts';
-export { boardPartNames, lookupBoardPart } from './parts/boards.ts';
+export { boardPartNames, bundledBoardNames, lookupBoardPart } from './parts/boards.ts';
+export { readCard } from './parts/cards/read.ts';
+export type { CardRead } from './parts/cards/read.ts';
+export { checkPinNames } from './parts/cards/pinNames.ts';
+export { buildCardTable } from './parts/cards/table.ts';
+export type { CardTableNotice, PlacedCard } from './parts/cards/table.ts';
+export { cardTableOf, chipRows, discreteRows, moduleRows, boardRows } from './parts/cards/convert.ts';
+export { withCards, withCardsUsed } from './parts/cards/scope.ts';
+export { editorWithCards } from './parts/cards/editor.ts';
+export type { CardSource } from './parts/cards/editor.ts';
+export { EMPTY_CARD_TABLE } from './parts/cards/types.ts';
+export { FIXTURE_CARDS, fixtureCardTable } from './parts/cards/fixture.ts';
+export type {
+  BoardCard, CardIssue, CardReader, CardSpice, CardTable, ChipCard, DiscreteCard, ModuleCard, PartCard,
+} from './parts/cards/types.ts';
 export { drawNamedChip, lookupNamedChip, namedChipBox, namedChipLooks, namedChipTypes } from './parts/namedChips.ts';
 export { lookupGateUnits, lookupPinout, lookupPinoutNames, lookupRole, pinoutModels, pinoutTable } from './parts/pinouts.ts';
 export {
@@ -80,7 +94,7 @@ export {
 } from './parts/usbCable.ts';
 export type { UsbCableOptions, UsbCableRead } from './parts/usbCable.ts';
 export type { DeviceModelPins, ModuleRow } from './parts/modules.ts';
-export type { AdapterChip, GateUnit, Pinout, PinoutRow } from './parts/pinouts.ts';
+export type { AdapterChip, GateUnit, IcSides, Pinout, PinoutRow } from './parts/pinouts.ts';
 export { drawModuleOutline, moduleBox, moduleSide } from './parts/moduleOutline.ts';
 export type { ModuleOutline, ModuleOutlineOptions } from './parts/moduleOutline.ts';
 export { VERIFY_NOTES, discreteModels, discreteTable, lookupDiscrete } from './parts/discretes.ts';

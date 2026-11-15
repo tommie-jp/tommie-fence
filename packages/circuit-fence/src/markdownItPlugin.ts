@@ -4,6 +4,7 @@ import {
   shiftErrors,
 } from './core/index.ts';
 import type { FenceError, Theme } from './core/index.ts';
+import type { CardReader, CardTable } from 'fence-kit';
 import { hashOf } from './host/hash.ts';
 
 const LANGUAGE = 'circuit';
@@ -28,7 +29,7 @@ const PENDING = '<p class="circuit-pending">図を描いています…</p>';
  * 文字列の組み立ては core 側のエスケープを通ったものだけを使う。
  */
 export const circuitPlugin =
-  (figures: FigureSource) =>
+  (figures: FigureSource, cards?: CardReader) =>
   (md: MarkdownIt): MarkdownIt => {
     const fallback: RendererRule =
       md.renderer.rules.fence ?? ((tokens, index, options, _env, self) => self.renderToken(tokens, index, options));
@@ -46,7 +47,8 @@ export const circuitPlugin =
       // core が返す行番号はフェンスの中の数え方。書き手が直しに行くのは
       // Markdown の行なので、フェンスが始まる位置ぶんずらして出す。
       const offset = token.map === null ? 0 : token.map[0] + 1;
-      const { html, theme } = bodyOf(token.content, figures, offset);
+      // 部品カード (52 の docs/158) は host が文書ごとに渡す。web 版は渡さない。
+      const { html, theme } = bodyOf(token.content, figures, offset, cards?.(env));
 
       // 地の色をエディタに合わせるのは CSS の仕事なので、その目印を付ける
       // (テーマや地の色を書いてある図は、書いたとおりの色のままにする)。
@@ -63,8 +65,9 @@ function bodyOf(
   source: string,
   figures: FigureSource,
   offset: number,
+  cards: CardTable | undefined,
 ): { readonly html: string; readonly theme: Theme } {
-  const { tex, lineMap, netlist, theme, width, notes, errors, notices, debug } = compileCircuit(source);
+  const { tex, lineMap, netlist, theme, width, notes, errors, notices, debug } = compileCircuit(source, cards === undefined ? {} : { cards });
   if (tex === null) return { html: renderErrorCard(shiftErrors(errors, offset)), theme };
 
   const hash = hashOf(tex);

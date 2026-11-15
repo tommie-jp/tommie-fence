@@ -1,5 +1,5 @@
-import { renderIssues, wireColorNames, withSheets } from 'fence-kit';
-import type { EditResult, FenceEditor } from 'fence-kit';
+import { editorWithCards, renderIssues, wireColorNames, withSheets } from 'fence-kit';
+import type { CardSource, EditResult, FenceEditor } from 'fence-kit';
 import { renderPalette, renderTypeOptions } from './palette.ts';
 import { partFields, setField } from './field.ts';
 import type { PartField } from './field.ts';
@@ -49,9 +49,12 @@ const unreadable = (written: string): EditResult =>
 
 const readAddress = (written: string): Address | null => parseAddress(written);
 
-export function createBreadboardEditor(): FenceEditor {
+/** 殻を作るときの選び。`cards` は開いている文書の部品カード (52 の docs/158)。 */
+export type BreadboardEditorOptions = { readonly cards?: CardSource };
+
+export function createBreadboardEditor(options: BreadboardEditorOptions = {}): FenceEditor {
   // `sheets:` の図は枚を 1 枚ずつ仮のフェンスとして掴む (52 の docs/118)。
-  return withSheets(oneSheetEditor());
+  return editorWithCards(withSheets(oneSheetEditor()), options.cards);
 }
 
 /** 1 枚の図のエディタ。`sheets:` の図では `withSheets` が枚の本文を渡す。 */

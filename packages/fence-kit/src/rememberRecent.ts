@@ -1,3 +1,6 @@
+import { activeCardTable } from './parts/cards/scope.ts';
+import type { CardTable } from './parts/cards/types.ts';
+
 /**
  * 直近いくつかの答えを覚える包み。**同じ入力なら数え直さない。**
  *
@@ -36,5 +39,23 @@ export function rememberRecent<A, R>(compute: (arg: A) => R, keep = 2): (arg: A)
       seen.delete(oldest.value);
     }
     return answer;
+  };
+}
+
+/**
+ * `rememberRecent` を**部品カードの表ごとに分けて**掛ける (52 の docs/158)。フェンスの読み取りは
+ * 型番の表を引くので、同じ本文でも手元のカードがあるか無いかで答えが違う。本文だけを鍵にすると、
+ * カード無しで読んだ答え (「表に無い」) をカードつきの読みに返してしまう (試験で踏んだ)。
+ * 表はフォルダごとに 1 つを使い回すので、表ごとの控えでも当たる。
+ */
+export function rememberRecentPerCards<A, R>(compute: (arg: A) => R, keep = 2): (arg: A) => R {
+  const plain = rememberRecent(compute, keep);
+  const byTable = new WeakMap<CardTable, (arg: A) => R>();
+  return (arg: A): R => {
+    const table = activeCardTable();
+    if (table === null) return plain(arg);
+    const known = byTable.get(table) ?? rememberRecent(compute, keep);
+    byTable.set(table, known);
+    return known(arg);
   };
 }

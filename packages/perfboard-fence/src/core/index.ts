@@ -1,4 +1,4 @@
-import { applyExpectations, deviceWireColor, element, hasSheets, normalizeNewlines, num, renderSheets, resolveLang, splitSheets } from 'fence-kit';
+import { applyExpectations, deviceWireColor, element, hasSheets, normalizeNewlines, num, renderSheets, resolveLang, splitSheets, withCards } from 'fence-kit';
 import { perfboardScene } from './render/scene.ts';
 import { attachSourceText } from './errors.ts';
 import { createLayout } from './model/layout.ts';
@@ -39,7 +39,7 @@ import { resolveStyle, themeForBoard } from './render/theme.ts';
 import type {
   Address, Board, FenceError, PartSpec, PointSpec, Rect, ResolvedNote, RoutedWire,
 } from './types.ts';
-import type { Lang, Net, Scene, SheetExtras } from 'fence-kit';
+import type { CardTable, Lang, Net, Scene, SheetExtras } from 'fence-kit';
 
 /** 行の無いものを先に、あとは行の順に。同じ行なら見つけた順を保つ。 */
 const byLine = (errors: readonly FenceError[]): FenceError[] =>
@@ -109,6 +109,11 @@ export type RenderOptions = {
    * 書かなければ ja。エラーとお知らせの文は言語によらず日本語。
    */
   readonly lang?: Lang;
+  /**
+   * 手元の部品カードの表 (52 の docs/158)。**描いている間だけ**型番の表の次に引く。
+   * 書かなければ同梱の表だけ。
+   */
+  readonly cards?: CardTable;
 };
 
 /**
@@ -147,6 +152,10 @@ function editLayer(
  * (52 の docs/118。`sheets:` を書かない図は今までの 1 枚の描き方のまま)。
  */
 export function renderPerfboard(input: string, options: RenderOptions = {}): RenderResult {
+  return withCards(options.cards, () => renderAllSheets(input, options));
+}
+
+function renderAllSheets(input: string, options: RenderOptions): RenderResult {
   const source = normalizeNewlines(input);
   if (!hasSheets(source)) {
     // 枚の中でだけ使うもの (節点の座標) は外へ返さない。
@@ -172,7 +181,11 @@ export function renderPerfboard(input: string, options: RenderOptions = {}): Ren
  * 図の幾何 (fence-check が見る形。52 の docs/148)。**`sheets:` の図は枚ごとに 1 つ**。
  * 描くのと同じ道を通して組むので、描画を直せば検査も一緒に動く。
  */
-export function scenesOfPerfboard(input: string): readonly Scene[] {
+export function scenesOfPerfboard(input: string, options: { readonly cards?: CardTable } = {}): readonly Scene[] {
+  return withCards(options.cards, () => scenesOf(input));
+}
+
+function scenesOf(input: string): readonly Scene[] {
   const source = normalizeNewlines(input);
   if (!hasSheets(source)) return [renderOneSheet(source, { stamp: false }).scene];
   return splitSheets(source, { shared: ['lang'] }).sheets

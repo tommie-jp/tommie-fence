@@ -6,7 +6,7 @@ import { isLandColor, isPlateColor, landNames, plateNames } from '../render/fini
 import { boardNames } from '../model/catalog.ts';
 import { LIMITS, clampText } from '../limits.ts';
 import { parsePartLine } from './parts.ts';
-import { USB_CABLE_TYPE, readUsbCable, rememberRecent, resolveLang } from 'fence-kit';
+import { USB_CABLE_TYPE, readUsbCable, rememberRecentPerCards, resolveLang } from 'fence-kit';
 import type { Lang } from 'fence-kit';
 import { parseWireLine } from './wires.ts';
 import { EMPTY_STYLE, parseStyle } from './style.ts';
@@ -681,8 +681,8 @@ function readFence(source: string): ParseResult {
 }
 
 /**
- * 読んだ結果は**直前の 2 本文ぶん覚える** (`rememberRecent`)。マップの試し当ては
+ * 読んだ結果は**直前の 2 本文ぶん覚える** (`rememberRecent`。部品カードの表ごとに分けて。52 の docs/158)。マップの試し当ては
  * 1 回のうちに同じ本文を何度も読むので、そのたびに YAML を通すと拡張ホストが
  * 埋まる (52 の docs/27 の実測)。**答えは読み取り専用**で、呼ぶ側に書き換える所は無い。
  */
-export const parseFence = rememberRecent(readFence);
+export const parseFence = rememberRecentPerCards(readFence);

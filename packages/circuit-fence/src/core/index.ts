@@ -1,4 +1,5 @@
-import { applyExpectations } from 'fence-kit';
+import { applyExpectations, withCards } from 'fence-kit';
+import type { CardTable } from 'fence-kit';
 import { attachSourceText, fenceError } from './errors.ts';
 import { buildCircuit } from './model/circuit.ts';
 import { computeNets } from './model/nets.ts';
@@ -77,9 +78,18 @@ export type CompileOptions = {
    * `circuit-fence check` から渡す。
    */
   readonly erc?: boolean;
+  /**
+   * 手元の部品カードの表 (52 の docs/158)。**組んでいる間だけ**型番の表の次に引く。
+   * 表を引くのは TeX を書き出すまでの同期の部分なので、TeX の描画 (非同期) には要らない。
+   */
+  readonly cards?: CardTable;
 };
 
 export function compileCircuit(fence: string, options: CompileOptions = {}): CompileResult {
+  return withCards(options.cards, () => compile(fence, options));
+}
+
+function compile(fence: string, options: CompileOptions): CompileResult {
   const target = options.target ?? 'fence';
   // 読む前に改行を揃える。ここから先は `\n` だけを見ればよい
   // (行を trim して読むところと、1 字ずつ検めるところで食い違わせない)。

@@ -1,5 +1,6 @@
 import type { MarkdownIt, RendererRule } from 'markdown-it';
 import { isFenceOf, langFromEnv } from 'fence-kit';
+import type { CardReader } from 'fence-kit';
 import { renderBreadboard } from './core/index.ts';
 
 /** 正の綴り。長い綴り (` ```breadboard `) も別名として読む (52 の docs/08)。 */
@@ -10,7 +11,7 @@ const LANGUAGE = 'bread';
  * VS Code のプレビューはここが返した HTML をサニタイズしないので、
  * 文字列の組み立てはすべて core 側のエスケープを通ったものだけを使う。
  */
-export function breadboardPlugin(md: MarkdownIt): MarkdownIt {
+export function breadboardPlugin(md: MarkdownIt, cards?: CardReader): MarkdownIt {
   const fallback: RendererRule = md.renderer.rules.fence
     ?? ((tokens, index, options, _env, self) => self.renderToken(tokens, index, options));
 
@@ -29,7 +30,11 @@ export function breadboardPlugin(md: MarkdownIt): MarkdownIt {
     const offset = token.map === null ? 0 : token.map[0] + 1;
     // 言語は host が `md.render(text, { fenceLang: 'en' })` で渡す。書かなければ YAML の `lang:` か ja。
     const lang = langFromEnv(env);
-    const { svg, errorHtml } = renderBreadboard(token.content, { offset, ...(lang === undefined ? {} : { lang }) });
+    // 部品カード (52 の docs/158) は host が文書ごとに渡す (`md.use(breadboardPlugin, cards)`)。web 版は渡さない。
+    const table = cards?.(env);
+    const { svg, errorHtml } = renderBreadboard(token.content, {
+      offset, ...(lang === undefined ? {} : { lang }), ...(table === undefined ? {} : { cards: table }),
+    });
 
     return `<div${self.renderAttrs(token)}>${svg}${errorHtml}</div>\n`;
   };

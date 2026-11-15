@@ -1,4 +1,4 @@
-import { lookupPinout } from 'fence-kit';
+import { lookupPinout, lookupPinoutNames } from 'fence-kit';
 import type { Pinout } from 'fence-kit';
 
 /**
@@ -336,13 +336,18 @@ const LAYOUTS: readonly { readonly pins: number; readonly model: string; readonl
   { pins: 8, model: 'LM386', layout: LM386_LAYOUT },
 ];
 
-/** 型番からピンの名前と働きの並びを引く。並びを持たない型番は null。 */
+/**
+ * 型番からピンの名前と働きの並びを引く。並びを持たない型番は null。
+ * ここの表に無ければ、型番の表の行の `ic` (部品カードの `ic:`。52 の docs/158) を使う。
+ */
 export function lookupIcPinout(model: string | null): IcPinout | null {
   for (const row of LAYOUTS) {
     const pinout = lookupPinout(model, row.pins);
     if (pinout !== null && pinout.model === row.model) return { ...pinout, layout: row.layout };
   }
-  return null;
+  const names = model === null ? null : lookupPinoutNames(model);
+  const pinout = names === null ? null : lookupPinout(model, names.names.length);
+  return pinout?.ic === undefined ? null : { ...pinout, layout: pinout.ic };
 }
 
 /** 働きの並びを持つ型番 (代表の綴り)。お知らせと早見表に出す。 */

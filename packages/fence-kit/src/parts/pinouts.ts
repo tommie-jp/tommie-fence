@@ -3,6 +3,9 @@ import type { SipLook } from './chips.ts';
 import type { ModuleOutline } from './moduleOutline.ts';
 import { VERIFY_NOTES } from './discretes.ts';
 import { ROLES_EN } from './pinoutRolesEn.ts';
+import { BUNDLED_CARDS } from './cards/bundled.gen.ts';
+import { chipRows } from './cards/convert.ts';
+import { cardPinout } from './cards/scope.ts';
 
 /**
  * DIP の IC のピンの名前の表 (52 の docs/95)。**型番で引いて、3 つのフェンスが
@@ -108,6 +111,12 @@ export type PinoutRow = {
   readonly role: string;
   /** 文書の表に添える一言 (上に線のピンなど)。`scripts/pinout-rows.mjs` が行に書き出す。 */
   readonly note?: string;
+  /** 働きの英語。無ければ `pinoutRolesEn.ts` の訳 (部品カードの `role-en:`)。 */
+  readonly roleEn?: string;
+  /** 回路図の `ic` の箱の左右上下の割り振り (部品カードの `ic:`)。 */
+  readonly ic?: IcSides;
+  /** 部品カードから読んだ行 (同梱のカードは `bundled`)。 */
+  readonly card?: 'bundled' | 'local';
   /** 1 列の姿 (`sipN`) を樹脂の色と胴の字で描く部品。無ければ黒い 1 列ヘッダ。 */
   readonly look?: SipLook;
   /** 面実装しか無い型番の胴。`dipN` / `sipN` を**変換基板に載せた実寸の胴**で描く。 */
@@ -142,6 +151,15 @@ export type Pinout = {
   readonly look?: SipLook;
   readonly chip?: AdapterChip;
   readonly module?: ModuleOutline;
+  readonly ic?: IcSides;
+};
+
+/** 回路図の `ic` の箱の 4 辺に並べるピンの名前 (circuit-fence の `IcLayout` と同じ形)。 */
+export type IcSides = {
+  readonly left: readonly string[];
+  readonly right: readonly string[];
+  readonly top: readonly string[];
+  readonly bottom: readonly string[];
 };
 
 /** 4 回路の 2 入力ゲート (CD4071B・CD4081B・CD4011B・CD4001B) は同じ並び。 */
@@ -155,7 +173,7 @@ const HC_QUAD_GATE = ['1A', '1B', '1Y', '2A', '2B', '2Y', 'GND', '3Y', '3A', '3B
 
 const TIMER_555 = ['GND', 'TRIG', 'OUT', 'RESET', 'CONT', 'THRES', 'DISCH'];
 
-const ROWS: readonly PinoutRow[] = [
+const TS_ROWS: readonly PinoutRow[] = [
   { models: ['NE555', 'NE555P', 'SA555', 'SA555P', 'SE555', 'SE555P'], role: 'タイマー', names: [...TIMER_555, 'VCC'] },
   { models: ['TLC555', 'TLC555CP', 'TLC555IP'], role: 'タイマー (CMOS)', names: [...TIMER_555, 'VDD'] },
   {
@@ -915,10 +933,20 @@ const ROWS: readonly PinoutRow[] = [
   },
 ];
 
+/**
+ * 表の全部。**TS の行のあとに同梱の部品カード** (`packages/fence-kit/parts/*.part.yaml` を
+ * `npm run cards` で焼いた物。52 の docs/158) をつなぐ。
+ */
+const ROWS: readonly PinoutRow[] = [...TS_ROWS, ...chipRows(BUNDLED_CARDS, 'bundled')];
+
 /** 型番 (大文字) → 行。`Map` にするのは `constructor` のような継ぎ物の名前を拾わないため。 */
 const BY_MODEL: ReadonlyMap<string, PinoutRow> = new Map(
   ROWS.flatMap((row) => row.models.map((model) => [model.toUpperCase(), row] as const)),
 );
+
+/** 同梱の表、無ければ描いている間だけ有効な手元のカード (`withCards`)。 */
+const rowOf = (model: string): PinoutRow | undefined =>
+  BY_MODEL.get(model.trim().toUpperCase()) ?? cardPinout(model);
 
 /**
  * 型番とピンの本数からピンの名前を引く。**表に無い型番、本数がパッケージと合わない
@@ -926,13 +954,14 @@ const BY_MODEL: ReadonlyMap<string, PinoutRow> = new Map(
  */
 export function lookupPinout(model: string | null, pins: number): Pinout | null {
   if (model === null) return null;
-  const row = BY_MODEL.get(model.trim().toUpperCase());
+  const row = rowOf(model);
   if (row === undefined || row.names.length !== pins) return null;
   return {
     model: row.models[0] ?? '', names: row.names,
     ...(row.look === undefined ? {} : { look: row.look }),
     ...(row.chip === undefined ? {} : { chip: row.chip }),
     ...(row.module === undefined ? {} : { module: row.module }),
+    ...(row.ic === undefined ? {} : { ic: row.ic }),
   };
 }
 
@@ -941,16 +970,17 @@ export function lookupPinout(model: string | null, pins: number): Pinout | null 
  * 機器は穴に挿さないので、パッケージの本数と突き合わせる必要が無い。表に無い型番は null。
  */
 export function lookupPinoutNames(model: string): { readonly model: string; readonly names: readonly string[] } | null {
-  const row = BY_MODEL.get(model.trim().toUpperCase());
+  const row = rowOf(model);
   return row === undefined ? null : { model: row.models[0] ?? '', names: row.names };
 }
 
 /** 型番から働きの名前を引く (本数は問わない)。表に無い型番は null。 */
 export function lookupRole(model: string | null, lang: Lang = 'ja'): string | null {
   if (model === null) return null;
-  const role = BY_MODEL.get(model.trim().toUpperCase())?.role ?? null;
+  const row = rowOf(model);
+  const role = row?.role ?? null;
   if (role === null || lang === 'ja') return role;
-  return ROLES_EN[role] ?? role;
+  return row?.roleEn ?? ROLES_EN[role] ?? role;
 }
 
 /** 表にある型番 (行ごとに代表の綴り 1 つ)。本数を渡すとそのパッケージの行だけ。 */
@@ -977,7 +1007,7 @@ const GATE_ROLE = /\b(N?AND|N?OR|XN?OR|NOT)\b|インバータ|バッファ/;
  */
 export function lookupGateUnits(model: string | null): readonly GateUnit[] | null {
   if (model === null) return null;
-  const row = BY_MODEL.get(model.trim().toUpperCase());
+  const row = rowOf(model);
   if (row === undefined || !GATE_ROLE.test(row.role)) return null;
 
   const units = new Map<number, { inputs: [string, number][]; output: number | null }>();

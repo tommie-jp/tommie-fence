@@ -17,7 +17,8 @@ import type { Address } from '../model/address.ts';
 import type { Endpoint } from '../types.ts';
 import { renamePart } from './rename.ts';
 import type { MapLook } from './mapSvg.ts';
-import type { EditResult, FenceEditor, NewPart } from 'fence-kit';
+import { editorWithCards } from 'fence-kit';
+import type { CardSource, EditResult, FenceEditor, NewPart } from 'fence-kit';
 import { isWireHandle, renderColorOptions, setWireField, wireFields, moveWireEnd } from './wireField.ts';
 import {
   deleteNote, duplicateNote, flipNote, isNoteHandle, moveNote, noteCells, noteFields, noteLineOf, noteSpans, noteText,
@@ -69,7 +70,14 @@ export type LookSource = () => MapLook;
 
 const PLAIN: LookSource = () => ({});
 
-export function createCircuitEditor(look: LookSource = PLAIN): FenceEditor {
+/** 殻を作るときの選び。`cards` は開いている文書の部品カード (52 の docs/158)。 */
+export type CircuitEditorOptions = { readonly cards?: CardSource };
+
+export function createCircuitEditor(look: LookSource = PLAIN, options: CircuitEditorOptions = {}): FenceEditor {
+  return editorWithCards(plainCircuitEditor(look), options.cards);
+}
+
+function plainCircuitEditor(look: LookSource): FenceEditor {
   /** 番地の並びを読む。1 つでも読めなければ、その綴りを名指して断る。 */
   const addresses = (written: readonly string[]): readonly Address[] | string => {
     const parsed = written.map((one) => parseAddress(one));

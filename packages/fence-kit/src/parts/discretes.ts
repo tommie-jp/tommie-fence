@@ -1,3 +1,7 @@
+import { BUNDLED_CARDS } from './cards/bundled.gen.ts';
+import { discreteRows } from './cards/convert.ts';
+import { cardDiscrete } from './cards/scope.ts';
+
 /**
  * 3 ピンのディスクリート部品 (トランジスタ・FET・三端子レギュレータ) のピンの名前の表
  * (52 の docs/119)。**型番で引いて、ブレッドボードとユニバーサル基板が同じ名前を刷る**。
@@ -31,6 +35,8 @@ export type DiscreteRow = {
   readonly note?: string;
   /** 確かめたデータシート。 */
   readonly source: string;
+  /** 部品カードから読んだ行。 */
+  readonly card?: 'bundled' | 'local';
 };
 
 export type Discrete = {
@@ -59,7 +65,7 @@ const SGD = ['S', 'G', 'D'] as const;
 const DGS = ['D', 'G', 'S'] as const;
 const GDS = ['G', 'D', 'S'] as const;
 
-const ROWS: readonly DiscreteRow[] = [
+const TS_ROWS: readonly DiscreteRow[] = [
   // --- 東芝系の TO-92 (2-5F1B): 印字面を手前に 1=E 2=C 3=B ---
   {
     models: ['2SC1815', '2SC1815Y', '2SC1815GR', '2SC1815BL', '2SC1815-Y', '2SC1815-GR', '2SC2458'], type: 'transistor', kind: 'npn', names: ECB,
@@ -232,6 +238,9 @@ const ROWS: readonly DiscreteRow[] = [
 ];
 
 /** 型番 (大文字) → 行。`Map` にするのは `constructor` のような継ぎ物の名前を拾わないため。 */
+/** 表の全部。TS の行のあとに同梱の部品カード (52 の docs/158)。 */
+const ROWS: readonly DiscreteRow[] = [...TS_ROWS, ...discreteRows(BUNDLED_CARDS, 'bundled')];
+
 const BY_MODEL: ReadonlyMap<string, DiscreteRow> = new Map(
   ROWS.flatMap((row) => row.models.map((model) => [`${row.type}:${model.toUpperCase()}`, row] as const)),
 );
@@ -241,7 +250,7 @@ const BY_MODEL: ReadonlyMap<string, DiscreteRow> = new Map(
  */
 export function lookupDiscrete(type: string, model: string | null): Discrete | null {
   if (model === null) return null;
-  const row = BY_MODEL.get(`${type}:${model.trim().toUpperCase()}`);
+  const row = BY_MODEL.get(`${type}:${model.trim().toUpperCase()}`) ?? cardDiscrete(type, model);
   return row === undefined ? null : { model: row.models[0] ?? '', kind: row.kind, names: row.names };
 }
 

@@ -1,5 +1,5 @@
-import { applyExpectations, deviceWireColor, hasSheets, keptSourceLines, renderSheets, resolveLang, splitSheets } from 'fence-kit';
-import type { Lang, Scene, SceneEndKind, SheetExtras, SheetPoint } from 'fence-kit';
+import { applyExpectations, deviceWireColor, hasSheets, keptSourceLines, renderSheets, resolveLang, splitSheets, withCards } from 'fence-kit';
+import type { CardTable, Lang, Scene, SceneEndKind, SheetExtras, SheetPoint } from 'fence-kit';
 import { breadboardScene } from './render/scene.ts';
 import { toroidNotices } from './parts/toroidNotices.ts';
 import { trimmerNotices } from './parts/trimmerNotices.ts';
@@ -148,6 +148,11 @@ export type RenderOptions = {
    * 書かなければ ja。エラーとお知らせの文は言語によらず日本語。
    */
   readonly lang?: Lang;
+  /**
+   * 手元の部品カードの表 (52 の docs/158)。**描いている間だけ**型番の表の次に引く。
+   * 書かなければ同梱の表だけ。
+   */
+  readonly cards?: CardTable;
 };
 
 /** 基板から張り出した部品と画布の縁の間に残す余白。縁に貼り付くと切れて見える。 */
@@ -158,6 +163,10 @@ const OVERHANG_MARGIN = 8;
  * (52 の docs/118。`sheets:` を書かない図は今までの 1 枚の描き方のまま)。
  */
 export function renderBreadboard(input: string, options: RenderOptions = {}): RenderResult {
+  return withCards(options.cards, () => renderAllSheets(input, options));
+}
+
+function renderAllSheets(input: string, options: RenderOptions): RenderResult {
   const source = normalizeNewlines(input);
   if (!hasSheets(source)) {
     // 枚の中でだけ使うもの (節点の座標) は外へ返さない。
@@ -198,7 +207,11 @@ export function renderBreadboard(input: string, options: RenderOptions = {}): Re
  * 図の幾何 (fence-check が見る形。52 の docs/148)。**`sheets:` の図は枚ごとに 1 つ**。
  * 描くのと同じ道を通して組むので、描画を直せば検査も一緒に動く。
  */
-export function scenesOfBreadboard(input: string): readonly Scene[] {
+export function scenesOfBreadboard(input: string, options: { readonly cards?: CardTable } = {}): readonly Scene[] {
+  return withCards(options.cards, () => scenesOf(input));
+}
+
+function scenesOf(input: string): readonly Scene[] {
   const source = normalizeNewlines(input);
   if (!hasSheets(source)) return [renderOneSheet(source, { stamp: false }).scene];
   return splitSheets(source, { shared: ['lang'] }).sheets

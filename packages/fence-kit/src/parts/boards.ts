@@ -1,4 +1,7 @@
 import type { UsbKind } from './deviceLooks.ts';
+import { BUNDLED_CARDS } from './cards/bundled.gen.ts';
+import { boardRows } from './cards/convert.ts';
+import { cardBoard, cardBoardNames } from './cards/scope.ts';
 
 /**
  * 基板に挿すマイコンボード。ピン名は**実物のピンアウトの印字そのまま**にする。
@@ -101,11 +104,23 @@ const BOARD_PARTS: Record<string, BoardPart> = {
   },
 };
 
-export const boardPartNames = (): readonly string[] => Object.keys(BOARD_PARTS);
+/** 同梱の表のボード (TS の行と同梱の部品カード)。 */
+const BUNDLED_BOARDS: Readonly<Record<string, BoardPart>> = {
+  ...BOARD_PARTS,
+  ...Object.fromEntries(boardRows(BUNDLED_CARDS).map((board) => [board.type, board.part])),
+};
+
+/** ボードの種類の名前。**描いている間だけ有効な手元のカードのボードも並ぶ** (`withCards`)。 */
+export const boardPartNames = (): readonly string[] => [
+  ...Object.keys(BUNDLED_BOARDS), ...cardBoardNames().filter((name) => !Object.hasOwn(BUNDLED_BOARDS, name)),
+];
+
+/** 同梱の表のボードの種類の名前だけ (部品カードの重なりを調べるため)。 */
+export const bundledBoardNames = (): readonly string[] => Object.keys(BUNDLED_BOARDS);
 
 /**
  * 種類名は入力から来るので、必ず自分の持ち物だけを引く (`render/palette.ts` と同じ理由)。
  * 素の添字だと `constructor` が Object.prototype から拾えてしまう。
  */
 export const lookupBoardPart = (type: string): BoardPart | null =>
-  Object.hasOwn(BOARD_PARTS, type) ? BOARD_PARTS[type] ?? null : null;
+  (Object.hasOwn(BUNDLED_BOARDS, type) ? BUNDLED_BOARDS[type] ?? null : cardBoard(type) ?? null);

@@ -1,4 +1,5 @@
-import { sceneWireNames } from 'fence-kit';
+import { sceneWireNames, withCards } from 'fence-kit';
+import type { CardTable } from 'fence-kit';
 import type { Scene, SceneBody, ScenePoint, SceneWire } from 'fence-kit';
 import { compileCircuit } from '../index.ts';
 import { parseFence } from '../parser/parseFence.ts';
@@ -71,7 +72,11 @@ function anchorOf(end: Endpoint): { readonly node: string; readonly anchor: stri
  * TeX で特別な字 (`%` `#`) が来うるので、鍵はログに載せない。
  * 問い合わせるものが無ければ null。
  */
-export function pinProbe(input: string): { readonly tex: string; readonly keys: readonly string[] } | null {
+export function pinProbe(input: string, cards?: CardTable): { readonly tex: string; readonly keys: readonly string[] } | null {
+  return withCards(cards, () => probeOf(input));
+}
+
+function probeOf(input: string): { readonly tex: string; readonly keys: readonly string[] } | null {
   const read = circuitOf(input);
   if (read === null) return null;
   const queries = new Map<string, { readonly node: string; readonly anchor: string }>();
@@ -112,7 +117,11 @@ export function readPinProbe(log: string, keys: readonly string[]): ProbedPoints
   return found;
 }
 
-export function scenesOfCircuit(input: string, probed: ProbedPoints | null = null): readonly Scene[] {
+export function scenesOfCircuit(input: string, probed: ProbedPoints | null = null, cards?: CardTable): readonly Scene[] {
+  return withCards(cards, () => scenesOf(input, probed));
+}
+
+function scenesOf(input: string, probed: ProbedPoints | null): readonly Scene[] {
   const read = circuitOf(input);
   if (read === null) return [];
   const { circuit, pitch } = read;

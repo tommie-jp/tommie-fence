@@ -1,6 +1,9 @@
 import type { Lang } from '../lang.ts';
 import { VERIFY_NOTES } from './discretes.ts';
 import { lookupPinoutNames, lookupRole } from './pinouts.ts';
+import { BUNDLED_CARDS } from './cards/bundled.gen.ts';
+import { moduleRows } from './cards/convert.ts';
+import { cardModule } from './cards/scope.ts';
 import type { DeviceLookName } from './deviceLooks.ts';
 
 /**
@@ -43,9 +46,11 @@ export type ModuleRow = {
    * 型番 (`RPI-DEBUG-PROBE`) は書くための綴りで、買う物の名前ではないため。
    */
   readonly name?: string;
+  /** 部品カードから読んだ行。 */
+  readonly card?: 'bundled' | 'local';
 };
 
-const ROWS: readonly ModuleRow[] = [
+const TS_ROWS: readonly ModuleRow[] = [
   {
     models: ['MBC2596-01', 'MBC2596', 'LM2596-01'],
     names: ['IN+', 'IN-', 'OUT+', 'OUT-'],
@@ -129,6 +134,9 @@ const ROWS: readonly ModuleRow[] = [
   },
 ];
 
+/** 表の全部。TS の行のあとに同梱の部品カード (52 の docs/158)。 */
+const ROWS: readonly ModuleRow[] = [...TS_ROWS, ...moduleRows(BUNDLED_CARDS, 'bundled')];
+
 const BY_MODEL: ReadonlyMap<string, ModuleRow> = new Map(
   ROWS.flatMap((row) => row.models.map((model) => [model.toUpperCase(), row] as const)),
 );
@@ -141,7 +149,7 @@ export const moduleModels = (): readonly string[] => ROWS.map((row) => row.model
 
 /** 型番からモジュールの行を引く。表に無ければ null。 */
 export function lookupModule(model: string): ModuleRow | null {
-  return BY_MODEL.get(model.trim().toUpperCase()) ?? null;
+  return BY_MODEL.get(model.trim().toUpperCase()) ?? cardModule(model) ?? null;
 }
 
 /** 機器の型番の働き (モジュールの表、無ければピンの名前の表)。 */
