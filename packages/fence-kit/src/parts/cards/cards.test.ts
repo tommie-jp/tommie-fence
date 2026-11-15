@@ -210,3 +210,17 @@ describe('editorWithCards', () => {
     expect(editor.look('XY1234')).toBeNull();
   });
 });
+
+describe('同梱の表 (TS の行と同梱のカード)', () => {
+  test('no model is written twice across the tables a model is looked up in', () => {
+    const pin = [...pinoutTable(), ...moduleTable()].flatMap((row) => row.models.map((model) => model.toUpperCase()));
+    const discrete = discreteTable().flatMap((row) => row.models.map((model) => `${row.type}:${model.toUpperCase()}`));
+    for (const keys of [pin, discrete]) expect(keys.filter((key, index) => keys.indexOf(key) !== index)).toEqual([]);
+  });
+
+  test('74LS00 now comes from a bundled card and still reads as before', () => {
+    expect(pinoutTable().find((row) => row.models[0] === '74LS00')?.card).toBe('bundled');
+    expect(lookupPinout('74LS00', 14)?.names[13]).toBe('VCC');
+    expect(lookupRole('74LS00', 'en')).toBe(lookupRole('74HC00', 'en'));
+  });
+});

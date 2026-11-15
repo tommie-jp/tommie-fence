@@ -24,6 +24,9 @@
     "labels": "node scripts/fence-labels.mjs",
     "labels:check": "node --test scripts/fence-labels.test.mjs && node scripts/fence-labels.mjs --check",
     "gallery:check": "node --test scripts/gallery-index.test.mjs",
-    "check": "npm run labels:check && npm run gallery:check && npm run typecheck && npm run test"
+    "cards": "node packages/part-card/scripts/bake.mjs",
+    "rows": "node packages/part-card/scripts/rows.mjs",
+    "cards:check": "node packages/part-card/scripts/bake.mjs --check && node packages/part-card/scripts/rows.mjs --check",
+    "check": "npm run labels:check && npm run gallery:check && npm run cards:check && npm run typecheck && npm run test"
   }
 }

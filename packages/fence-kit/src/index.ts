@@ -76,6 +76,7 @@ export { withCards, withCardsUsed } from './parts/cards/scope.ts';
 export { editorWithCards } from './parts/cards/editor.ts';
 export type { CardSource } from './parts/cards/editor.ts';
 export { EMPTY_CARD_TABLE } from './parts/cards/types.ts';
+export { BUNDLED_CARDS } from './parts/cards/bundled.gen.ts';
 export { FIXTURE_CARDS, fixtureCardTable } from './parts/cards/fixture.ts';
 export type {
   BoardCard, CardIssue, CardReader, CardSpice, CardTable, ChipCard, DiscreteCard, ModuleCard, PartCard,

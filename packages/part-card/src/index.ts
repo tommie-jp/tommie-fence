@@ -4,3 +4,4 @@
  */
 export { MAX_CARD_BYTES, readCardText } from './text.ts';
 export type { CardTextIssue, CardTextRead } from './text.ts';
+export { CARD_ROWS_BEGIN, CARD_ROWS_END, CARD_ROW_DOCS, cardRowsBlock, replaceCardRows } from './docRows.ts';

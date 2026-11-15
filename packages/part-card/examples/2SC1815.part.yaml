@@ -1,0 +1,17 @@
+# 3 ピンのトランジスタ。印字面を手前、ピンを下にして左から右。
+models:
+  - 2SC1815
+  - 2SC1815Y
+  - 2SC1815GR
+  - 2SC1815BL
+  - 2SC1815-Y
+  - 2SC1815-GR
+  - 2SC2458
+package: transistor/to92
+kind: npn
+role: NPN 汎用 50 V 150 mA
+pins:
+  - E
+  - C
+  - B
+source: 東芝 2SC1815 (2007-11-01)、外形図 2-5F1B の端子 (1 EMITTER・2 COLLECTOR・3 BASE)
