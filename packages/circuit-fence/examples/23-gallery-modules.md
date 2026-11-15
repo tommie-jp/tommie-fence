@@ -237,36 +237,36 @@ title: 図04 ギャラリー device のモジュール
 parts:
   M1:
       type: device
-      at: 2,3
-      model: MBC2596-01
+      at: 2.25,3.5
+      model: RPI-DEBUG-PROBE
   M2:
       type: device
-      at: 4.25,3
+      at: 4.75,3.5
       model: 28BYJ-48
   M3:
       type: device
-      at: 6.75,3
-      model: ULN2003-BOARD
+      at: 7.25,3.5
+      model: DRV8833-POLOLU
   M4:
       type: device
-      at: 9.25,3
-      model: TP4056-MODULE
+      at: 9.25,3.5
+      model: EC11
   M5:
       type: device
-      at: 11.5,3
-      model: NRF24L01+
+      at: 11.25,3.5
+      model: MBC2596-01
   M6:
       type: device
-      at: 13.5,3
-      model: EC11
+      at: 13.5,3.5
+      model: NRF24L01+
   M7:
       type: device
-      at: 2.25,7
-      model: DRV8833-POLOLU
+      at: 2.25,8
+      model: TP4056-MODULE
   M8:
       type: device
-      at: 5,7
-      model: RPI-DEBUG-PROBE
+      at: 4.75,8
+      model: ULN2003-BOARD
 ```
 
 ![図04 ギャラリー device のモジュール](out/23-gallery-modules-4.png)

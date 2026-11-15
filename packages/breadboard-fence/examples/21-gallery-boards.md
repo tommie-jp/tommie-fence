@@ -85,28 +85,28 @@ board: full
 parts:
   M1:
       type: device
-      model: MBC2596-01
+      model: RPI-DEBUG-PROBE
   M2:
       type: device
       model: 28BYJ-48
   M3:
       type: device
-      model: ULN2003-BOARD
+      model: DRV8833-POLOLU
   M4:
       type: device
-      model: TP4056-MODULE
+      model: EC11
   M5:
       type: device
-      model: NRF24L01+
+      model: MBC2596-01
   M6:
       type: device
-      model: EC11
+      model: NRF24L01+
   M7:
       type: device
-      model: DRV8833-POLOLU
+      model: TP4056-MODULE
   M8:
       type: device
-      model: RPI-DEBUG-PROBE
+      model: ULN2003-BOARD
 ```
 
 ![図06 ボード外の機器](out/21-gallery-boards-6.svg)

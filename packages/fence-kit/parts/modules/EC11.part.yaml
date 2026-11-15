@@ -1,0 +1,10 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [EC11, EC11E, EC11E15244G1]
+package: device
+role: ロータリーエンコーダ (押しスイッチつき)
+role-en: rotary encoder (with push switch)
+pins: [A, C, B, D, E]
+view: "取付面から見て: 一列に A・C・B (2.5 mm 間隔)、14.5 mm 離れた列に D・E (5 mm 間隔、D が A の側)"
+product: Alps Alpine EC11E15244G1 (縦型、軸 20 mm、30 クリック 15 パルス、押しスイッチつき)
+note: "`A` `B` が 2 相の出力、`C` が共通。`D` `E` が押しスイッチ。**列の間 14.5 mm は 2.54 mm の格子に乗らない**ので、穴に挿す形は無い (挿せるのはモジュールの `KY-040`)"
+source: Alps Alpine EC11E Series のカタログ (Update 2510)、p2 の Drawing No.2 Mounting Hole Dimensions。KiCad 公式 Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm のパッドの座標も同じ

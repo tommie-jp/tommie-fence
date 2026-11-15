@@ -1,0 +1,10 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [ULN2003-BOARD, ULN2003-STEPPER, ULN2003-DRIVER]
+package: device
+role: ステッピングモータの駆動基板 (ULN2003)
+role-en: stepper motor driver board (ULN2003)
+pins: [IN1, IN2, IN3, IN4, VCC, GND, A, B, C, D, V+]
+view: "入力のヘッダを下の辺に置いて: 入力 (左から IN1〜IN4)・電源のヘッダ (右の辺に縦、上が + = VCC、下が - = GND)・モータのコネクタ (上の辺、左から A B C D V+)"
+product: 28BYJ-48 と組で売られる緑の基板 (ULN2003AN・XH 5P・表示 LED 4 個・ON/OFF ジャンパ)
+note: モータのコネクタは 28BYJ-48 のコネクタがそのまま挿さる (A=BLUE・B=PINK・C=YELLOW・D=ORANGE・V+=RED)。電源のヘッダの印字 `-` `+` は `GND` `VCC` と呼ぶ (配線の `--` と紛れないため)。電源は 5〜12 V、1 出力 500 mA まで。入力のヘッダは版により 4 本の物と、7 位置のうち 4 本だけピンの物がある。電源のヘッダの隣に ON/OFF のジャンパがある版もある
+source: Makerguides の資料 ULN2003-Stepper-Motor-Driver-PCB.pdf (2019-04、https://www.makerguides.com/wp-content/uploads/2019/04/ULN2003-Stepper-Motor-Driver-PCB.pdf)、p1 の基板の写真と Typical Connections の表。電源のヘッダの向きは Fritzing の部品 2 つ (mgesteiro/fritzing-parts の 28BYJ-48 Driver Module、Elegoo の X113647 Stepper Driver Board) で一致 (2026-10-22)

@@ -1,0 +1,10 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [DRV8833-POLOLU, POLOLU-2130, POLOLU2130]
+package: device
+role: モータドライバ (DRV8833、2 回路の H ブリッジ)
+role-en: motor driver (DRV8833, dual H-bridge)
+pins: [GND, VMM, BIN1, BIN2, AIN2, AIN1, SLP, FLT, GND2, VIN, BOUT1, BOUT2, AOUT2, AOUT1, AISEN, BISEN]
+view: 部品面を上にして、左の列を上から (GND〜FLT)、続けて右の列を上から (GND2〜BISEN)
+product: Pololu 2130 (DRV8833 Dual Motor Driver Carrier、0.5 × 0.8 インチ)
+note: 2 列 × 8 本、列の間は 0.4 インチ = 10.16 mm (ブレッドボードの溝 0.3 インチより広い)。右の列の GND は `GND2` (基板の中で GND とつながる)。`SLP` (nSLEEP) は H で動く。`VIN` が電源の入力で、`VMM` は逆接保護を通した後
+source: Pololu 2130 の製品ページ (https://www.pololu.com/product/2130) の上面のピン配置の図 0J3866。列の間は Pololu の寸法図 drv8833-dual-motor-driver-carrier-dimensions.pdf (https://www.pololu.com/file/0J1615/、2018-10-26) の Connector callouts

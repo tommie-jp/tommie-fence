@@ -1,0 +1,10 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [MBC2596-01, MBC2596, LM2596-01]
+package: device
+role: 降圧 DC-DC モジュール (可変 1.25〜30 V 3 A)
+role-en: buck DC-DC module (adjustable 1.25–30 V, 3 A)
+pins: [IN+, IN-, OUT+, OUT-]
+view: "部品面を上、入力を左にして: 左上 IN+・左下 IN-・右上 OUT+・右下 OUT-"
+product: 秋月 131750 (TAEJIN MBC2596-01。2026-03 に LM2596-01 から改称)
+note: 端子は四隅のスルーホール (ピンヘッダは付かない)。出力は青い多回転トリマで決める。入力は出力より 1.5 V 以上高く (4〜35 V)
+source: HTC MBC2596-01 R1.1 (2025-12、秋月の配布 https://akizukidenshi.com/goodsaffix/MBC2596-01.pdf)、p3 の I/O PORT CONFIGURATION と上面の写真

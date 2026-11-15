@@ -96,7 +96,7 @@ parts:
 
 ```perf
 # ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
-title: 図05 基板の外の機器 (1/2)
+title: 図05 基板の外の機器
 board:
   size: 46x4
   h: 1.6mm
@@ -108,7 +108,7 @@ parts:
   M1:
       type: device
       at: top
-      model: MBC2596-01
+      model: RPI-DEBUG-PROBE
   M2:
       type: device
       at: top
@@ -116,42 +116,27 @@ parts:
   M3:
       type: device
       at: top
-      model: ULN2003-BOARD
+      model: DRV8833-POLOLU
   M4:
       type: device
       at: top
-      model: TP4056-MODULE
+      model: EC11
   M5:
       type: device
       at: bottom
-      model: NRF24L01+
+      model: MBC2596-01
   M6:
       type: device
       at: bottom
-      model: EC11
+      model: NRF24L01+
   M7:
       type: device
       at: bottom
-      model: DRV8833-POLOLU
-```
-
-![図05 基板の外の機器 (1/2)](out/16-gallery-boards-5.svg)
-
-```perf
-# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
-title: 図06 基板の外の機器 (2/2)
-board:
-  size: 46x3
-  h: 1.6mm
-  material: FR-4
-  slots: on
-style:
-  check: off
-parts:
-  M1:
+      model: TP4056-MODULE
+  M8:
       type: device
-      at: top
-      model: RPI-DEBUG-PROBE
+      at: bottom
+      model: ULN2003-BOARD
 ```
 
-![図06 基板の外の機器 (2/2)](out/16-gallery-boards-6.svg)
+![図05 基板の外の機器](out/16-gallery-boards-5.svg)

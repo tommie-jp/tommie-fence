@@ -1,0 +1,10 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [28BYJ-48, 28BYJ48, 28BYJ-48-5V]
+package: device
+role: ステッピングモータ (5 V、ユニポーラ 4 相)
+role-en: stepper motor (5 V, unipolar 4-phase)
+pins: [BLUE, PINK, YELLOW, ORANGE, RED]
+view: コネクタの 1〜5 番 (線の色で呼ぶ)
+product: 秋月 113256 (28BYJ-48 5V、XH 5P のコネクタつき)
+note: "**ピンは線の色で呼ぶ** (相の名前 A〜D の割り当ては資料で逆になる)。`RED` は共通 (+5 V)。1 相励磁は ORANGE → YELLOW → PINK → BLUE の順で、軸側から見て反時計回り。秋月の写真の線の並びは図と食い違うので、実物で確かめる"
+source: 28BYJ48-W01 (2019-11-13、秋月の配布 https://akizukidenshi.com/goodsaffix/28BYJ48-W01.pdf)、p6 の Connector pin No. / Lead wire color と分配順序の表
