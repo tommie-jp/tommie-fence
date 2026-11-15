@@ -256,7 +256,20 @@ function readChipExtras(reader: Reader, fields: Fields, pins: readonly string[])
       });
       return names;
     };
-    return { left: side('left'), right: side('right'), top: side('top'), bottom: side('bottom') };
+    const sides = { left: side('left'), right: side('right'), top: side('top'), bottom: side('bottom') };
+    // **全部のピンを 1 度ずつ。** 箱は全部のピンに口を作るので、抜けたピンがあると TeX が止まる
+    // (同梱の表の割り振りも circuit-fence の試験が同じ決まりで見張る)。
+    const left = [...pins];
+    const twice: string[] = [];
+    for (const name of [...sides.left, ...sides.right, ...sides.top, ...sides.bottom]) {
+      const at = left.indexOf(name);
+      if (at < 0) twice.push(name);
+      else left.splice(at, 1);
+    }
+    const unknownOrTwice = twice.filter((name) => pins.includes(name));
+    if (left.length > 0) reader.error(['ic'], `ic: に置いていないピンがあります (${left.join(' ')})。全部のピンを 1 度ずつ left: right: top: bottom: のどれかに置きます`);
+    if (unknownOrTwice.length > 0) reader.error(['ic'], `ic: に 2 度置いたピンがあります (${unknownOrTwice.join(' ')})`);
+    return sides;
   })();
 
   return { look, outline, smd, ic };

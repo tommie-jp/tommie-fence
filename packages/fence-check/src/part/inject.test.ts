@@ -15,7 +15,7 @@ const CARDS: readonly Record<string, unknown>[] = [
     models: ['XE1'], package: 'dip8/sop', role: EVIL, 'role-en': EVIL, note: EVIL, source: EVIL,
     pins: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
     smd: { length: 2, width: 1, span: 2, pitch: 1, lead: 0.4, mark: EVIL },
-    ic: { left: ['A', 'B'], right: ['C'] }, spice: { model: EVIL, lib: EVIL },
+    ic: { left: ['A', 'B', 'C', 'D'], right: ['E', 'F'], top: ['G'], bottom: ['H'] }, spice: { model: EVIL, lib: EVIL },
   },
   {
     models: ['XE2'], package: 'sip4', role: EVIL, note: EVIL, source: EVIL, pins: ['A', 'B', 'C', 'D'],

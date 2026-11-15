@@ -72,7 +72,7 @@ YAML のファイルで `part-card` と打つと、骨組みのスニペット�
 | `look:` | 省ける | 1 列のモジュールの基板の色 (`body:` `edge:`、`#rrggbb`) |
 | `outline:` | 省ける | ヘッダに載った基板と胴の外形 (mm) |
 | `smd:` | 省ける | 変換基板に載せる面実装の胴の寸法 (mm) |
-| `ic:` | 省ける | 回路図の `ic` の箱の `left:` `right:` `top:` `bottom:` に並べるピン |
+| `ic:` | 省ける | 回路図の `ic` の箱の `left:` `right:` `top:` `bottom:` に並べるピン。**全部のピンを 1 度ずつ**置く |
 | `spice:` | 省ける | LTspice の模型 (`model:` `lib:` `nodes:`)。今は形だけ見る |
 
 手本は [examples/](examples/) にあります (3 ピン・1 列・外形つき・面実装・機器・ボード)。

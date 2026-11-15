@@ -89,7 +89,7 @@ describe('readCard', () => {
 
   test('checks that spice nodes and ic sides name pins of the card', () => {
     const { issues } = readCard({ ...CHIP, spice: { model: 'XY', nodes: ['1A', 'OUT'] }, ic: { left: ['1A', 'Q'] } });
-    expect(issues.map((issue) => issue.path)).toEqual([['spice', 'nodes', 1], ['ic', 'left', 1]]);
+    expect(issues.map((issue) => issue.path)).toEqual(expect.arrayContaining([['spice', 'nodes', 1], ['ic', 'left', 1]]));
   });
 
   test('accepts only #rrggbb colours for look:', () => {
@@ -228,5 +228,23 @@ describe('同梱の表 (TS の行と同梱のカード)', () => {
 describe('TeX の字を通さない', () => {
   test.each(['B#', 'A~'])('refuses %s, which LaTeX would read as a TeX character', (name) => {
     expect(checkPinNames(['A', name])[0]?.message).toContain('使えない字');
+  });
+});
+
+describe('ic: は全部のピンを 1 度ずつ置く', () => {
+  // 回路図の `ic` の箱は全部のピンに口を作る。抜けたピンがあると TeX が止まる (手元のカードで試して踏んだ)。
+  test('refuses ic: that leaves a pin out, naming the pins left out', () => {
+    const { card, issues } = readCard({ ...CHIP, ic: { left: ['1A', '1B', '2A', '2B'], right: ['1Y', '2Y'], top: ['VCC'] } });
+    expect(card).toBeNull();
+    expect(issues).toContainEqual(expect.objectContaining({ path: ['ic'], message: expect.stringContaining('GND') }));
+  });
+
+  test('refuses ic: that places a pin twice', () => {
+    const { issues } = readCard({ ...CHIP, ic: { left: ['1A', '1B', '2A', '2B', '1A'], right: ['1Y', '2Y'], top: ['VCC'], bottom: ['GND'] } });
+    expect(issues).toContainEqual(expect.objectContaining({ path: ['ic'], message: expect.stringContaining('1A') }));
+  });
+
+  test('accepts ic: that places every pin once', () => {
+    expect(readCard({ ...CHIP, ic: { left: ['1A', '1B', '2A', '2B'], right: ['1Y', '2Y'], top: ['VCC'], bottom: ['GND'] } }).card).not.toBeNull();
   });
 });
