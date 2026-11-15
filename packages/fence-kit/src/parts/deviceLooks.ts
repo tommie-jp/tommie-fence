@@ -85,10 +85,10 @@ const MEDIUM: ProbeGeometry = {
   ...LARGE, boardShort: 18, boardLong: 24, caseSide: 1.5, caseEnd: 1.5,
   ledLeft: 3.5, ledTop: 7.3, nameTop: 11.5, corner: 2.5,
 };
-/** `small`: 口も 0.7 倍にし、基板を 13 × 17 mm、ケースを 15 × 19 mm に縮める。 */
+/** `small`: 口も 0.7 倍にし、基板を 13 × 19 mm、ケースを 15 × 21 mm に縮める (2 行の名前と口の字が重ならない背)。 */
 const SMALL_PORT = 0.7;
 const SMALL: ProbeGeometry = {
-  boardShort: 13, boardLong: 17, caseSide: 1, caseEnd: 1,
+  boardShort: 13, boardLong: 19, caseSide: 1, caseEnd: 1,
   usbWidth: LARGE.usbWidth * SMALL_PORT, usbDepth: LARGE.usbDepth * SMALL_PORT, usbJut: LARGE.usbJut * SMALL_PORT,
   portOffset: LARGE.portOffset * SMALL_PORT, pinStep: LARGE.pinStep * SMALL_PORT,
   housingWidth: LARGE.housingWidth * SMALL_PORT, housingDepth: LARGE.housingDepth * SMALL_PORT,
@@ -117,6 +117,22 @@ const METAL_FILL = '#c9cfd8';
 const METAL_EDGE = '#8a929c';
 /** LED の色 (回路図 RP-008194-DS: 電源の赤と、UART・DAP の緑と黄)。 */
 const LEDS = ['#e5484d', '#3fb950', '#e3b341', '#3fb950', '#e3b341'] as const;
+
+/** 名前の行の送り (字の大きさに対する比)。字と字の間が 1/4 em。 */
+const NAME_LINE = 1.25;
+/** 姿に刷る名前の字の大きさ (USB の差し込みに刷る字と同じ)。 */
+const LABEL_FONT = 9;
+/** これより長い名前は 2 行に分ける (字の数)。 */
+const LABEL_WRAP = 12;
+
+/** 名前を行に分ける。長くて空白があれば、真ん中に近い空白で 2 行に。 */
+function labelLines(label: string): readonly string[] {
+  if (label.length <= LABEL_WRAP || !label.includes(' ')) return [label];
+  const spaces = [...label.matchAll(/ /g)].map((match) => match.index ?? 0);
+  const middle = label.length / 2;
+  const cut = spaces.reduce((best, at) => (Math.abs(at - middle) < Math.abs(best - middle) ? at : best));
+  return [label.slice(0, cut), label.slice(cut + 1)];
+}
 
 /** 2.54 mm = 1 ピッチの図で、1 mm が何 px か。 */
 export const pxPerMmOf = (pitch: number): number => pitch / 2.54;
@@ -179,8 +195,11 @@ export function drawDeviceLook(_look: DeviceLookName, options: LookOptions): str
   const { rect, side, label, scale, pxPerMm, pins } = options;
   const size = options.size ?? DEFAULT_PART_SIZE;
   const g = GEOMETRY[size];
-  // `small` は口の中のピンの間が 0.7 mm なので、名前をその間に収まる大きさまで縮める (隣の名前と重ねない)。
-  const pinFont = size === 'small' ? Math.min(options.pinFont, g.pinStep * pxPerMm * 1.1) : options.pinFont;
+  // ピンの名前はどの大きさでも、ほかの機器のピンの名前と同じ大きさ。
+  const { pinFont } = options;
+  // 名前の並びの間 (縦書きの行の送り) は 1.25 em (字と字の間が 1/4 em)。口の中のピンの間 (1 mm) より広いので、
+  // 名前はピンの真上ではなく、口の真ん中から行の送りずつ左右へ広げて並べる (並びの順はピンと同じ)。
+  const nameStep = (pinFont * NAME_LINE) / pxPerMm;
   const top = side === 'top';
   const mm = (value: number): number => value * pxPerMm;
   // 上の帯の向き (USB が上、口が下) で mm を測り、下の帯では 180 度回す。
@@ -228,7 +247,7 @@ export function drawDeviceLook(_look: DeviceLookName, options: LookOptions): str
   const names = pins.flatMap((pin) => {
     const slot = Object.hasOwn(PROBE_SLOTS, pin.name) ? PROBE_SLOTS[pin.name] : undefined;
     if (slot === undefined) return [];
-    const x = px(portCentre(g, slot.port) + slot.step * g.pinStep);
+    const x = px(portCentre(g, slot.port) + slot.step * nameStep);
     const y = py(housingTop - 0.6);
     const anchor = top ? 'start' : 'end';
     return [element('g', { transform: `translate(${num(x + pinFont * 0.35)} ${num(y)}) rotate(-90)` },
@@ -237,9 +256,15 @@ export function drawDeviceLook(_look: DeviceLookName, options: LookOptions): str
 
   const leds = LEDS.map((fill, index) =>
     box(g.ledLeft + index * g.ledStep, g.ledTop, g.ledWidth, g.ledHeight, { fill, stroke: '#1d2b22', 'stroke-width': 0.5 })).join('');
-  // 名前は基板の幅に収める (字幅は字の大きさの 0.6 倍で見積もる)。
-  const nameSize = Math.min(font * 1.2, mm(g.boardShort - 2) / Math.max(1, label.length * 0.6));
-  const name = svgText(px(centreX), py(g.nameTop) + nameSize * 0.35, label, { 'font-size': num(nameSize), fill: SILK });
+  // 名前は USB の差し込みに刷る字と同じ大きさ。長い名前 (`Raspberry Pi Debug Probe`) は真ん中に近い空白で 2 行に分ける。
+  // 基板の幅に収まらなければ縮める (字幅は字の大きさの 0.6 倍で見積もる)。
+  const lines = labelLines(label);
+  const widest = Math.max(...lines.map((line) => line.length));
+  const nameSize = Math.min(LABEL_FONT * scale, mm(g.boardShort - 2) / Math.max(1, widest * 0.6));
+  const name = lines.map((line, index) => svgText(
+    px(centreX), py(g.nameTop) + nameSize * (0.35 + (index - (lines.length - 1) / 2) * NAME_LINE), line,
+    { 'font-size': num(nameSize), fill: SILK },
+  )).join('');
 
   // USB の口はケースの開口から見えるので、ケースと基板より上に描く。
   return `${casing}${board}${usb}${leds}${name}${ports}${names}`;

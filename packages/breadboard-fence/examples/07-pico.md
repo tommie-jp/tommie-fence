@@ -245,3 +245,92 @@ wires:
   `small` はコネクタも小さく)。実寸 (`large`) では USB-A の胴だけで 15.7 × 36 mm あり、図がかなり大きくなる
 - Pico の USB の口の脇の `micro-B` は、ケーブルを描かなくても刷る。Type-C のケーブルしか無いと挿さらない
 - 部品表には `W1 usb-cable USB-C – micro-B` のように両端の種類が出る。買う物がそのまま読める
+
+## 大きさを選ぶ (size:)
+
+Debug Probe と USB ケーブルは、`size:` で大きさを選べる。**書かなければ `medium`**。
+大きさが変わるのは姿と差し込みだけで、ピンの位置の並びと配線の書き方は同じ。
+
+| `size:` | Debug Probe | USB ケーブル |
+| --- | --- | --- |
+| `large` | 実寸 (ケース 31 × 37 mm) | 実寸 (USB-A の胴 15.7 × 36 mm) |
+| `medium` (既定) | 口は実寸、ケース 21 × 27 mm | 金物と胴の幅は実寸、胴の長さ 0.45 倍 |
+| `small` | 口も 0.7 倍、ケース 15 × 21 mm | 金物と胴の幅 0.6 倍、胴の長さ 0.3 倍 |
+
+```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
+title: 図05 大きさ large
+board: half
+parts:
+  MCU: pico2 @ h8
+  PROBE:
+    type: device
+    model: RPI-DEBUG-PROBE
+    at: top
+    size: large
+  W1:
+    type: usb-cable
+    from: MCU.USB
+    size: large
+  W2:
+    type: usb-cable
+    from: PROBE.USB
+    plug: usb-a
+    size: large
+```
+
+![図05 大きさ large](out/07-pico-5.svg)
+
+- `size: large` — 実寸。ブレッドボードと比べてどれだけ場所を取るかが分かるが、図は大きい
+
+```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
+title: 図06 大きさ medium
+board: half
+parts:
+  MCU: pico2 @ h8
+  PROBE:
+    type: device
+    model: RPI-DEBUG-PROBE
+    at: top
+    size: medium
+  W1:
+    type: usb-cable
+    from: MCU.USB
+    size: medium
+  W2:
+    type: usb-cable
+    from: PROBE.USB
+    plug: usb-a
+    size: medium
+```
+
+![図06 大きさ medium](out/07-pico-6.svg)
+
+- `size: medium` — 既定。口とコネクタは実寸のまま、全体を小さくする
+
+```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
+title: 図07 大きさ small
+board: half
+parts:
+  MCU: pico2 @ h8
+  PROBE:
+    type: device
+    model: RPI-DEBUG-PROBE
+    at: top
+    size: small
+  W1:
+    type: usb-cable
+    from: MCU.USB
+    size: small
+  W2:
+    type: usb-cable
+    from: PROBE.USB
+    plug: usb-a
+    size: small
+```
+
+![図07 大きさ small](out/07-pico-7.svg)
+
+- `size: small` — コネクタも小さくする。図をいちばん小さくしたいとき
