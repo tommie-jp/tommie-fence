@@ -9,7 +9,12 @@ const BOARD_PAD_X = 28;
 const BOARD_PAD_Y = 16;
 // 電源レールと穴のブロックの間は、列番号と配線レーンが同居するので広めに取る。
 const RAIL_TO_BLOCK = 1.7 * PITCH;
-const RAVINE = 0.8 * PITCH;
+/**
+ * 溝の幅 (e 行と f 行の間から 1 ピッチを引いた分)。**実物どおり e 行と f 行の間を 0.3 インチ = 3 ピッチ**にする。
+ * 詰めて描いていた (0.8 ピッチ、e〜f が 1.8 ピッチ) ころは、溝をまたぐ物 (Pico は b 行と g 行で 0.7 インチ、
+ * DIP は e 行と f 行で 0.3 インチ) の幅が実物より狭く出ていた (Pico 2 が 21 mm でなく 17.9 mm。52 の docs/157)。
+ */
+const RAVINE = 2 * PITCH;
 const BLOCK_TO_RAIL = RAIL_TO_BLOCK;
 // レールの無い基板でも、列番号と配線レーンの居場所は要る。基板の縁からブロックまでを同じだけ空ける。
 const EDGE_TO_BLOCK = RAIL_TO_BLOCK;

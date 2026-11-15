@@ -41,8 +41,9 @@ describe('wires that cross', () => {
     const { svg } = renderBreadboard([
       'board: mini',
       'wires:',
-      '  - e3 -- f12 brown',
-      '  - e4 -- f5 purple',
+      // 同じブロックの中で交わる 2 本 (溝をまたぐ線は曲がり角の近くで交わり、跨ぎを描かないことがある)。
+      '  - c3 -- c12 brown',
+      '  - a4 -- e5 purple',
     ].join('\n'));
     expect(svg).toMatch(/<path d="[^"]* A [^"]*"/);
   });

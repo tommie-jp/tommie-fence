@@ -1071,8 +1071,8 @@ describe('parts that share a hole with a wire endpoint', () => {
 
     expect(errors).toEqual([]);
     expect(notices).toEqual([]);
-    expect(svg).toContain('x1="362" y1="260" x2="422" y2="260"');
-    expect(svg).toContain('M 422 280 L 422 314');
+    expect(svg).toContain('x1="362" y1="284" x2="422" y2="284"');
+    expect(svg).toContain('M 422 304 L 422 338');
   });
 
   test('keeps the netlist identical to writing the slid holes by hand', () => {
@@ -1086,8 +1086,8 @@ describe('parts that share a hole with a wire endpoint', () => {
     const { svg, notices } = renderBreadboard(fence('Re: resistor j17 j20 100', 'Re.2 -- -b20 black'));
 
     expect(notices).toEqual([]);
-    expect(svg).toContain('x1="362" y1="280" x2="422" y2="280"');
-    expect(svg).toContain('M 422 280 L 422 314');
+    expect(svg).toContain('x1="362" y1="304" x2="422" y2="304"');
+    expect(svg).toContain('M 422 304 L 422 338');
   });
 
   test('slides symmetrically when the hinted wire is written in reverse', () => {
@@ -1098,7 +1098,7 @@ describe('parts that share a hole with a wire endpoint', () => {
 
     expect(errors).toEqual([]);
     expect(notices).toEqual([]);
-    expect(svg).toContain('x1="362" y1="260" x2="422" y2="260"');
+    expect(svg).toContain('x1="362" y1="284" x2="422" y2="284"');
   });
 
   test('does not slide a part into a wire crossing from the other block', () => {
@@ -1146,8 +1146,8 @@ describe('parts that share a hole with a wire endpoint', () => {
     expect(errors).toEqual([]);
     expect(notices).toHaveLength(1);
     expect(notices[0]?.message).toContain('f20');
-    // 図は書かれたまま (f 行 = y 200) 描く。
-    expect(svg).toContain('x1="362" y1="200" x2="422" y2="200"');
+    // 図は書かれたまま (f 行 = y 224) 描く。
+    expect(svg).toContain('x1="362" y1="224" x2="422" y2="224"');
   });
 });
 
