@@ -732,7 +732,7 @@ const TS_ROWS: readonly PinoutRow[] = [
   },
   {
     // 超音波距離センサのモジュール。ピンは 1 列 4 本 (VCC Trig Echo GND)。2026-10-22 に秋月 111009 の付属資料
-    // (HC-SR04 用户手册 V-2020: 1 Vcc 2 Trig 3 Echo 4 Gnd、外形図は裏から見て逆)・ElecFreaks・Cytron V1.0 で確かめた。
+    // (HC-SR04 の取扱説明書 V-2020、中国語: 1 Vcc 2 Trig 3 Echo 4 Gnd、外形図は裏から見て逆)・ElecFreaks・Cytron V1.0 で確かめた。
     models: ['HC-SR04', 'HCSR04'], role: '超音波距離センサのモジュール',
     names: ['VCC', 'TRIG', 'ECHO', 'GND'],
     look: { body: '#2b6cb0', edge: '#1c4a7d' },
