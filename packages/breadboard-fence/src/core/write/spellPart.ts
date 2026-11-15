@@ -37,6 +37,7 @@ export function spellPart(part: PartSpec): string | null {
       ...(part.color == null ? [] : [part.color]),
       // 1 列の部品は名札の置き場所を書ける (書き戻しで落とさない)。
       ...(part.caption ? [`cap=${part.caption.written}`] : []),
+      ...(part.usesWritten ? [`use=${part.usesWritten}`] : []),
     ].join(' ');
   }
 

@@ -1,4 +1,4 @@
-import { boardBox, boardChip, boardLegends, boardPadFont, boardPadNames, boardPads, lookupBoardPart } from 'fence-kit';
+import { boardBox, boardChip, boardLegends, boardPadFont, boardPadNames, boardPads, lookupBoardPart, pinLabel } from 'fence-kit';
 import { HOLE_ROWS } from '../types.ts';
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Point, Rect } from '../types.ts';
@@ -79,7 +79,7 @@ export function renderBoardPadNames(part: PlacedPart, layout: Layout, theme: Ren
     boardPadFont(textScale(theme)),
     chipInk(theme),
     undefined,
-    boardLegends(part.pins.map((pin) => pin.name), points.length),
+    boardLegends(part.pins.map((pin) => pinLabel(pin.name, part.uses)), points.length),
   );
 }
 
@@ -134,7 +134,8 @@ export function renderBoardPart(part: PlacedPart, layout: Layout, theme: RenderT
   const definition = lookupBoardPart(part.type);
   const drawn = boardChip({
     points,
-    names: part.pins.map((pin) => pin.name),
+    // 使う機能 (`use=`) を選んだピンは、名前の欄に機能の名前を出す (`ADC1 32`)。
+    names: part.pins.map((pin) => pinLabel(pin.name, part.uses)),
     definition,
     pinOne: pinOneOf(part),
     pitch: layout.pitch,

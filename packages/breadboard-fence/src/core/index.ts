@@ -789,8 +789,12 @@ function resolveEndpoint(
     const part = parts.find((candidate) => candidate.id === partId);
     if (!part) return fail(`配線の端点 ${safeToken(text)}: そんな部品はありません`, line, text);
     // 名前が先、無ければ DIP の番号 (`U1.2` = `U1.TRIG`)。
+    // 使う機能 (`use=GP27:ADC1`) の名前でも指せる (`MCU.ADC1`、`MCU.UART0_TX`)。
+    const byUse = Object.entries(part.uses ?? {})
+      .find(([, fn]) => fn.toUpperCase() === pinName.toUpperCase().replace(/_/g, ' '))?.[0];
     const pin = part.pins.find((candidate) => candidate.name === pinName)
       ?? part.pins.find((candidate) => candidate.number === pinName)
+      ?? (byUse === undefined ? undefined : part.pins.find((candidate) => candidate.name === byUse))
       // 穴に挿さらないパッド (Pico の SWD) は、ボード外の機器のピンと同じ端になる。
       ?? part.pads?.find((candidate) => candidate.name === pinName);
     if (!pin) return fail(`配線の端点 ${safeToken(text)}: そのピンはありません${nearbyPins(part, pinName)}`, line, text);

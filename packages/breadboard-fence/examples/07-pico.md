@@ -150,7 +150,7 @@ Probe は **`model: RPI-DEBUG-PROBE`** で置く。ピンの名前が表から�
 title: 図02 Debug Probe を UART につなぐ
 board: full
 parts:
-  MCU: pico2 @ h15
+  MCU: pico2 @ h15 use=GP0:UART0_TX,GP1:UART0_RX
   PROBE:
     type: device
     model: RPI-DEBUG-PROBE
@@ -166,6 +166,7 @@ wires:
 ![図02 Debug Probe を UART につなぐ](out/07-pico-2.svg)
 
 - **UART は TX と RX を入れ違いに**つなぐ (Probe の TX → Pico の RX = GP1)。名前は Probe の側から見た名前
+- `use=GP0:UART0_TX,GP1:UART0_RX` で、Pico の 1 番と 2 番のピンの名前の欄が `UART0 TX` `UART0 RX` になる。どのピンを UART に使うかが図で読める
 - 線は組の中でいちばん下の穴 (j 行) から出す。Probe の箱が下にあるので、線が Pico のピン (h 行) の上を通らない
 - Probe は下の帯で 180 度回した姿 (U が右・D が左、口の中の並びも逆) になる。そのため **GND と TX の 2 本が 1 か所で交わる**。
   Probe の口の並び (TX・GND・RX) と Pico のピンの並び (GP0・GP1・GND) が合わないためで、実物でもケーブルはここでねじれる

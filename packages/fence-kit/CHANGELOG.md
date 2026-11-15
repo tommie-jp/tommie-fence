@@ -9,6 +9,8 @@
 
 - 姿と USB ケーブルの大きさ (`PartSize`: `large` `medium` `small`、既定は `medium`)。`lookSize` `lookPinX` `lookUsbPort` `drawDeviceLook` `usbCableMinLength` `usbCableBox` `drawUsbCable` が受け取り、`readUsbCable` が `size:` を読む
   - `large`: 実寸。`medium`: 口とコネクタは実寸のまま全体を小さく (Debug Probe はケース 21 × 27 mm、ケーブルは胴の長さ 0.45 倍)。`small`: コネクタも小さく (口 0.7 倍、ケーブルは金物と胴の幅 0.6 倍・胴の長さ 0.3 倍)
+- Pico シリーズの GPIO の機能の表 (UART・I2C・SPI・ADC。Pico 2 のピン配置図と同じ並び) と、`use=GP27:ADC1` を読む `readPinUses`・名前の欄の字を決める `pinLabel`
+- USB の口の種類の字 (`micro-B`) をボードの外 (口のすぐ外側) に刷る。ボードの内側では、長くなったピンの名前の縦書きに重なった
 
 ## [0.46.0] - 2026-11-15
 

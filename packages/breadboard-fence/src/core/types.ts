@@ -161,6 +161,9 @@ export type PartSpec = {
   readonly model?: string | null;
   /** 姿の大きさ (`size:`)。姿のある機器だけが持つ。書かなければ null (既定の medium)。 */
   readonly size?: PartSize | null;
+  /** マイコンボードの使う機能 (`use=GP27:ADC1`、ピンの名前 → 機能の名前)。書いた綴りは `usesWritten`。 */
+  readonly uses?: Readonly<Record<string, string>> | null;
+  readonly usesWritten?: string | null;
   /** 名札の置き場所 (`cap=above`)。書かなければ null で、今までどおり自動で胴の下に置く。 */
   readonly caption?: CaptionSpec | null;
   /** 胴を半穴ずらす向き (`shift=down`)。2 ピンの部品だけ。 */
@@ -383,6 +386,8 @@ export type PlacedPart = {
   readonly model?: string | null;
   /** 姿の大きさ。書かなければ null (既定の medium)。 */
   readonly size?: PartSize | null;
+  /** マイコンボードの使う機能 (ピンの名前 → 機能の名前)。ピンの名前の欄に機能の名前を出し、配線からも指せる。 */
+  readonly uses?: Readonly<Record<string, string>> | null;
   /** 書いて決めた名札の置き場所。無ければ自動 (`render/captions.ts`)。 */
   readonly caption?: CaptionSpec | null;
   /** 胴を半穴ずらす向き (2 ピンだけ)。 */

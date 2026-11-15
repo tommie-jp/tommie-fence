@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { lookupBoardPart } from './boards.ts';
+import { lookupBoardPart, pinLabel, readPinUses } from './boards.ts';
 import { boardChip, boardUsbPort } from './chips.ts';
 import { drawDeviceLook, lookPinX, lookSize, lookUsbPort, lookupPartSize, lookupUsbKind, pxPerMmOf } from './deviceLooks.ts';
 import { deviceLookOf, deviceProductName, deviceSilk, deviceWireColor, lookupModule, resolveDeviceModel } from './modules.ts';
@@ -176,5 +176,32 @@ describe('USB ケーブル', () => {
   test('draws the plugs to scale: a USB-A body is 15.7 mm wide', () => {
     const box = usbCableBox({ port: { ...port, dir: 'up' }, far: 'usb-a', length: 1000, pxPerMm, size: 'large' });
     expect(box.width / pxPerMm).toBeCloseTo(15.7);
+  });
+});
+
+describe('マイコンボードの使う機能 (use=)', () => {
+  test('reads pin:function pairs, with _ for the space', () => {
+    expect(readPinUses('pico2', 'GP0:UART0_TX,GP27:ADC1')).toEqual({ ok: true, uses: { GP0: 'UART0 TX', GP27: 'ADC1' } });
+  });
+
+  test('takes a bare function when only one pin has it', () => {
+    expect(readPinUses('pico', 'ADC2')).toEqual({ ok: true, uses: { GP28: 'ADC2' } });
+  });
+
+  test.each([
+    ['I2C0_SDA', 'ピンを書きます'],
+    ['GP2:ADC0', 'GP2 に ADC0 はありません'],
+    ['GP0:UART0_TX,GP0:I2C0_SDA', '2 回'],
+    ['HDMI', 'という機能はありません'],
+  ])('refuses %s', (written, message) => {
+    const read = readPinUses('pico2', written);
+    expect(read.ok).toBe(false);
+    if (!read.ok) expect(read.message).toContain(message);
+  });
+
+  test('refuses a board without the table and leaves other pins as they are', () => {
+    expect(readPinUses('tang-nano-9k', 'ADC0').ok).toBe(false);
+    expect(pinLabel('GP27', { GP27: 'ADC1' })).toBe('ADC1');
+    expect(pinLabel('GP26', { GP27: 'ADC1' })).toBe('GP26');
   });
 });

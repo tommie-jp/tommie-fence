@@ -35,6 +35,8 @@ export type BoardPart = {
   readonly debug?: BoardDebug;
   /** USB の口の種類。**図の口の隣に刷る** (Pico は micro-B。Type-C のケーブルしか無いとつまずく所。52 の docs/157)。 */
   readonly usb: UsbKind;
+  /** GPIO の機能 (ピンの名前 → 機能の名前の並び)。`use=` で選んだ機能をピンの名前の欄に出す。無いボードもある。 */
+  readonly functions?: Readonly<Record<string, readonly string[]>>;
 };
 
 /**
@@ -94,11 +96,32 @@ const TANG_NANO_9K_PINS: readonly string[] = [
   'IO75', 'IO76', 'IO77', 'IO79', 'IO80', 'IO81', 'IO82', 'IO83', 'IO84', 'IO85', 'IO86', 'IO63',
 ];
 
+/**
+ * Pico シリーズの GPIO の機能 (UART・I2C・SPI・ADC)。**ピンの名前の欄に、使う機能の名前を出す**ため
+ * (`use=GP27:ADC1` で `GP27 32` が `ADC1 32` になる。52 の docs/157)。
+ * 出典: SunFounder の Pico 2 のピン配置図 (pico-2-r4-pinout.svg、Raspberry Pi の公式のピン配置図と同じ並び)。
+ * Pico (RP2040) も同じ並び。PWM と PIO はどの GPIO にもあるので表に入れない。
+ */
+const PICO_FUNCTIONS: Readonly<Record<string, readonly string[]>> = {
+  GP0: ['UART0 TX', 'I2C0 SDA', 'SPI0 RX'], GP1: ['UART0 RX', 'I2C0 SCL', 'SPI0 CSn'],
+  GP2: ['I2C1 SDA', 'SPI0 SCK'], GP3: ['I2C1 SCL', 'SPI0 TX'],
+  GP4: ['UART1 TX', 'I2C0 SDA', 'SPI0 RX'], GP5: ['UART1 RX', 'I2C0 SCL', 'SPI0 CSn'],
+  GP6: ['I2C1 SDA', 'SPI0 SCK'], GP7: ['I2C1 SCL', 'SPI0 TX'],
+  GP8: ['UART1 TX', 'I2C0 SDA', 'SPI1 RX'], GP9: ['UART1 RX', 'I2C0 SCL', 'SPI1 CSn'],
+  GP10: ['I2C1 SDA', 'SPI1 SCK'], GP11: ['I2C1 SCL', 'SPI1 TX'],
+  GP12: ['UART0 TX', 'I2C0 SDA', 'SPI1 RX'], GP13: ['UART0 RX', 'I2C0 SCL', 'SPI1 CSn'],
+  GP14: ['I2C1 SDA', 'SPI1 SCK'], GP15: ['I2C1 SCL', 'SPI1 TX'],
+  GP16: ['UART0 TX', 'I2C0 SDA', 'SPI0 RX'], GP17: ['UART0 RX', 'I2C0 SCL', 'SPI0 CSn'],
+  GP18: ['I2C1 SDA', 'SPI0 SCK'], GP19: ['I2C1 SCL', 'SPI0 TX'],
+  GP20: ['I2C0 SDA'], GP21: ['I2C0 SCL'],
+  GP26: ['ADC0', 'I2C1 SDA'], GP27: ['ADC1', 'I2C1 SCL'], GP28: ['ADC2'],
+};
+
 const BOARD_PARTS: Record<string, BoardPart> = {
-  pico: { name: 'Pico', chip: 'RP2040', wireless: false, ...PICO_SHAPE, pins: PICO_PINS, debug: PICO_DEBUG },
-  'pico-w': { name: 'Pico W', chip: 'RP2040', wireless: true, ...PICO_SHAPE, pins: PICO_PINS, debug: PICO_W_DEBUG },
-  pico2: { name: 'Pico 2', chip: 'RP2350', wireless: false, ...PICO_SHAPE, pins: PICO_PINS, debug: PICO_DEBUG },
-  'pico2-w': { name: 'Pico 2 W', chip: 'RP2350', wireless: true, ...PICO_SHAPE, pins: PICO_PINS, debug: PICO_W_DEBUG },
+  pico: { name: 'Pico', chip: 'RP2040', wireless: false, ...PICO_SHAPE, pins: PICO_PINS, functions: PICO_FUNCTIONS, debug: PICO_DEBUG },
+  'pico-w': { name: 'Pico W', chip: 'RP2040', wireless: true, ...PICO_SHAPE, pins: PICO_PINS, functions: PICO_FUNCTIONS, debug: PICO_W_DEBUG },
+  pico2: { name: 'Pico 2', chip: 'RP2350', wireless: false, ...PICO_SHAPE, pins: PICO_PINS, functions: PICO_FUNCTIONS, debug: PICO_DEBUG },
+  'pico2-w': { name: 'Pico 2 W', chip: 'RP2350', wireless: true, ...PICO_SHAPE, pins: PICO_PINS, functions: PICO_FUNCTIONS, debug: PICO_W_DEBUG },
   'tang-nano-9k': {
     name: 'Tang Nano 9K', chip: 'GW1NR-9', wireless: false, hdmi: true, rowSpan: 9, reach: 2.28, usb: 'usb-c', mark: 'GW1NR', pins: TANG_NANO_9K_PINS,
   },
@@ -124,3 +147,46 @@ export const bundledBoardNames = (): readonly string[] => Object.keys(BUNDLED_BO
  */
 export const lookupBoardPart = (type: string): BoardPart | null =>
   (Object.hasOwn(BUNDLED_BOARDS, type) ? BUNDLED_BOARDS[type] ?? null : cardBoard(type) ?? null);
+
+export type PinUses =
+  | { readonly ok: true; readonly uses: Readonly<Record<string, string>> }
+  | { readonly ok: false; readonly message: string; readonly token: string };
+
+/** `UART0_TX` と `UART0 TX` を同じに読む (行の中に空白は書けないので `_` で書く)。 */
+const normalizeFunction = (written: string): string => written.trim().toUpperCase().replace(/_/g, ' ').replace(/CSN$/, 'CSn');
+
+/**
+ * `use=GP0:UART0_TX,GP27:ADC1` を読む (ピンの名前 → 機能の名前)。**機能だけ** (`ADC1`) も、その機能を持つピンが
+ * 1 本だけなら書ける。I2C0 SDA のように何本ものピンにある機能は、どのピンかを書かせる (候補を添えて断る)。
+ */
+export function readPinUses(type: string, written: string): PinUses {
+  const definition = lookupBoardPart(type);
+  const table = definition?.functions;
+  if (table === undefined) return { ok: false, message: `${type} には use= で選べる機能がありません`, token: written };
+  const uses: Record<string, string> = {};
+  for (const item of written.split(',').map((one) => one.trim()).filter(Boolean)) {
+    const [left, right] = item.includes(':') ? item.split(':', 2) as [string, string] : [null, item];
+    const fn = normalizeFunction(right);
+    const pins = left === null
+      ? Object.keys(table).filter((pin) => (table[pin] ?? []).includes(fn))
+      : [left.trim().toUpperCase()];
+    const pin = pins[0];
+    if (pins.length === 0 || pin === undefined) {
+      return { ok: false, message: `${type} に ${fn} という機能はありません (例: GP27:ADC1、GP0:UART0_TX)`, token: item };
+    }
+    if (pins.length > 1) {
+      return { ok: false, message: `${fn} は ${pins.join(' ')} にあるので、ピンを書きます (例: ${pins[0]}:${right.trim()})`, token: item };
+    }
+    if (!Object.hasOwn(table, pin)) return { ok: false, message: `${type} の ${pin} に選べる機能はありません`, token: item };
+    if (!(table[pin] ?? []).includes(fn)) {
+      return { ok: false, message: `${pin} に ${fn} はありません (${pin} の機能: ${(table[pin] ?? []).join(' / ')})`, token: item };
+    }
+    if (Object.hasOwn(uses, pin)) return { ok: false, message: `${pin} の機能が 2 回書かれています`, token: item };
+    uses[pin] = fn;
+  }
+  return { ok: true, uses };
+}
+
+/** ピンの名前の欄に出す字 (選んだ機能があればその名前、無ければピンの名前)。 */
+export const pinLabel = (pin: string, uses: Readonly<Record<string, string>> | null | undefined): string =>
+  (uses !== null && uses !== undefined && Object.hasOwn(uses, pin) ? uses[pin] ?? pin : pin);

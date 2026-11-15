@@ -8,6 +8,8 @@
 ### Added
 
 - Debug Probe (`model: RPI-DEBUG-PROBE`) と USB ケーブル (`type: usb-cable`) に `size: large | medium | small` を書ける。**既定は `medium`** (口とコネクタは実寸、全体は小さく)。前の版の実寸の姿は `size: large`
+- Pico シリーズの部品の行に `use=GP0:UART0_TX,ADC1` を書くと、ピンの名前の欄に使う機能の名前を出す (`ADC1 32`)。配線からも機能の名前で指せる (`MCU.ADC1`)。1 本のピンにしか無い機能はピンを省ける
+- 例: `examples/07-pico.md` の図02 に `use=GP0:UART0_TX,GP1:UART0_RX`
 
 ## [0.71.1] - 2026-11-15
 

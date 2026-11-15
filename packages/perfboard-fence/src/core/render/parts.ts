@@ -4,7 +4,7 @@ import {
   element, fit, hasBody,
   drawNamedChip, lookupBoardPart, lookupNamedChip, lookupPinout, num, bodySize, packageExtent, packageHalfWidth, packageReach, sipHeader,
   smaBody as drawSmaBody, svgText, chipAlongX, sipBox, sipLegendDepth, transformerCore, transformerExtent, TEXT_HALO_WIDTH, drawModuleOutline, moduleSide,
-  partPlateColor, plateInk, plateLook,
+  partPlateColor, pinLabel, plateInk, plateLook,
 } from 'fence-kit';
 import type { BodyInk, BodyPart, ChipInk } from 'fence-kit';
 import { dipPinout } from '../parts/pinout.ts';
@@ -757,7 +757,8 @@ function renderChip(
     pitch: layout.pitch,
     scale: CHIP_SCALE,
     ink: chipInk(theme),
-    names: definition?.pins ?? [],
+    // 使う機能 (`use=`) を選んだピンは、名前の欄に機能の名前を出す (`ADC1 32`)。
+    names: (definition?.pins ?? []).map((pin) => pinLabel(pin, part.uses)),
     definition,
   });
   const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };

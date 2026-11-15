@@ -130,6 +130,7 @@ export function placeParts(specs: readonly PartSpec[], board: Board): Placement 
       value: spec.value,
       color: spec.color,
       ...(spec.socket === true ? { socket: true } : {}),
+      ...(spec.uses === undefined ? {} : { uses: spec.uses }),
       line: spec.line,
       pins: pins.map((address) => ({ address, strip: holeStrip(address) })),
     });

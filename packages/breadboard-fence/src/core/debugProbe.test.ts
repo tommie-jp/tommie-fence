@@ -117,3 +117,20 @@ describe('大きさ (size:)', () => {
     expect(errors.map((one) => one.message).join('\n')).toContain(message);
   });
 });
+
+describe('使う機能 (use=)', () => {
+  test('prints the function in place of the pin name and lets a wire use it', () => {
+    const { svg, errors, netlist } = renderBreadboard(fence('parts-list: none', 'parts:',
+      '  MCU: pico2 @ h15 use=GP0:UART0_TX,ADC1', '  R1: resistor a30 a34 10k', 'wires:', '  - MCU.ADC1 -- b30'));
+    expect(errors).toEqual([]);
+    expect(svg).toContain('01 UART0 TX');
+    expect(svg).toContain('ADC1 32');
+    expect(svg).not.toContain('GP27 32');
+    expect(netlist.some((net) => net.refs.includes('MCU.GP27') && net.refs.includes('R1.1'))).toBe(true);
+  });
+
+  test('refuses a function the pin does not have', () => {
+    const { errors } = renderBreadboard(fence('parts:', '  MCU: pico2 @ h15 use=GP2:ADC0'));
+    expect(errors.map((one) => one.message).join('\n')).toContain('GP2 に ADC0 はありません');
+  });
+});

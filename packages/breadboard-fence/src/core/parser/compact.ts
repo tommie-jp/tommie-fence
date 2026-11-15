@@ -1,5 +1,5 @@
 import type { PartRatings } from 'fence-kit';
-import { partValueProblem, readPlateColor, readRating } from 'fence-kit';
+import { partValueProblem, readPlateColor, readRating, readPinUses } from 'fence-kit';
 import { fail, ok, safeToken } from '../errors.ts';
 import { LIMITS, clampText } from '../limits.ts';
 import { parseAddress } from '../model/address.ts';
@@ -32,6 +32,8 @@ const CAPTION_NUMBER = '(-?\\d+(?:\\.\\d+)?)';
 // 側だけ (`above`)、側とずらす量 (`above:1,0`、コロンは要る)、ずらす量だけ (`1,0` = 下)。
 const CAPTION_VALUE = new RegExp(`^(?:(above|below|left|right)(?::${CAPTION_NUMBER},${CAPTION_NUMBER})?|${CAPTION_NUMBER},${CAPTION_NUMBER})$`);
 const SHIFT_TAG = /^shift=(.*)$/;
+/** `use=GP27:ADC1,GP0:UART0_TX` — マイコンボードの使う機能。ピンの名前の欄に機能の名前を出す (fence-kit の `readPinUses`)。 */
+const USE_TAG = /^use=(.*)$/;
 const SHIFT_WORDS: readonly BodyShift[] = ['up', 'down', 'left', 'right'];
 /** ずらせる量の上限 (穴の数)。これより遠いと、どの部品の名札か分からなくなる。 */
 const CAPTION_REACH = 10;
@@ -104,8 +106,19 @@ export function parseCompactPart(
 
     // **向きの語は穴のすぐ後ろ。** 残りはラベルなので、ここで剥がさないと
     // `r180` が図に出るラベルとして飲み込まれる。
-    const turn = takeTurn(id, type, rest.slice(2), line);
-    if (!turn.ok) return turn;
+    const turned = takeTurn(id, type, rest.slice(2), line);
+    if (!turned.ok) return turned;
+    // **使う機能 (`use=`) はラベルに飲み込まない。** マイコンボードにだけ書ける。
+    const useTags = turned.value.rest.filter((token) => USE_TAG.test(token));
+    if (useTags.length > 1) return fail(`部品 ${safeToken(id)}: use= が 2 回書かれています`, line, useTags[1]);
+    let usesOf: { uses?: Readonly<Record<string, string>>; usesWritten?: string } = {};
+    if (useTags[0] !== undefined) {
+      const usesWritten = USE_TAG.exec(useTags[0])?.[1] ?? '';
+      const read = readPinUses(type, usesWritten);
+      if (!read.ok) return fail(`部品 ${safeToken(id)}: ${read.message}`, line, read.token);
+      usesOf = { uses: read.uses, usesWritten };
+    }
+    const turn = { ...turned, value: { ...turned.value, rest: turned.value.rest.filter((token) => !USE_TAG.test(token)) } };
 
     // 名札と胴の置き場所は、@ で置く部品 (DIP・ボードなど) には効かない。ラベルに飲み込まない。
     // **1 列の部品 (`sipN`) だけは名札を書ける** — 胴に字を刷らず、名札を胴の外に置くので。
@@ -134,10 +147,10 @@ export function parseCompactPart(
     const written = tag?.[1] ?? joined;
     const label = written ? clampText(written, LIMITS.labelLength) : null;
     const labelTagged = tag !== null;
-    if (target === 'top' || target === 'bottom') return ok({ ...base, at: target, label, anchored: true, labelTagged, ...captionOf, ...colorOf });
+    if (target === 'top' || target === 'bottom') return ok({ ...base, at: target, label, anchored: true, labelTagged, ...captionOf, ...colorOf, ...usesOf });
     return ok({
       ...base, holes: [{ addr: target, tag: '1', tagged: false, written: target }],
-      turn: turn.value.turn, label, anchored: true, labelTagged, ...captionOf, ...colorOf,
+      turn: turn.value.turn, label, anchored: true, labelTagged, ...captionOf, ...colorOf, ...usesOf,
     });
   }
 

@@ -34,5 +34,6 @@ export function spellPart(part: PartSpec): string {
     ...(part.value === null ? [] : [part.value]),
     ...(part.color == null ? [] : [part.color]),
     ...ratingWords(part.ratings),
+    ...(part.usesWritten === undefined ? [] : [`use=${part.usesWritten}`]),
   ].join(' ');
 }

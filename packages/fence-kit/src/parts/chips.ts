@@ -818,22 +818,23 @@ export function boardChip(options: BoardChipOptions): string {
     + `${chip}${chipName}${stubs}${legends}${pads}${usbStamp}`;
 }
 
-/** 種類の字を USB の端から内へ置く距離 (ピッチに対する比)。 */
-const USB_STAMP_INSET = 0.95;
 const USB_STAMP_FONT = 6.5;
 
 /**
- * USB の口の種類 (`micro-B`) を**基板の USB の端の内側**に、端の辺に沿って刷る。口そのものは
- * 基板から 8 px しか出ていないので字が入らない (52 の docs/157)。
+ * USB の口の種類 (`micro-B`) を**ボードの外、口のすぐ外側**に、端の辺に沿って刷る。ボードの内側に刷ると、
+ * 1 番と 40 番の列のピンの名前の縦書き (`use=` で `01 UART0 TX` のように長くなる) に重なる (52 の docs/157)。
+ * ケーブルを挿した図では差し込みの胴に隠れる (胴にも種類を刷る)。字は地の色で縁取る。
  */
 function boardUsbStamp(
   definition: BoardPart, box: ChipBox, centre: ChipPoint, alongX: boolean, nearStart: boolean, pitch: number, scale: number, ink: ChipInk,
 ): string {
-  const inset = USB_STAMP_INSET * pitch;
   const size = USB_STAMP_FONT * scale;
-  const x = alongX ? (nearStart ? box.x + inset : box.x + box.width - inset) : centre.x;
-  const y = alongX ? centre.y : (nearStart ? box.y + inset : box.y + box.height - inset);
-  const text = svgText(0, size * 0.35, USB_STAMP[definition.usb], { 'font-size': num(size), fill: ink.chipText });
+  const out = usbMm(USB_MM.jut, pitch) + size * 0.9;
+  const x = alongX ? (nearStart ? box.x - out : box.x + box.width + out) : centre.x;
+  const y = alongX ? centre.y : (nearStart ? box.y - out : box.y + box.height + out);
+  const text = svgText(0, size * 0.35, USB_STAMP[definition.usb], {
+    'font-size': num(size), fill: ink.outside, halo: ink.halo, haloWidth: ink.haloWidth,
+  });
   return element('g', { class: 'cf-usb-kind', transform: `translate(${num(x)} ${num(y)})${alongX ? ' rotate(-90)' : ''}` }, text);
 }
 

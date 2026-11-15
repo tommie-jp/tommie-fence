@@ -134,6 +134,9 @@ export type PartSpec = {
   readonly color?: string | null;
   /** IC ソケットに挿した DIP (`dip8/socket`)。姿 (`variant`) には残さない。 */
   readonly socket?: boolean;
+  /** マイコンボードの使う機能 (`use=GP27:ADC1`、ピンの名前 → 機能の名前)。書いた綴りは `usesWritten`。 */
+  readonly uses?: Readonly<Record<string, string>>;
+  readonly usesWritten?: string;
   readonly line: number | null;
 };
 
@@ -150,6 +153,8 @@ export type PlacedPart = {
   readonly color?: string | null;
   /** IC ソケットに挿した DIP。枠を描き、当たり判定も枠の外形で見る。 */
   readonly socket?: boolean;
+  /** マイコンボードの使う機能 (ピンの名前 → 機能の名前)。ピンの名前の欄に機能の名前を出す。 */
+  readonly uses?: Readonly<Record<string, string>>;
   readonly line: number | null;
   readonly pins: readonly { readonly address: Address; readonly strip: StripId }[];
 };

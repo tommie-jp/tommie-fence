@@ -8,6 +8,7 @@
 ### Added
 
 - Debug Probe と USB ケーブルに `size: large | medium | small` を書ける (既定は `medium`。前の版の実寸は `large`)
+- Pico シリーズの部品の行に `use=GP0:UART0_TX,ADC1` を書くと、ピンの名前の欄に使う機能の名前を出す
 
 ## [0.68.0] - 2026-11-15
 

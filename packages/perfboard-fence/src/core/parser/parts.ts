@@ -1,4 +1,4 @@
-import { readRating } from 'fence-kit';
+import { readRating, readPinUses } from 'fence-kit';
 import type { PartRatings } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS, isReferenceable } from '../limits.ts';
@@ -138,7 +138,17 @@ export function parsePartLine(id: string, line: string, board: BoardExtent = ANY
   const tail: string[] = [];
   // 定格・想定値 (`i=3mA` `vf=2.0V` `v=16V`)。図には出さず、部品表の値の欄に添える (breadboard と同じ。fence-kit の readRating)。
   let ratings: PartRatings = {};
+  // マイコンボードの使う機能 (`use=GP27:ADC1`)。ピンの名前の欄に機能の名前を出す (breadboard と同じ。fence-kit の readPinUses)。
+  let usesOf: { uses?: Readonly<Record<string, string>>; usesWritten?: string } = {};
   for (const token of after) {
+    const use = /^use=(.*)$/.exec(token);
+    if (use) {
+      if (usesOf.uses !== undefined) return fail(`${safeToken(written)}: use= が 2 回書かれています`, token);
+      const read = readPinUses(type, use[1] ?? '');
+      if (!read.ok) return fail(`${safeToken(written)}: ${read.message}`, read.token);
+      usesOf = { uses: read.uses, usesWritten: use[1] ?? '' };
+      continue;
+    }
     const rating = readRating(token, type, ratings);
     if (rating !== null) {
       if (!rating.ok) return fail(`${safeToken(written)}: ${rating.message}`, token);
@@ -203,6 +213,7 @@ export function parsePartLine(id: string, line: string, board: BoardExtent = ANY
       id, type, variant: socket ? null : variant, written, holes, value: value === '' ? null : value, turn, color,
       ...(socket ? { socket: true } : {}),
       ...(Object.keys(ratings).length === 0 ? {} : { ratings }),
+      ...usesOf,
     },
   };
 }

@@ -65,7 +65,8 @@ export {
 } from './parts/toroids.ts';
 export type { ToroidCore, ToroidMaterial, ToroidValue } from './parts/toroids.ts';
 export type { TransformerLook } from './parts/bodies.ts';
-export { boardPartNames, bundledBoardNames, lookupBoardPart } from './parts/boards.ts';
+export { boardPartNames, bundledBoardNames, lookupBoardPart, pinLabel, readPinUses } from './parts/boards.ts';
+export type { PinUses } from './parts/boards.ts';
 export { cardFields, readCard } from './parts/cards/read.ts';
 export type { CardRead } from './parts/cards/read.ts';
 export { checkPinNames } from './parts/cards/pinNames.ts';
