@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.50.0] - 2026-11-15
+
 ### Added
 
 - `outsideNotes` — 計器の画面とグラフの外 (上か下) に置く字 (`- text below: 字` `- text above: 字`) を読み、帯の大きさを測り、描く。色と `bold`、`\n` で改行、120 字・8 行まで
