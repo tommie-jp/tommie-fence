@@ -97,6 +97,20 @@ trigger: CLK falling at 125us            # 書いた edge が本当にあるか�
 - 読み下しは **`uart` だけ** (`spi` `i2c` は「まだ書けません」)。形式は `8N1` (データ 5〜8・パリティ `N` `E` `O`・ストップ 1〜2)
 - トリガに指せるのは 1 ビットのレーン。`data:` (CSV を重ねる) はまだ無い
 
+## 画面の外の字 (`notes:`)
+
+```yaml
+device: ad3
+time: 1s/div
+signals:
+  CLK: dio0 clock 1Hz
+notes:
+  - text above: 題の下に出る字
+  - text below red bold: 画面の下に出る字\n2 行め   # 語は色と bold。120 字・8 行まで
+```
+
+レーンの上の注釈はまだ書けない (断る)。
+
 ## 読み値 (CLI の `check`)
 
 カーソルの表 (`信号 / X1 / X2 …`、2 つなら `ΔX` と `1/ΔX`、3 つ以上なら `ΔX (X1 から)` と `1/ΔX`) の後に、**レーンの変わり目の数**、

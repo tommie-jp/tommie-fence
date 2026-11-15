@@ -1,3 +1,4 @@
+import { outsideNotesSize, renderOutsideNotes } from 'fence-kit';
 import { applyExpectations, formatSeconds, normalizeNewlines, resolveLang } from 'fence-kit';
 import type { Lang } from 'fence-kit';
 import { attachSourceText, fenceError, notice, shiftErrors } from './errors.ts';
@@ -71,6 +72,8 @@ export function renderLogic(input: string, options: RenderOptions = {}): RenderR
     status,
     readings: readingsSize(screen.readings, theme, lang),
     source: null,
+    above: outsideNotesSize(doc.outside, 'above', theme.metrics.textSize),
+    below: outsideNotesSize(doc.outside, 'below', theme.metrics.textSize),
     theme,
   });
 
@@ -82,6 +85,8 @@ export function renderLogic(input: string, options: RenderOptions = {}): RenderR
     + renderCursors(screen.cursors, window, layout, theme)
     + renderRows(screen.rows, window, layout, theme)
     + (status === '' ? '' : renderStatus(status, layout, theme))
+    + (layout.aboveBand === null ? '' : renderOutsideNotes(doc.outside, 'above', layout.aboveBand, { size: theme.metrics.textSize, fill: theme.palette.label }))
+    + (layout.belowBand === null ? '' : renderOutsideNotes(doc.outside, 'below', layout.belowBand, { size: theme.metrics.textSize, fill: theme.palette.label }))
     + (layout.readingsBand === null ? '' : renderReadings(screen.readings, layout.readingsBand, theme, lang));
   const svg = renderDocument(layout, body, { theme, width: style.width, stamp: style.stamp });
 

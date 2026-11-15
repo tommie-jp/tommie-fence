@@ -184,3 +184,5 @@ export {
 export type { PartsMark } from './partsListing.ts';
 export { readRating, ratingWords, withRatings } from './parts/ratings.ts';
 export type { PartRatings, RatingRead, RatingTag } from './parts/ratings.ts';
+export { OUTSIDE_LIMITS, isOutsidePlace, outsideNotesSize, readOutsideNote, renderOutsideNotes } from './outsideNotes.ts';
+export type { OutsideBand, OutsideNote, OutsidePlace, OutsideRead, OutsideSize } from './outsideNotes.ts';

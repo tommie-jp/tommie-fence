@@ -1,6 +1,6 @@
 import { isMap, isScalar, isSeq } from 'yaml';
 import type { Node } from 'yaml';
-import { isBareNumber, parseSeconds, parseVolts } from 'fence-kit';
+import { isBareNumber, isOutsidePlace, parseSeconds, parseVolts, readOutsideNote } from 'fence-kit';
 import { dropInvisible, fenceError, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { CHANNEL_NAMES } from '../model/channel.ts';
@@ -93,6 +93,11 @@ export function parseNoteLine(head: string, body: string | null): LineResult<Omi
   }
   if (kind === 'band') return readBand(words, text);
   if (kind !== 'mark' && kind !== 'text') return fail(HINT, kind || undefined);
+  // **画面の外の字** (`- text below: 字` `- text above: 字`)。番地の代わりに場所の語を書く。
+  if (kind === 'text' && isOutsidePlace(words[1])) {
+    const read = readOutsideNote(words.slice(1), body === null ? null : dropInvisible(body));
+    return read.ok ? ok({ kind: 'outside', note: read.note }) : fail(read.message, read.token);
+  }
   const point = readPoint(words);
   if (!point.ok) return point;
   if (kind === 'mark') return body === null ? ok({ kind: 'mark', ...point.value }) : fail('mark には字を書きません (字は text で)', 'mark');

@@ -1,3 +1,4 @@
+import { isOutsidePlace, readOutsideNote } from 'fence-kit';
 import { dropInvisible, safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
 import { parseNumber, parseQuantity } from '../model/quantity.ts';
@@ -42,6 +43,11 @@ export function parseNoteLine(head: string, body: string | null, xUnit: string):
     return read.ok ? ok(read.value) : fail(`x が読めません: ${safeToken(word ?? '')} (${read.reason})`, word);
   };
 
+  // **グラフの外の字** (`- text below: 字` `- text above: 字`)。番地の代わりに場所の語を書く。
+  if (kind === 'text' && isOutsidePlace(words[1])) {
+    const read = readOutsideNote(words.slice(1), body === null ? null : dropInvisible(body));
+    return read.ok ? ok({ kind: 'outside', note: read.note }) : fail(read.message, read.token);
+  }
   if (kind === 'source' || kind === 'peak') {
     if (words.length > 1 || body !== null) return fail(`${kind} の後ろには何も書きません`, words[1]);
     return ok({ kind });

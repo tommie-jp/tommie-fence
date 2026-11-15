@@ -168,6 +168,7 @@ notes:
   - band 14k 18k: LED が点く
   - peak
   - text 5k 10mA: 輪の抵抗 170 Ω
+  - text below: 共振 (15.9 kHz) の前後 2 kHz だけ LED が点く
 ```
 
 ![図06 注釈 — mark・band・peak・text](out/01-syntax-6.svg)
@@ -180,6 +181,7 @@ notes:
 | `- text 16k 27mA: 字` | 点に字 |
 | `- peak` | 全部の線の頂点に ▽ と値。**読み値の表に線ごとに 1 行** |
 | `- source` | フェンスの中身を図の下に書き出す |
+| `- text below: 字` / `- text above red bold: 字` | **グラフの外**の字 (読み値の表の上か、題の下)。語は色と `bold`、`\n` で改行。120 字・8 行まで |
 
 ## 測った値 (`data:`)
 

@@ -39,6 +39,9 @@ export type Layout = {
   readonly xLabelBaseline: number;
   readonly readingsBand: Band | null;
   readonly sourceBand: Band | null;
+  /** グラフの外の字 (`- text above: 字` は題の下、`- text below: 字` は x の名札の下)。無ければ null。 */
+  readonly aboveBand: Band | null;
+  readonly belowBand: Band | null;
 };
 
 export type LayoutOptions = {
@@ -48,6 +51,9 @@ export type LayoutOptions = {
   readonly panels: number;
   readonly readings: Size | null;
   readonly source: Size | null;
+  /** グラフの外の字の帯 (上と下)。 */
+  readonly above?: Size | null;
+  readonly below?: Size | null;
   readonly theme: Theme;
 };
 
@@ -58,6 +64,9 @@ export function createLayout(options: LayoutOptions): Layout {
   let y = OUTER;
   const titleBaseline = y + 18;
   if (title !== null) y += TITLE_BAND;
+  const above = options.above ?? null;
+  const aboveBand: Band | null = above === null || above.height === 0 ? null : { x: OUTER, y, width: above.width, height: above.height };
+  if (aboveBand !== null) y += aboveBand.height + BAND_GAP;
   const legendRows: number[] = [];
   for (let row = 0; row < options.legendRows; row += 1) {
     legendRows.push(y + LEGEND_ROW / 2);
@@ -84,6 +93,7 @@ export function createLayout(options: LayoutOptions): Layout {
     y += size.height;
     return here;
   };
+  const belowBand = band(options.below ?? null);
   const readingsBand = band(readings);
   const sourceBand = band(source);
 
@@ -100,5 +110,8 @@ export function createLayout(options: LayoutOptions): Layout {
     xLabelBaseline,
     readingsBand,
     sourceBand,
+    // グラフの外の字は図の幅で `…` に切る (字の長さで図を広げない)。
+    aboveBand: aboveBand === null ? null : { ...aboveBand, width: inner },
+    belowBand: belowBand === null ? null : { ...belowBand, width: inner },
   };
 }

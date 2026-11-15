@@ -1,6 +1,6 @@
 import { safeToken } from '../errors.ts';
 import { LIMITS } from '../limits.ts';
-import { HERTZ_HINT, isBareNumber, parsePrefixedHertz } from 'fence-kit';
+import { HERTZ_HINT, isBareNumber, isOutsidePlace, parsePrefixedHertz, readOutsideNote } from 'fence-kit';
 import type { NoteSpec, NoteUnit } from '../types.ts';
 import { fail, ok, wordsOf } from './result.ts';
 import type { LineResult } from './result.ts';
@@ -43,6 +43,11 @@ export function parseNoteLine(head: string, body: string | null): LineResult<Omi
   if (kind === 'source') {
     if (words.length > 1 || body !== null) return fail('source の後ろには何も書きません', words[1]);
     return ok({ kind: 'source' });
+  }
+  // **画面の外の字** (`- text below: 字` `- text above: 字`)。番地の代わりに場所の語を書く。
+  if (kind === 'text' && isOutsidePlace(words[1])) {
+    const read = readOutsideNote(words.slice(1), body);
+    return read.ok ? ok({ kind: 'outside', note: read.note }) : fail(read.message, read.token);
   }
   // **周波数の素の数は断る** (接頭辞か Hz が要る。文法の方針 1)。
   const frequencies = kind === 'band' ? words.slice(1, 3) : kind === 'mark' || kind === 'text' ? words.slice(1, 2) : [];

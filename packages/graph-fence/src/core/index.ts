@@ -1,4 +1,4 @@
-import { applyExpectations, normalizeNewlines, resolveLang, textWidth } from 'fence-kit';
+import { applyExpectations, normalizeNewlines, outsideNotesSize, renderOutsideNotes, resolveLang, textWidth } from 'fence-kit';
 import type { Lang } from 'fence-kit';
 import { attachSourceText, fenceError, notice, safeToken, shiftErrors } from './errors.ts';
 import { linearAxis, logAxis, startsAtZero } from './layout/axis.ts';
@@ -237,12 +237,16 @@ export function renderGraph(input: string, options: RenderOptions = {}): RenderR
   }));
   const rows = legendRows(legendItems, SIZE.plotWidth, theme);
   const listing = doc.notes.some((note) => note.kind === 'source') ? sourceListing(source) : null;
+  // グラフの外の字 (`- text above: 字` `- text below: 字`)。
+  const outside = doc.notes.flatMap((note) => (note.kind === 'outside' ? [note.note] : []));
   const layout = createLayout({
     title: doc.title,
     legendRows: rows.length,
     panels: panels.length,
     readings: readingsSize(readings, dataName, theme, lang),
     source: listing === null ? null : linesSize(listing, theme),
+    above: outsideNotesSize(outside, 'above', theme.metrics.textSize),
+    below: outsideNotesSize(outside, 'below', theme.metrics.textSize),
     theme,
   });
 
@@ -311,6 +315,8 @@ export function renderGraph(input: string, options: RenderOptions = {}): RenderR
     + renderLegend(rows, layout.legendRows, (bottom?.x ?? 0), theme)
     + panelSvg
     + xLabels
+    + (layout.aboveBand === null ? '' : renderOutsideNotes(outside, 'above', layout.aboveBand, { size: theme.metrics.textSize, fill: theme.palette.label }))
+    + (layout.belowBand === null ? '' : renderOutsideNotes(outside, 'below', layout.belowBand, { size: theme.metrics.textSize, fill: theme.palette.label }))
     + (layout.readingsBand === null ? '' : renderReadings(readings, dataName, layout.readingsBand, theme, lang))
     + (layout.sourceBand === null || listing === null ? '' : renderLines(listing, layout.sourceBand, theme, theme.palette.label));
   const svg = renderDocument(layout, body, { theme, width: style.width, stamp: style.stamp });

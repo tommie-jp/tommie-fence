@@ -1,3 +1,4 @@
+import type { OutsideNote } from 'fence-kit';
 import type { Lang } from 'fence-kit';
 import type { THEME_NAMES } from './limits.ts';
 import type { DecodeSpec } from './model/decode.ts';
@@ -30,7 +31,7 @@ export type FenceError = {
 
 /** フェンスの一番外側に書けるキー。知らないキーを名指すのにも使う。 */
 export const TOP_LEVEL_KEYS = [
-  'device', 'title', 'time', 'window', 'start', 'axis', 'sample', 'signals', 'buses', 'decode', 'cursors', 'trigger', 'style', 'lang', 'expect',
+  'device', 'title', 'time', 'window', 'start', 'axis', 'sample', 'signals', 'buses', 'decode', 'cursors', 'trigger', 'notes', 'style', 'lang', 'expect',
 ] as const;
 
 export type TopLevelKey = (typeof TOP_LEVEL_KEYS)[number];
@@ -85,6 +86,8 @@ export type TriggerSpec = {
 export type TimeSpec = { readonly perDiv: number; readonly written: 'time' | 'window' };
 
 export type FenceDocument = {
+  /** 画面の外 (上か下) の字 (`notes:` の `- text below: 字`)。 */
+  readonly outside: readonly OutsideNote[];
   /** 書かれなかった・読めなかったときは null (**既定を作らない** — 標本化と本数の検査が変わる)。 */
   readonly device: DeviceName | null;
   readonly title: string | null;

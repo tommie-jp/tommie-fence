@@ -43,6 +43,9 @@ export type Layout = {
   readonly statusBaseline: number;
   readonly readingsBand: Band | null;
   readonly sourceBand: Band | null;
+  /** 画面の外の字 (`- text above: 字` は題の下、`- text below: 字` は状態の行の下)。無ければ null。 */
+  readonly aboveBand: Band | null;
+  readonly belowBand: Band | null;
   /** 行の数 (空でも描く行の数)。 */
   readonly rowCount: number;
 };
@@ -56,6 +59,9 @@ export type LayoutOptions = {
   readonly status: string;
   readonly readings: Size | null;
   readonly source: Size | null;
+  /** 画面の外の字の帯 (上と下)。 */
+  readonly above?: Size | null;
+  readonly below?: Size | null;
   readonly theme: Theme;
 };
 
@@ -65,6 +71,9 @@ export function createLayout(options: LayoutOptions): Layout {
   let y = OUTER;
   const titleBaseline = y + 18;
   if (title !== null) y += TITLE_BAND;
+  const above = options.above ?? null;
+  const aboveBand: Band | null = above === null || above.height === 0 ? null : { x: OUTER, y, width: above.width, height: above.height };
+  if (aboveBand !== null) y += aboveBand.height + BAND_GAP;
   const triggerTop = options.hasTrigger ? y : null;
   if (options.hasTrigger) y += MARK_ROW;
   const cursorBaseline = options.hasCursors ? y + MARK_ROW - 3 : null;
@@ -86,6 +95,7 @@ export function createLayout(options: LayoutOptions): Layout {
     y += bandSize.height;
     return here;
   };
+  const belowBand = band(options.below ?? null);
   const readingsBand = band(readings);
   const sourceBand = band(source);
 
@@ -104,6 +114,9 @@ export function createLayout(options: LayoutOptions): Layout {
     statusBaseline,
     readingsBand,
     sourceBand,
+    // 画面の外の字は図の幅で `…` に切る (字の長さで図を広げない)。
+    aboveBand: aboveBand === null ? null : { ...aboveBand, width: inner },
+    belowBand: belowBand === null ? null : { ...belowBand, width: inner },
     rowCount,
   };
 }

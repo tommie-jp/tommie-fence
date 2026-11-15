@@ -1,3 +1,4 @@
+import { outsideNotesSize, renderOutsideNotes } from 'fence-kit';
 import { applyExpectations, formatHertzShort, normalizeNewlines, resolveLang } from 'fence-kit';
 import type { Lang } from 'fence-kit';
 import { attachSourceText, fenceError, notice, safeToken, shiftErrors } from './errors.ts';
@@ -144,6 +145,8 @@ export function renderSpectrum(input: string, options: RenderOptions = {}): Rend
     key: keyText(hasModel, drawn.dataName, drawn.holdSweeps, lang),
     readings: readingsSize(drawn.readings, drawn.dataName, theme, lang),
     source: null,
+    above: outsideNotesSize(doc.outside, 'above', theme.metrics.textSize),
+    below: outsideNotesSize(doc.outside, 'below', theme.metrics.textSize),
     theme,
   });
   const read = drawn.measured.length > 0 ? drawn.measured : isHeld ? drawn.held : drawn.points;
@@ -168,6 +171,8 @@ export function renderSpectrum(input: string, options: RenderOptions = {}): Rend
     + markerSvg
     + markerLabels.svg
     + renderStatus(status, layout, theme)
+    + (layout.aboveBand === null ? '' : renderOutsideNotes(doc.outside, 'above', layout.aboveBand, { size: theme.metrics.textSize, fill: theme.palette.label }))
+    + (layout.belowBand === null ? '' : renderOutsideNotes(doc.outside, 'below', layout.belowBand, { size: theme.metrics.textSize, fill: theme.palette.label }))
     + (layout.readingsBand === null ? '' : renderReadings(drawn.readings, drawn.dataName, layout.readingsBand, theme, lang));
   const svg = renderDocument(layout, body, { theme, width: style.width, stamp: style.stamp });
 

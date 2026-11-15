@@ -115,6 +115,18 @@ markers: [74M, 102M]                    # マーカーは保持したトレー�
 刻みを書かなければ掃引の点ごとに置く。FFT 型 (`ad2` `ad3`) は刻みを書く (`1kHz..9kHz/2kHz`)。
 積める掃引は掃引型 1000・FFT 型 32。**`data:` とは一緒に書けない。**
 
+## 画面の外の字 (`notes:`)
+
+```yaml
+device: tinysa-ultra
+signal: sine 100MHz -10dBm
+notes:
+  - text above: 題の下に出る字
+  - text below red bold: 画面の下に出る字\n2 行め   # 語は色と bold。120 字・8 行まで
+```
+
+画面の中の注釈 (`mark` `band` など) はまだ書けない (断る)。
+
 ## マーカーと読み値の見方
 
 マーカーは周波数 (`100M` `30.5MHz` `0`) か `peak`。周波数は一番近い点に吸い付き、`peak` は一番高い点。
@@ -149,7 +161,7 @@ markers: [74M, 102M]                    # マーカーは保持したトレー�
 | `lna: on` を tinysa で | 断る (LNA は Ultra だけ) | `device: tinysa-ultra` |
 | `sine 74M..102M` を `signal:` に書く | 断る (範囲は `hold:` の中だけ) | `hold: sine 74M..102M -54dBm` |
 | `hold:` と `data:` を一緒に | 断る (`hold:` を外す) | どちらか |
-| `notes:`、マーカーの `delta` `noise`、`span: 0` | 断る (まだ書けない) | — |
+| `notes:` の画面の中の注釈、マーカーの `delta` `noise`、`span: 0` | 断る (まだ書けない) | — |
 
 ## scope・vna との違い
 

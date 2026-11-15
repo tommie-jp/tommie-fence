@@ -1,3 +1,4 @@
+import { readOutsideNotes } from './outsideNotes.ts';
 import { LineCounter, isMap, isScalar, isSeq, parseDocument } from 'yaml';
 import type { Pair } from 'yaml';
 import { parsePerDiv, rememberRecent, resolveLang } from 'fence-kit';
@@ -21,7 +22,14 @@ const MAX_YAML_MESSAGE = 120;
 /** 読んだ結果。**`doc` は必ずある** (52 の docs/54「エディターを YAML の都合で止めない」)。 */
 export type ParseResult = { readonly doc: FenceDocument; readonly errors: readonly FenceError[] };
 
+/** `notes:` (画面の外の字だけ)。 */
+function readNotesOf(context: Context): FenceDocument['outside'] {
+  const entry = context.entries.get('notes');
+  return entry === undefined ? [] : readOutsideNotes(entry.pair.value, entry.keyLine, context.lineOf, context.errors);
+}
+
 const emptyDocument = (): FenceDocument => ({
+  outside: [],
   device: null, title: null, time: null, start: null, axis: null, sample: null, signals: [], buses: [], decode: [], cursors: [], trigger: null,
   style: EMPTY_STYLE, lang: null, keys: [],
 });
@@ -365,6 +373,7 @@ function readFence(source: string): ParseResult {
     style: readStyle(context),
     lang: readLang(context),
     keys: collected.keys,
+    outside: readNotesOf(context),
   };
   return { doc, errors: context.errors };
 }

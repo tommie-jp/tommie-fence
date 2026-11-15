@@ -21,6 +21,7 @@ Markdown の ` ```logic ` フェンスに YAML を書くと、Markdown プレビ
 - [カーソル (`cursors:`)](#カーソル-cursors)
 - [トリガ (`trigger:`)](#トリガ-trigger)
 - [読み下し (`decode:`)](#読み下し-decode)
+- [注釈 (`notes:`)](#注釈-notes)
 - [まだ書けないもの](#まだ書けないもの)
 - [見た目 (`style:`)](#見た目-style)
 - [読み値](#読み値)
@@ -223,6 +224,36 @@ decode:
 
 ![図04 9600 baud の "H" — 0x48](out/01-syntax-4.svg)
 
+## 注釈 (`notes:`)
+
+**書けるのは画面の外の字だけ** (レーンの上の印はまだ書けない)。読み方や断り書きを、波形に
+重ねずに画面の下か題の下に書く。
+
+| 書き方 | 置く所 |
+| --- | --- |
+| `- text below: 字` | 画面の下 (読み値の上) |
+| `- text above: 字` | 題の下 (画面の上) |
+| `- text below red bold: 字` | 語は色 (配線の色の名前) と `bold` |
+
+- `\n` で改行する。120 字・8 行まで。図の幅を越える行は `…` で切る。注釈は 20 個まで
+
+```logic
+# ロジックアナライザの画面 (tommie-fence の logic フェンス)
+title: 図05 画面の外の字 — 3 ビットのカウンタ
+device: ad3
+time: 1s/div
+sample: 1kHz
+signals:
+  CLK: dio0 clock 1Hz
+  Q:   dio1..dio3 counter on CLK rising
+buses:
+  Count: Q2..Q0 hex
+notes:
+  - text below: Q0 は CLK の半分、Q1 は 1/4、Q2 は 1/8 の周波数\n(1 段ごとに 2 分周)
+```
+
+![図05 画面の外の字 — 3 ビットのカウンタ](out/01-syntax-5.svg)
+
 ## まだ書けないもの
 
 - **SPI と I2C の読み下し** — `decode:` に書くと「まだ書けません」と断る
@@ -242,7 +273,7 @@ decode:
 
 ```logic
 # ロジックアナライザの画面 (tommie-fence の logic フェンス)
-title: 図05 dark と mono
+title: 図06 dark と mono
 device: generic
 time: 1ms/div
 signals:
@@ -252,7 +283,7 @@ style:
   stamp: off
 ```
 
-![図05 dark と mono](out/01-syntax-5.svg)
+![図06 dark と mono](out/01-syntax-6.svg)
 
 ## 言語 (`lang:`)
 
@@ -310,7 +341,7 @@ Address (hex): 0x0@0 s 0x1@1 s 0x2@2 s … 0x3@9 s
 
 ```logic
 # ロジックアナライザの画面 (tommie-fence の logic フェンス)
-title: 図06 お知らせの例 — 1 kHz のクロックを 1 s/div で見る (線では読めず塗りになる)
+title: 図07 お知らせの例 — 1 kHz のクロックを 1 s/div で見る (線では読めず塗りになる)
 device: ad3
 time: 1s/div
 signals:
@@ -318,7 +349,7 @@ signals:
   SLOW: clock 1Hz
 ```
 
-![図06 お知らせの例 — 1 kHz のクロックを 1 s/div で見る (線では読めず塗りになる)](out/01-syntax-6.svg)
+![図07 お知らせの例 — 1 kHz のクロックを 1 s/div で見る (線では読めず塗りになる)](out/01-syntax-7.svg)
 
 ### 想定どおりのお知らせ (`expect:`)
 

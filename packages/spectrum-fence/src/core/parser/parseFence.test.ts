@@ -131,9 +131,10 @@ describe('parseFence — values', () => {
     expect(messages('device: tinysa-ultra\nref: -300dBm')[0]).toContain('-200〜40');
   });
 
-  test('refuses both points in sweep: and points:, and notes: for now', () => {
+  test('refuses both points in sweep: and points:, and notes: inside the screen for now', () => {
     expect(messages('device: tinysa-ultra\nsweep: 0-1M 101\npoints: 101')).toEqual(['点数は sweep: か points: の片方に書きます']);
-    expect(messages('device: tinysa-ultra\nnotes: []')[0]).toContain('notes: はまだ書けません');
+    expect(messages('device: tinysa-ultra\nnotes:\n  - mark 1M')[0]).toContain('画面の外の字');
+    expect(parseFence('device: tinysa-ultra\nnotes:\n  - text below: 字').doc.outside).toHaveLength(1);
   });
 
   test('takes a data file name next to the markdown only', () => {

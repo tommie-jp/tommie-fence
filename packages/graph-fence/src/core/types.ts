@@ -1,3 +1,4 @@
+import type { OutsideNote } from 'fence-kit';
 import type { THEME_NAMES } from './limits.ts';
 import type { Lang } from 'fence-kit';
 import type { LineSpec } from './model/lines.ts';
@@ -58,7 +59,9 @@ export type NoteSpec =
   | { readonly kind: 'band'; readonly from: number; readonly to: number; readonly text: string | null; readonly line: number | null }
   | { readonly kind: 'text'; readonly x: number; readonly y: number; readonly unit: string | null; readonly text: string; readonly line: number | null }
   | { readonly kind: 'peak'; readonly line: number | null }
-  | { readonly kind: 'source'; readonly line: number | null };
+  | { readonly kind: 'source'; readonly line: number | null }
+  /** グラフの外 (上か下) の字 (`- text below: 字`)。番地を持たない。 */
+  | { readonly kind: 'outside'; readonly note: OutsideNote; readonly line: number | null };
 
 export type FenceDocument = {
   readonly title: string | null;

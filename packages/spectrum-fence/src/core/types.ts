@@ -1,3 +1,4 @@
+import type { OutsideNote } from 'fence-kit';
 import type { THEME_NAMES } from './limits.ts';
 import type { Lang, WaveSpec, WindowName } from 'fence-kit';
 import type { DeviceKind, DeviceName, LevelUnit } from './model/device.ts';
@@ -81,6 +82,8 @@ export type StyleSpec = {
 export type Located<T> = { readonly value: T; readonly line: number | null };
 
 export type FenceDocument = {
+  /** 画面の外 (上か下) の字 (`notes:` の `- text below: 字`)。 */
+  readonly outside: readonly OutsideNote[];
   /** 書かれなかった・読めなかったときは null (**既定を作らない** — 計算の道が変わる)。 */
   readonly device: DeviceName | null;
   readonly title: string | null;

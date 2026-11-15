@@ -1,4 +1,4 @@
-import { applyExpectations, normalizeNewlines, resolveLang } from 'fence-kit';
+import { applyExpectations, normalizeNewlines, outsideNotesSize, renderOutsideNotes, resolveLang } from 'fence-kit';
 import type { Lang } from 'fence-kit';
 import { LABELS } from './render/labels.ts';
 import { sweepAdvice } from './advice.ts';
@@ -115,7 +115,8 @@ function notesFor(panels: readonly Panel[], notes: readonly NoteSpec[]): { reado
   const byPanel = new Map<Panel, NoteSpec[]>(panels.map((panel) => [panel, []]));
   const said: FenceError[] = [];
   for (const note of notes) {
-    if (note.kind === 'source') continue;
+    // 書き出しと画面の外の字は枠に配らない (図の上と下の帯)。
+    if (note.kind === 'source' || note.kind === 'outside') continue;
     if (note.kind === 'band') {
       const targets = panels.filter((panel) => !isRound(panel.kind) && panel.kind !== 'tdr');
       if (targets.length === 0) said.push(notice('band を塗る枠がありません (周波数が横軸の枠に塗ります)', note.line));
@@ -186,6 +187,8 @@ export function renderVna(input: string, options: RenderOptions = {}): RenderRes
   for (const extra of sourceNotes.slice(1)) said.push(notice('書き出し (source) は 1 つだけ描きます (後のものは描いていません)', extra.line));
   const listing = sourceNotes.length > 0 ? sourceListing(source) : [];
 
+  // 画面の外の字 (`- text above: 字` `- text below: 字`)。
+  const outside = doc.notes.flatMap((note) => (note.kind === 'outside' ? [note.note] : []));
   const key = keyLines(allSeries, model !== null, dataName, theme, lang);
   const layout = createLayout({
     title: doc.title,
@@ -193,6 +196,8 @@ export function renderVna(input: string, options: RenderOptions = {}): RenderRes
     groups,
     readings: readingsSize(readings, dataName, theme, lang),
     source: listing.length > 0 ? linesSize(listing, theme) : null,
+    above: outsideNotesSize(outside, 'above', theme.metrics.textSize),
+    below: outsideNotesSize(outside, 'below', theme.metrics.textSize),
     theme,
   });
   const placed = notesFor(layout.panels, doc.notes);
@@ -217,6 +222,8 @@ export function renderVna(input: string, options: RenderOptions = {}): RenderRes
       theme,
       lang,
     })).join('')
+    + (layout.aboveBand === null ? '' : renderOutsideNotes(outside, 'above', layout.aboveBand, { size: theme.metrics.textSize, fill: theme.palette.caption }))
+    + (layout.belowBand === null ? '' : renderOutsideNotes(outside, 'below', layout.belowBand, { size: theme.metrics.textSize, fill: theme.palette.caption }))
     + (layout.readingsBand === null ? '' : renderReadings(readings, dataName, layout.readingsBand, theme, lang))
     + (layout.sourceBand === null ? '' : renderLines(listing, layout.sourceBand, theme, theme.palette.caption));
 

@@ -1,3 +1,4 @@
+import type { OutsideNote } from 'fence-kit';
 import type { THEME_NAMES } from './limits.ts';
 import type { DeviceName } from './model/device.ts';
 import type { DutElement } from './model/dut.ts';
@@ -66,7 +67,9 @@ export type NoteSpec =
   | { readonly kind: 'text'; readonly f: number; readonly value: number; readonly unit: NoteUnit; readonly text: string; readonly line: number | null }
   | { readonly kind: 'mark'; readonly f: number; readonly value: number; readonly unit: NoteUnit; readonly line: number | null }
   | { readonly kind: 'band'; readonly from: number; readonly to: number; readonly text: string | null; readonly line: number | null }
-  | { readonly kind: 'source'; readonly line: number | null };
+  | { readonly kind: 'source'; readonly line: number | null }
+  /** 画面の外 (上か下) の字 (`- text below: 字`)。番地を持たない。 */
+  | { readonly kind: 'outside'; readonly note: OutsideNote; readonly line: number | null };
 
 export type ThemeName = (typeof THEME_NAMES)[number];
 

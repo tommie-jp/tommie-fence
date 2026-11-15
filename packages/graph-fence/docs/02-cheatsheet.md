@@ -83,9 +83,10 @@ notes:
   - text 16k 27mA: f₀        # 点に字 (y は単位つき)
   - peak                    # 全部の線の頂点に印。読み値に出る
   - source                  # フェンスの中身を図の下に書き出す
+  - text below: 読み方        # グラフの外 (下) の字。above なら題の下。\n で改行
 ```
 
-6 つ: `mark` `level` `band` `text` `peak` `source`。番地は軸の値 (x は単位を省ける、y は単位で枠が決まる)。
+6 つ: `mark` `level` `band` `text` `peak` `source`。`text below` / `text above` はグラフの外の字 (色と `bold`、120 字・8 行まで)。番地は軸の値 (x は単位を省ける、y は単位で枠が決まる)。
 
 ## 測った値 (`data:`)
 

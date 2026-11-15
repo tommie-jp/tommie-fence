@@ -1,4 +1,4 @@
-import { formatPerDiv, formatSeconds, formatVolts, normalizeNewlines, resolveLang } from 'fence-kit';
+import { formatPerDiv, formatSeconds, formatVolts, normalizeNewlines, resolveLang, outsideNotesSize, renderOutsideNotes } from 'fence-kit';
 import type { Lang } from 'fence-kit';
 import { fenceError, notice } from './errors.ts';
 import { idealOf } from './ideal.ts';
@@ -189,6 +189,8 @@ function drawTime(scene: TimeScene, style: ReturnType<typeof resolveStyle>, said
   const { doc, screen, trigger, measured, scales } = scene;
   const { theme } = style;
   const drawn = [...scene.idealTraces, ...measured.traces];
+  // 画面の外の字 (`- text above: 字` `- text below: 字`)。
+  const outside = doc.notes.flatMap((note) => (note.kind === 'outside' ? [note.note] : []));
   const groups = groupMarks([...scales].map(([name, scale]) => ({
     fraction: fractionY(0, scale.perDiv, scale.position), label: { number: markLabel(name), color: traceColor(theme, name) },
   })));
@@ -199,6 +201,8 @@ function drawTime(scene: TimeScene, style: ReturnType<typeof resolveStyle>, said
     key: drawn.length === 0 ? null : keyText(scene.idealTraces.length > 0, measured.name, lang),
     readings: readingsSize(scene.readings, measured.name, theme, lang),
     source: scene.listing.length > 0 ? linesSize(scene.listing, theme) : null,
+    above: outsideNotesSize(outside, 'above', theme.metrics.textSize),
+    below: outsideNotesSize(outside, 'below', theme.metrics.textSize),
     markSlots: Math.max(1, ...groups.map((group) => group.labels.length)),
     theme,
   });
@@ -224,6 +228,8 @@ function drawTime(scene: TimeScene, style: ReturnType<typeof resolveStyle>, said
     + groups.map((group) => renderChannelMark(group.labels, group.fraction, layout, theme)).join('')
     + triggerMarks
     + renderStatus(status, layout, theme)
+    + (layout.aboveBand === null ? '' : renderOutsideNotes(outside, 'above', layout.aboveBand, { size: theme.metrics.textSize, fill: theme.palette.caption }))
+    + (layout.belowBand === null ? '' : renderOutsideNotes(outside, 'below', layout.belowBand, { size: theme.metrics.textSize, fill: theme.palette.caption }))
     + (layout.readingsBand === null ? '' : renderReadings(scene.readings, measured.name, layout.readingsBand, theme, lang))
     + (layout.sourceBand === null ? '' : renderLines(scene.listing, layout.sourceBand, theme, theme.palette.caption));
   return renderDocument(layout, body, { theme, width: style.width, stamp: style.stamp });

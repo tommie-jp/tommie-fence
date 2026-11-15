@@ -40,6 +40,9 @@ export type Layout = {
   readonly statusBaseline: number;
   readonly readingsBand: Band | null;
   readonly sourceBand: Band | null;
+  /** 画面の外の字 (`- text above: 字` は題の下、`- text below: 字` は状態の行の下)。無ければ null。 */
+  readonly aboveBand: Band | null;
+  readonly belowBand: Band | null;
 };
 
 export type LayoutOptions = {
@@ -49,6 +52,9 @@ export type LayoutOptions = {
   readonly key: string | null;
   readonly readings: Size | null;
   readonly source: Size | null;
+  /** 画面の外の字の帯 (上と下)。 */
+  readonly above?: Size | null;
+  readonly below?: Size | null;
   /** 同じ高さに並ぶ基準の印の数の最大 (既定 1)。左の余白をその分だけ取る。 */
   readonly markSlots?: number;
   /** 格子の目盛の数 (既定は時間の画面の 10 × 8。XY は 8 × 8)。 */
@@ -64,6 +70,9 @@ export function createLayout(options: LayoutOptions): Layout {
   let y = OUTER;
   const titleBaseline = y + titleSize;
   if (title !== null) y += titleSize + BAND_PAD;
+  const above = options.above ?? null;
+  const aboveBand: Band | null = above === null || above.height === 0 ? null : { x: OUTER, y, width: above.width, height: above.height };
+  if (aboveBand !== null) y += aboveBand.height + BAND_PAD;
   const keyBand = small + BAND_PAD;
   const keyY = key === null ? null : y + keyBand / 2 - 2;
   if (key !== null) y += keyBand;
@@ -84,12 +93,14 @@ export function createLayout(options: LayoutOptions): Layout {
     y += size.height;
     return here;
   };
+  const belowBand = band(options.below ?? null);
   const readingsBand = band(readings);
   const sourceBand = band(source);
 
   const screenWidth = marginLeft + grid.width + margins.right;
   const titleWidth = title === null ? 0 : textWidth(title) * titleSize;
   const keyWidth = key === null ? 0 : marginLeft + textWidth(key) * small + 80;
+  // 画面の外の字は画面の幅で折らずに `…` で切るので、幅は画面に合わせる (字の長さで図を広げない)。
   const inner = Math.max(screenWidth, titleWidth, keyWidth, readingsBand?.width ?? 0, sourceBand?.width ?? 0);
   return {
     width: Math.ceil(inner + OUTER * 2),
@@ -100,5 +111,7 @@ export function createLayout(options: LayoutOptions): Layout {
     statusBaseline,
     readingsBand,
     sourceBand,
+    aboveBand: aboveBand === null ? null : { ...aboveBand, width: inner },
+    belowBand: belowBand === null ? null : { ...belowBand, width: inner },
   };
 }

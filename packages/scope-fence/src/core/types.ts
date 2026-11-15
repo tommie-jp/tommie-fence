@@ -1,3 +1,4 @@
+import type { OutsideNote } from 'fence-kit';
 import type { Lang } from 'fence-kit';
 import type { THEME_NAMES } from './limits.ts';
 import type { ChannelName, ChannelSpec, TraceName } from './model/channel.ts';
@@ -81,7 +82,9 @@ export type NoteSpec =
   | { readonly kind: 'text'; readonly channel: ChannelName; readonly t: number; readonly volts: number; readonly text: string; readonly line: number | null }
   | { readonly kind: 'mark'; readonly channel: ChannelName; readonly t: number; readonly volts: number; readonly line: number | null }
   | { readonly kind: 'band'; readonly from: number; readonly to: number; readonly text: string | null; readonly line: number | null }
-  | { readonly kind: 'source'; readonly line: number | null };
+  | { readonly kind: 'source'; readonly line: number | null }
+  /** 画面の外 (上か下) の字 (`- text below: 字`)。番地を持たない。 */
+  | { readonly kind: 'outside'; readonly note: OutsideNote; readonly line: number | null };
 
 /** XY の軸 (`xy: ch1 math`)。書かなければ横 ch1・縦 ch2 (line は null)。 */
 export type XySpec = { readonly x: TraceName; readonly y: TraceName; readonly line: number | null };

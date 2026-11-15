@@ -94,7 +94,8 @@ export function placeNotes(input: NotesInput): PlacedNotes {
   const under: string[] = [];
   const over: string[] = [];
   for (const note of input.notes) {
-    if (note.kind === 'source') continue;
+    // 書き出しと画面の外の字は、ここでは描かない (図の上と下の帯。呼ぶ側)。
+    if (note.kind === 'source' || note.kind === 'outside') continue;
     const drawn = note.kind === 'band' ? renderBand(note, input) : renderPoint(note, input);
     (note.kind === 'band' ? under : over).push(drawn.svg);
     if (drawn.said !== null) said.push(drawn.said);
