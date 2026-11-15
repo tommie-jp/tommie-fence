@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.44.0] - 2026-11-15
+
 ### Changed
 
 - Debug Probe の姿を**実寸**にした (ケース 31 × 37 mm、基板 22 × 32 mm、口は寸法図の位置、口の中のピンは 1 mm 間隔)。ピンの名前は姿が口の上に縦に刷る (`drawDeviceLook` に `pxPerMm` と `pins` を渡す)。大きさは `lookSize`

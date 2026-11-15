@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.66.0] - 2026-11-15
+
 ### Changed
 
 - Debug Probe を**実寸**で描き、`label:` を書かないときの名札と部品表の値を正式名称 `Raspberry Pi Debug Probe` にした
