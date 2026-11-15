@@ -10,6 +10,8 @@ import { registerProblems } from './problems/diagnostics.ts';
 import { registerMigrateFix } from './problems/migrateFix.ts';
 import { graphProblems, logicProblems, scopeProblems, spectrumProblems, vnaProblems } from './mapless.ts';
 import { NEIGHBOR_READERS, dataForUri, graphDataFrom, scopeDataFrom, spectrumDataFrom, vnaDataFrom } from './neighborData.ts';
+import { cardReader, cardSourceFor } from './cards/cardHooks.ts';
+import { registerCards } from './cards/vscodeCards.ts';
 
 /**
  * デスクトップ版の入口。回路図の描画は WASM の TeX (node-tikzjax)。
@@ -23,9 +25,9 @@ export function activate(context: vscode.ExtensionContext) {
   registerEditorCommands(context);
   // 読めなかった行を Problems パネルにも出す。TeX を通らないので web 版でも動く。
   // vna・scope・spectrum・graph・logic は殻を持たないので Problems の口だけ。`data:` は文書の隣を読む (logic にはまだ無い)。
-  const editors = fenceEditors();
-  registerProblems(context, (document) => [
-    ...editors,
+  // 部品カード (52 の docs/158) は文書ごと。殻は軽いので文書ごとに作る。
+  const refreshProblems = registerProblems(context, (document) => [
+    ...fenceEditors(cardSourceFor(document.uri)),
     vnaProblems(dataForUri(document.uri, vnaDataFrom)),
     scopeProblems(dataForUri(document.uri, scopeDataFrom)),
     spectrumProblems(dataForUri(document.uri, spectrumDataFrom)),
@@ -38,6 +40,11 @@ export function activate(context: vscode.ExtensionContext) {
   const refresh = (): void => {
     void vscode.commands.executeCommand('markdown.preview.refresh');
   };
+  // カードが変わったら、プレビューを描き直し、フェンスの Problems も組み直す。
+  registerCards(context, () => {
+    refresh();
+    refreshProblems();
+  });
   return activateWith({
     render: createWorkerRenderer({
       workerPath: join(__dirname, 'tex-worker.cjs'),
@@ -46,6 +53,7 @@ export function activate(context: vscode.ExtensionContext) {
     refresh,
     imageAfterFence: imageAfterFenceOptions(context, refresh),
     readers: NEIGHBOR_READERS,
+    cards: cardReader,
   });
 }
 

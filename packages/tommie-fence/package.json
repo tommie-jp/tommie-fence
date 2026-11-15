@@ -49,6 +49,7 @@
     "breadboard-fence": "*",
     "circuit-fence": "*",
     "copper-fence": "*",
+    "part-card": "*",
     "vna-fence": "*",
     "scope-fence": "*",
     "spectrum-fence": "*",
@@ -184,6 +185,16 @@
       {
         "language": "markdown",
         "path": "./snippets/fences.json"
+      },
+      {
+        "language": "yaml",
+        "path": "./snippets/part-card.json"
+      }
+    ],
+    "yamlValidation": [
+      {
+        "fileMatch": "*.part.yaml",
+        "url": "./schemas/part-card.schema.json"
       }
     ],
     "commands": [

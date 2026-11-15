@@ -109,6 +109,20 @@ export const workspace = {
   applyEdit() {
     return Promise.resolve(true);
   },
+  // 部品カード (52 の docs/158)。見張りは何も知らせず、カードは 1 枚も無い。
+  isTrusted: true,
+  createFileSystemWatcher(_glob: string) {
+    const quiet = () => ({ dispose() {} });
+    return { onDidCreate: quiet, onDidChange: quiet, onDidDelete: quiet, dispose() {} };
+  },
+  findFiles() {
+    return Promise.resolve([]);
+  },
+  getWorkspaceFolder() {
+    return undefined;
+  },
+  onDidGrantWorkspaceTrust: () => ({ dispose() {} }),
+  onDidChangeWorkspaceFolders: () => ({ dispose() {} }),
 };
 
 /** 日本語の画面を真似る (`test/l10nJa.ts`)。表に無い文は投げる。 */
@@ -126,6 +140,7 @@ export const languages = {
     return {
       set(uri: unknown, diagnostics: unknown[]) { diagnosticLog.push(['set', String(uri), diagnostics]); },
       delete(uri: unknown) { diagnosticLog.push(['delete', String(uri)]); },
+      clear() { diagnosticLog.push(['clear', '']); },
       dispose() {},
     };
   },

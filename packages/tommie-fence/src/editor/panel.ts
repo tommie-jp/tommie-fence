@@ -3,6 +3,7 @@ import { revealMapEditor } from './customEditor.ts';
 import { makeNonce, panelHtml } from 'fence-kit';
 import { mapScriptUri, webviewRoot } from './vscodeHost.ts';
 import { fenceEditors } from './fences.ts';
+import { activeCardSource } from '../cards/cardHooks.ts';
 import { createSession } from 'fence-kit';
 import type { FenceEditor, Session } from 'fence-kit';
 import { firstFenceBodyLine } from './hasFence.ts';
@@ -43,7 +44,7 @@ function aimAtFence(editor: vscode.TextEditor, fences: readonly FenceEditor[]): 
 export function openMapPanel(context: vscode.ExtensionContext): void {
   // **どのフェンスでもよい。** 3 つとも扱えるので、カーソルの下にあるものを
   // そのまま開く (52 の docs/19 の決め 6 — 開いたときの選び方)。外なら最初のもの。
-  const fences = fenceEditors();
+  const fences = fenceEditors(activeCardSource);
   const editor = markdownEditor();
   const names = fences.map((one) => one.language).join(' / ');
   if (editor === null) {

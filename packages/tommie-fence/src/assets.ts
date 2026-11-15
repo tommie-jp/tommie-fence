@@ -28,4 +28,6 @@ export const ASSETS: readonly (readonly [string, string])[] = [
   ['../spectrum-fence/syntaxes/spectrum-injection.json', 'syntaxes/spectrum-injection.json'],
   ['../graph-fence/syntaxes/graph-injection.json', 'syntaxes/graph-injection.json'],
   ['../logic-fence/syntaxes/logic-injection.json', 'syntaxes/logic-injection.json'],
+  // 部品カードの JSON Schema (52 の docs/158)。`contributes.yamlValidation` が指す。
+  ['../part-card/schema/part-card.schema.json', 'schemas/part-card.schema.json'],
 ];

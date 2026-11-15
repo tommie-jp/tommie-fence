@@ -46,3 +46,4 @@ test-results/
 # 原本はコアのまま — 追跡すると 2 か所に分かれる。
 packages/tommie-fence/media/
 packages/tommie-fence/syntaxes/
+packages/tommie-fence/schemas/

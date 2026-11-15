@@ -1,0 +1,41 @@
+{
+  "part card (DIP)": {
+    "prefix": ["part-card", "part-card-dip"],
+    "description": "Part card — a DIP chip (部品カード: DIP の IC。*.part.yaml)",
+    "body": [
+      "models: [${1:74LS00}]",
+      "package: ${2:dip14}",
+      "role: ${3:2 入力 NAND ×4}",
+      "role-en: ${4:quad 2-input NAND}",
+      "# 1 番から番号順 (切り欠きを上にして左上から反時計回り)",
+      "pins: [${5:1A, 1B, 1Y, 2A, 2B, 2Y, GND, 3Y, 3A, 3B, 4Y, 4A, 4B, VCC}]",
+      "source: ${6:データシートの名前・版・端子図の番号}$0"
+    ]
+  },
+  "part card (transistor)": {
+    "prefix": ["part-card-transistor"],
+    "description": "Part card — a three-pin transistor (部品カード: 3 ピンのトランジスタ)",
+    "body": [
+      "models: [${1:2SC1815}]",
+      "package: transistor/${2|to92,to220|}",
+      "kind: ${3|npn,pnp,nch-mos,pch-mos,nch-jfet,pch-jfet|}",
+      "# 印字面を手前、ピンを下にして左から右",
+      "pins: [${4:E, C, B}]",
+      "role: ${5:NPN 汎用}",
+      "source: ${6:データシートの名前・版・外形図}$0"
+    ]
+  },
+  "part card (module)": {
+    "prefix": ["part-card-device"],
+    "description": "Part card — a module off the board (部品カード: 基板の外の機器)",
+    "body": [
+      "models: [${1:MODULE-1}]",
+      "package: device",
+      "pins: [${2:VCC, GND, OUT}]",
+      "role: ${3:働き}",
+      "view: ${4:部品面を上にして左から}",
+      "product: ${5:販売元・型番}",
+      "source: ${6:並びを確かめた資料}$0"
+    ]
+  }
+}

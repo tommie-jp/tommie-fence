@@ -4,6 +4,7 @@ import type { TexRenderer } from 'circuit-fence/queue';
 import { createPreviewRefresher } from './previewRefresher.ts';
 import { allPlugins } from './markdownItPlugin.ts';
 import type { NeighborReaders } from './neighborData.ts';
+import type { CardReader } from 'fence-kit';
 import type { ImageAfterFenceOptions } from './imageAfterFence.ts';
 
 export type Wiring = {
@@ -18,6 +19,8 @@ export type Wiring = {
    * 持つ** — 描いている文書の隣のファイルを読む。web 版は持たない (フェンスが「読めません」と言う)。
    */
   readonly readers?: NeighborReaders;
+  /** 部品カードを訊く口 (52 の docs/158)。**デスクトップだけ** — 文書の上の `.tommie-fence/parts/` を読む。 */
+  readonly cards?: CardReader;
 };
 
 /**
@@ -33,7 +36,7 @@ export function activateWith(wiring: Wiring) {
 
   return {
     extendMarkdownIt(md: MarkdownIt): MarkdownIt {
-      return allPlugins(queue, wiring.imageAfterFence, wiring.readers)(md);
+      return allPlugins(queue, wiring.imageAfterFence, wiring.readers, wiring.cards)(md);
     },
   };
 }

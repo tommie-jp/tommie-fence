@@ -64,7 +64,10 @@ function toDiagnostic(document: vscode.TextDocument, problem: Problem): vscode.D
  */
 export type SourcesFor = readonly ProblemSource[] | ((document: vscode.TextDocument) => readonly ProblemSource[]);
 
-export function registerProblems(context: vscode.ExtensionContext, sources: SourcesFor): void {
+/** 開いている文書の Problems を全部組み直す口 (部品カードが変わったときに呼ぶ)。 */
+export type ProblemsRefresh = () => void;
+
+export function registerProblems(context: vscode.ExtensionContext, sources: SourcesFor): ProblemsRefresh {
   const sourcesOf = (document: vscode.TextDocument): readonly ProblemSource[] =>
     (typeof sources === 'function' ? sources(document) : sources);
   const collection = vscode.languages.createDiagnosticCollection(SOURCE);
@@ -118,4 +121,5 @@ export function registerProblems(context: vscode.ExtensionContext, sources: Sour
       },
     },
   );
+  return refreshAll;
 }

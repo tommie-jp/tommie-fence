@@ -28,6 +28,8 @@ describe('コアから写した資材', () => {
       ...manifest.contributes['markdown.previewStyles']
         .filter((path) => !path.includes('node_modules') && !path.startsWith('./styles/')),
       ...manifest.contributes.grammars.map((one) => one.path),
+      // 部品カードの JSON Schema (52 の docs/158)。
+      ...manifest.contributes.yamlValidation.map((one) => one.url),
     ].map((path) => path.replace('./', ''));
 
     expect(wanted.every((path) => ASSETS.some(([, to]) => to === path))).toBe(true);

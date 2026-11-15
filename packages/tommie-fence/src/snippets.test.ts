@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, test } from 'vitest';
 import manifest from '../package.json' with { type: 'json' };
 import { fenceEditors } from './editor/fences.ts';
+import { readCardText } from 'part-card';
 import { MAPLESS_LANGUAGES, graphProblems, logicProblems, scopeProblems, spectrumProblems, vnaProblems } from './mapless.ts';
 
 /**
@@ -11,7 +12,9 @@ import { MAPLESS_LANGUAGES, graphProblems, logicProblems, scopeProblems, spectru
  */
 type Snippet = { readonly prefix: readonly string[]; readonly body: readonly string[]; readonly description: string };
 
-const contributed: readonly { readonly language: string; readonly path: string }[] = manifest.contributes.snippets;
+/** フェンスのスニペット (Markdown)。部品カードのスニペット (YAML) は下の別の節で見る。 */
+const contributed: readonly { readonly language: string; readonly path: string }[] =
+  manifest.contributes.snippets.filter((entry) => entry.language === 'markdown');
 const fileOf = (path: string): URL => new URL(`../${path}`, import.meta.url);
 const snippetsIn = (path: string): readonly [string, Snippet][] =>
   Object.entries(JSON.parse(readFileSync(fileOf(path), 'utf8')) as Record<string, Snippet>);
@@ -61,5 +64,17 @@ describe('フェンスのスニペット', () => {
     expect(view?.issues ?? '').toBe('');
     expect(view?.erc?.count ?? 0).toBe(0);
     expect(rows).toEqual([]);
+  });
+});
+
+describe('部品カードのスニペット (52 の docs/158)', () => {
+  const entry = manifest.contributes.snippets.find((one) => one.language === 'yaml');
+  /** 選び (`${2|to92,to220|}`) は最初の候補にする。 */
+  const settle = (line: string): string => expand(line.replace(/\$\{\d+\|([^,|]*)[^}]*\}/g, '$1'));
+
+  test.each(snippetsIn(entry?.path ?? ''))('%s reads as a card once filled in', (_name, snippet) => {
+    const { card, issues } = readCardText(snippet.body.map(settle).join('\n'));
+    expect(issues).toEqual([]);
+    expect(card).not.toBeNull();
   });
 });

@@ -125,3 +125,14 @@ describe('3 つを 1 つに畳んだ contributes', () => {
     expect(properties['circuitFence.map.noteFrame']?.['deprecationMessage']).toBeTruthy();
   });
 });
+
+describe('部品カード (52 の docs/158)', () => {
+  const contributes = manifest.contributes as unknown as {
+    readonly yamlValidation: readonly { readonly fileMatch: string; readonly url: string }[];
+  };
+
+  test('hands the JSON Schema of the cards to the YAML extension, from a copied asset', () => {
+    expect(contributes.yamlValidation).toEqual([{ fileMatch: '*.part.yaml', url: './schemas/part-card.schema.json' }]);
+    expect(ASSETS).toContainEqual(['../part-card/schema/part-card.schema.json', 'schemas/part-card.schema.json']);
+  });
+});

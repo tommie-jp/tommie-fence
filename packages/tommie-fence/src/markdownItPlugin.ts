@@ -9,6 +9,7 @@ import { spectrumPlugin } from 'spectrum-fence/plugin';
 import { graphPlugin } from 'graph-fence/plugin';
 import { logicPlugin } from 'logic-fence/plugin';
 import type { NeighborReaders } from './neighborData.ts';
+import type { CardReader } from 'fence-kit';
 import type { FigureSource } from 'circuit-fence/plugin';
 import { imageAfterFencePlugin } from './imageAfterFence.ts';
 import type { ImageAfterFenceOptions } from './imageAfterFence.ts';
@@ -22,9 +23,10 @@ import type { ImageAfterFenceOptions } from './imageAfterFence.ts';
  * 最後に、フェンスの直後の GitHub 用の画像を畳む (52 の docs/101)。
  */
 export const allPlugins = (
-  figures: FigureSource, imageAfterFence: ImageAfterFenceOptions, readers?: NeighborReaders,
+  figures: FigureSource, imageAfterFence: ImageAfterFenceOptions, readers?: NeighborReaders, cards?: CardReader,
 ) => (md: MarkdownIt): MarkdownIt =>
-  md.use(circuitPlugin(figures)).use(breadboardPlugin).use(perfboardPlugin).use(copperPlugin)
+  // 部品カード (52 の docs/158) は circuit・bread・perf の 3 つだけが型番を引く。
+  md.use(circuitPlugin(figures, cards)).use(breadboardPlugin, cards).use(perfboardPlugin, cards).use(copperPlugin)
     .use(vnaPlugin(readers?.vna)).use(scopePlugin(readers?.scope))
     .use(spectrumPlugin(readers?.spectrum)).use(graphPlugin(readers?.graph)).use(logicPlugin())
     .use(imageAfterFencePlugin(imageAfterFence));

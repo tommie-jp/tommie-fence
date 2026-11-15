@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { makeNonce, panelHtml } from 'fence-kit';
 import { fenceEditors } from './fences.ts';
+import { cardSourceFor } from '../cards/cardHooks.ts';
 import { createSession } from 'fence-kit';
 import { attachSession, createSessionHost, mapScriptUri, webviewRoot } from './vscodeHost.ts';
 
@@ -40,7 +41,7 @@ export function registerMapEditor(context: vscode.ExtensionContext): void {
     resolveCustomTextEditor(document, panel) {
       panel.webview.options = { enableScripts: true, localResourceRoots: [webviewRoot(context)] };
       const uri = document.uri.toString();
-      const fences = fenceEditors();
+      const fences = fenceEditors(cardSourceFor(document.uri));
       const session = createSession(createSessionHost(panel.webview, 'vscode'), fences, { pinned: document });
       panel.webview.html = panelHtml({
         cspSource: panel.webview.cspSource,
