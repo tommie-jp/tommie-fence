@@ -141,8 +141,8 @@ Raspberry Pi Debug Probe は 2 本のケーブルで Pico につなぐ。**U (UA
 D の線は Pico の右の端のパッドへ行くので、Probe の箱を 1 つにすると、どちらかの線が基板を
 縦断する (breadboard-wiring の skill の #26)。
 
-Probe は **`model: RPI-DEBUG-PROBE`** で置く。ピンの名前が表から出て、箱ではなく**実寸の姿**
-(ケース 31 × 37 mm、3 ピンの口 `U` `D`) で描かれ、**線の色を書かなければ付属のケーブルの色**
+Probe は **`model: RPI-DEBUG-PROBE`** で置く。ピンの名前が表から出て、箱ではなく**実物の姿**
+(3 ピンの口 `U` `D`) で描かれ、**線の色を書かなければ付属のケーブルの色**
 (橙・黒・黄) になる。名札を書かなければ正式名称 (Raspberry Pi Debug Probe) が出る。
 
 ```bread
@@ -211,7 +211,7 @@ wires:
 ## USB ケーブルを挿す
 
 USB ケーブルは**部品**として書く (`type: usb-cable`)。`from:` に挿す口を書くと、口から外へ伸びた
-ケーブルを**実寸**で描き、両端の差し込みに種類を刷る。**手前の差し込みは口で決まる** (Pico も Debug Probe も
+ケーブルを描き、両端の差し込みに種類を刷る。**手前の差し込みは口で決まる** (Pico も Debug Probe も
 micro-B)。向こうの端 (パソコンの側) は書かなければ USB-C、`plug: usb-a` で USB-A。
 
 ```bread
@@ -240,7 +240,7 @@ wires:
 
 ![図04 Pico 2 と Debug Probe に USB ケーブルを挿す](out/07-pico-4.svg)
 
-- 差し込みとケーブルは実寸 (USB-C の胴 12.2 × 35 mm、USB-A の胴 15.7 × 36 mm、ケーブルの太さ 3.8 mm)。
-  ブレッドボードと比べてどれだけ場所を取るかが図で分かる
+- Probe とケーブルの大きさは `size:` で選ぶ (`large` は実寸、既定の `medium` は口とコネクタだけ実寸で全体は小さく、
+  `small` はコネクタも小さく)。実寸 (`large`) では USB-A の胴だけで 15.7 × 36 mm あり、図がかなり大きくなる
 - Pico の USB の口の脇の `micro-B` は、ケーブルを描かなくても刷る。Type-C のケーブルしか無いと挿さらない
 - 部品表には `W1 usb-cable USB-C – micro-B` のように両端の種類が出る。買う物がそのまま読める

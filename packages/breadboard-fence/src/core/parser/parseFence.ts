@@ -494,7 +494,7 @@ function expandPart(id: string, raw: unknown, line: number) {
     return { ok: false as const, error: fenceError(`部品 ${safeToken(id)}: ${validated.message}`, line) };
   }
 
-  const { at, label, value, pins, holes, turn, color, model } = validated.value;
+  const { at, label, value, pins, holes, turn, color, model, size } = validated.value;
   const { type, variant, problem } = splitPartType(validated.value.type);
   if (problem) return { ok: false as const, error: fenceError(`部品 ${safeToken(id)}: ${problem}`, line) };
   // 基板の色は 1 行の記法と同じ読み方 (`readPlateColor`)。型番は値かラベルに書かれている。
@@ -516,7 +516,7 @@ function expandPart(id: string, raw: unknown, line: number) {
     value: {
       id, type, written: validated.value.type, variant,
       // マップ形式は `@` を書かない (項目で書く形なので)。
-      holes: holes.map(parseHoleToken), turn, value, label, at, pins, color, model,
+      holes: holes.map(parseHoleToken), turn, value, label, at, pins, color, model, size,
       anchored: false, labelTagged: false, block: true, line,
     } satisfies PartSpec,
     // 「描けたが使われなかった指定」はお知らせ。部品そのものは今までどおり描く。

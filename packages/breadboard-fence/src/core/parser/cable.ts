@@ -14,5 +14,5 @@ export function validateCable(id: string, raw: Record<string, unknown>, line: nu
   const read = readUsbCable(raw, safeToken);
   if (!read.ok) return read;
   const label = read.label === null ? null : clampText(read.label, LIMITS.labelLength);
-  return { ok: true, value: { id, partId: read.partId, far: read.far, label, line } };
+  return { ok: true, value: { id, partId: read.partId, far: read.far, label, size: read.size, line } };
 }

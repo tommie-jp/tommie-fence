@@ -52,7 +52,7 @@ const pinSpacingOf = (part: PlacedPart, scale: number): number => {
 /** 機器の幅。**姿のある機器 (Debug Probe) は実寸の幅**、ほかは名前とピンの数から。 */
 const widthOf = (part: PlacedPart, scale: number): number => {
   const look = deviceLookOf(part.model ?? null);
-  return look === null ? boxWidthOf(part, scale) : lookSize(look, PX_PER_MM).width;
+  return look === null ? boxWidthOf(part, scale) : lookSize(look, PX_PER_MM, part.size ?? undefined).width;
 };
 
 /** 帯の高さ。姿のある機器があれば、その実寸の高さまで伸ばす (箱は既定の高さのまま)。 */
@@ -61,7 +61,7 @@ export function deviceBandHeight(devices: readonly PlacedPart[], side: 'top' | '
     .filter((device) => (device.at ?? 'top') === side)
     .reduce((most, device) => {
       const look = deviceLookOf(device.model ?? null);
-      return look === null ? most : Math.max(most, lookSize(look, PX_PER_MM).height);
+      return look === null ? most : Math.max(most, lookSize(look, PX_PER_MM, device.size ?? undefined).height);
     }, DEVICE_HEIGHT);
 }
 
@@ -123,14 +123,14 @@ export function layoutDevices(
       const rightmost = band.x + band.width - width - rest;
       const x = Math.min(Math.max(wanted, cursor), Math.max(rightmost, cursor));
       // 背の高さ: 姿は実寸、箱は既定の高さ。どちらも基板の側の縁を帯の縁にそろえる (ピンの先がそろう)。
-      const height = look === null ? Math.min(band.height, DEVICE_HEIGHT) : lookSize(look, PX_PER_MM).height;
+      const height = look === null ? Math.min(band.height, DEVICE_HEIGHT) : lookSize(look, PX_PER_MM, device.size ?? undefined).height;
       const rect: Rect = { x, y: side === 'top' ? band.y + band.height - height : band.y, width, height };
       const edgeY = side === 'top' ? rect.y + rect.height : rect.y;
       const pinY = side === 'top' ? edgeY + PIN_LENGTH : edgeY - PIN_LENGTH;
 
       // 姿のある機器は、ピンの x を姿の口の位置から取る (書いたピンの数に依らない)。
       const pinX = (name: string, pinIndex: number): number =>
-        (look === null ? null : lookPinX(look, name, rect, side, PX_PER_MM))
+        (look === null ? null : lookPinX(look, name, rect, side, PX_PER_MM, device.size ?? undefined))
         ?? rect.x + (rect.width * (pinIndex + 0.5)) / device.pins.length;
       placements.set(device.id, {
         rect,
@@ -159,7 +159,9 @@ export function renderDevice(part: PlacedPart, placement: DevicePlacement, theme
   const look = deviceLookOf(part.model ?? null);
   if (look !== null) {
     const pins = part.pins.map((pin) => ({ name: pin.name, text: deviceSilk(part.model ?? null, pin.name) }));
-    const body = drawDeviceLook(look, { rect, side, label: captionOf(part), scale, pxPerMm: PX_PER_MM, pins, pinFont: scale * PIN_FONT });
+    const body = drawDeviceLook(look, {
+      rect, side, label: captionOf(part), scale, pxPerMm: PX_PER_MM, pins, pinFont: scale * PIN_FONT, ...(part.size ? { size: part.size } : {}),
+    });
     const stubs = part.pins.map((pin) => {
       const point = placement.pins.get(pin.name);
       return point === undefined ? '' : stubOf(point);

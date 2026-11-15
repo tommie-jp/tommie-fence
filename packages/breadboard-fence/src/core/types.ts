@@ -1,4 +1,4 @@
-import type { UsbKind } from 'fence-kit';
+import type { PartSize, UsbKind } from 'fence-kit';
 import type { PartRatings } from 'fence-kit';
 import type { Lang } from 'fence-kit';
 import type { Turn } from './parts/orient.ts';
@@ -159,6 +159,8 @@ export type PartSpec = {
   readonly color?: string | null;
   /** 機器の型番 (`model:`、表の代表の綴り)。機器だけが持つ。 */
   readonly model?: string | null;
+  /** 姿の大きさ (`size:`)。姿のある機器だけが持つ。書かなければ null (既定の medium)。 */
+  readonly size?: PartSize | null;
   /** 名札の置き場所 (`cap=above`)。書かなければ null で、今までどおり自動で胴の下に置く。 */
   readonly caption?: CaptionSpec | null;
   /** 胴を半穴ずらす向き (`shift=down`)。2 ピンの部品だけ。 */
@@ -314,6 +316,8 @@ export type CableSpec = {
   /** 向こうの端の差し込みの種類。 */
   readonly far: UsbKind;
   readonly label: string | null;
+  /** 大きさ (`size:`)。書かなければ medium。 */
+  readonly size: PartSize;
   readonly line: number;
 };
 
@@ -377,6 +381,8 @@ export type PlacedPart = {
   readonly color?: string | null;
   /** 機器の型番 (表の代表の綴り)。姿・刷る字・線の既定の色を引く。 */
   readonly model?: string | null;
+  /** 姿の大きさ。書かなければ null (既定の medium)。 */
+  readonly size?: PartSize | null;
   /** 書いて決めた名札の置き場所。無ければ自動 (`render/captions.ts`)。 */
   readonly caption?: CaptionSpec | null;
   /** 胴を半穴ずらす向き (2 ピンだけ)。 */

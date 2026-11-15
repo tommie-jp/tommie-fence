@@ -1,4 +1,5 @@
-import { deviceProductName, resolveDeviceModel } from 'fence-kit';
+import { deviceLookOf, deviceProductName, lookupPartSize, partSizes, resolveDeviceModel } from 'fence-kit';
+import type { PartSize } from 'fence-kit';
 import { safeToken } from '../errors.ts';
 import { LIMITS, clampText, isPinName } from '../limits.ts';
 import { NO_TURN, TURN_WORD, refusalFor } from '../parts/orient.ts';
@@ -21,6 +22,8 @@ export type ExpandedPart = {
   readonly color: string | null;
   /** 機器の型番 (表の代表の綴り)。姿・刷る字・線の既定の色を表から引くのに使う。 */
   readonly model: string | null;
+  /** 姿の大きさ (`size:`)。書かなければ null。 */
+  readonly size: PartSize | null;
 };
 
 /**
@@ -31,7 +34,7 @@ export type Validation =
   | { readonly ok: true; readonly value: ExpandedPart; readonly notes: readonly string[] }
   | { readonly ok: false; readonly message: string };
 
-const KNOWN_KEYS = ['type', 'at', 'label', 'value', 'model', 'pins', 'holes', 'turn', 'color'] as const;
+const KNOWN_KEYS = ['type', 'at', 'label', 'value', 'model', 'pins', 'holes', 'turn', 'color', 'size'] as const;
 
 const invalid = (message: string): Validation => ({ ok: false, message });
 
@@ -97,6 +100,13 @@ export function validateExpandedPart(raw: unknown): Validation {
   const resolved = model === null ? null : resolveDeviceModel(model, pins);
   if (resolved !== null && !resolved.ok) return invalid(resolved.message);
   const devicePins = resolved === null ? pins : resolved.names;
+  // **姿の大きさ (`size:`)。** 姿のある機器 (Debug Probe) にだけ書ける。
+  const sizeText = raw.size === undefined ? null : asText(raw.size);
+  const size = sizeText === null ? null : lookupPartSize(sizeText);
+  if (raw.size !== undefined && size === null) return invalid(`size は ${partSizes().join(' / ')} のどれかです`);
+  if (size !== null && (resolved === null || deviceLookOf(resolved.model) === null)) {
+    return invalid('size は姿のある機器 (model: RPI-DEBUG-PROBE) と USB ケーブルにだけ書けます');
+  }
   // `label:` を書かなければ名札は製品の正式名称 (表に無ければ型番)。
   const deviceLabel = label ?? (resolved === null ? null : deviceProductName(resolved.model) ?? resolved.model);
 
@@ -147,6 +157,7 @@ export function validateExpandedPart(raw: unknown): Validation {
       turn,
       color,
       model: resolved === null ? null : resolved.model,
+      size,
     },
   };
 }

@@ -40,29 +40,71 @@ export type UsbPort = {
 };
 
 /**
- * Debug Probe の寸法 (mm)。**寸法図 RP-008192-DS** から: 基板 32 × 22 mm、USB の口 (micro-B) は短辺の真ん中で
+ * 姿とケーブルの大きさ (`size:`)。**既定は `medium`** (52 の docs/157)。
+ * - `large`: 実寸 (図が大きくなる)
+ * - `medium`: 口とコネクタは実寸、全体 (基板・ケース・差し込みの胴の長さ) は小さくする
+ * - `small`: 口とコネクタも実寸より小さくし、全体も小さくする
+ */
+export type PartSize = 'large' | 'medium' | 'small';
+export const DEFAULT_PART_SIZE: PartSize = 'medium';
+export const partSizes = (): readonly PartSize[] => ['large', 'medium', 'small'];
+/** 綴りから大きさを引く。知らない綴りは null。 */
+export const lookupPartSize = (written: string): PartSize | null => {
+  const key = written.trim().toLowerCase();
+  return (partSizes() as readonly string[]).includes(key) ? key as PartSize : null;
+};
+
+/** Debug Probe の寸法 (mm)。大きさごとに 1 組。位置は上の帯の向き (USB が上) で、ケースの左上からの mm。 */
+type ProbeGeometry = {
+  readonly boardShort: number; readonly boardLong: number;
+  /** ケースが基板の縁から外へ出る量 (左右と上下)。 */
+  readonly caseSide: number; readonly caseEnd: number;
+  readonly usbWidth: number; readonly usbDepth: number; readonly usbJut: number;
+  /** 3 ピンの口: 基板の真ん中の線からの隔たり・口の中のピンの間・胴の幅と奥行き。 */
+  readonly portOffset: number; readonly pinStep: number; readonly housingWidth: number; readonly housingDepth: number;
+  /** LED の列 (左端・上下の位置・間・大きさ) と名前の高さ (ケースの上の縁から)。 */
+  readonly ledLeft: number; readonly ledTop: number; readonly ledStep: number; readonly ledWidth: number; readonly ledHeight: number;
+  readonly nameTop: number;
+  readonly corner: number;
+};
+
+/**
+ * `large` は実物の寸法。**寸法図 RP-008192-DS** から: 基板 32 × 22 mm、USB の口 (micro-B) は短辺の真ん中で
  * 基板の縁から 1.3 mm 出る。3 ピンの口 (JST SH の横挿し SM03B) は反対の短辺で、基板の真ん中の線から ±3.8 mm
  * (上の帯の向きで左が U、右が D)。口の中のピンは 1 mm 間隔 (3 ピンのデバッグコネクタの仕様 RP-003139-SP)。
  * ケースの外寸は 31 × 37 mm (**公式の値は無く、Elektor のレビューの実測**。基板の左右に 4.5 mm、上下に 2.5 mm ずつ)。
  */
-const MM = {
-  boardShort: 22, boardLong: 32,
+const LARGE: ProbeGeometry = {
+  boardShort: 22, boardLong: 32, caseSide: 4.5, caseEnd: 2.5,
   usbWidth: 7.5, usbDepth: 5.0, usbJut: 1.3,
   portOffset: 3.8, pinStep: 1.0, housingWidth: 5.8, housingDepth: 4.25,
-} as const;
-/** ケースが基板の縁から外へ出る量 (mm)。左右 (基板の短辺 22 mm の向き) と、上下 (USB と口の側)。 */
-const CASE_SIDE = 4.5;
-const CASE_END = 2.5;
+  ledLeft: 7, ledTop: 9, ledStep: 1.6, ledWidth: 1.0, ledHeight: 0.7, nameTop: 15.5, corner: 3.5,
+};
+/** `medium`: 口 (USB・3 ピン) は実寸のまま、基板を 18 × 24 mm、ケースを 21 × 27 mm に縮める。 */
+const MEDIUM: ProbeGeometry = {
+  ...LARGE, boardShort: 18, boardLong: 24, caseSide: 1.5, caseEnd: 1.5,
+  ledLeft: 3.5, ledTop: 7.3, nameTop: 11.5, corner: 2.5,
+};
+/** `small`: 口も 0.7 倍にし、基板を 13 × 17 mm、ケースを 15 × 19 mm に縮める。 */
+const SMALL_PORT = 0.7;
+const SMALL: ProbeGeometry = {
+  boardShort: 13, boardLong: 17, caseSide: 1, caseEnd: 1,
+  usbWidth: LARGE.usbWidth * SMALL_PORT, usbDepth: LARGE.usbDepth * SMALL_PORT, usbJut: LARGE.usbJut * SMALL_PORT,
+  portOffset: LARGE.portOffset * SMALL_PORT, pinStep: LARGE.pinStep * SMALL_PORT,
+  housingWidth: LARGE.housingWidth * SMALL_PORT, housingDepth: LARGE.housingDepth * SMALL_PORT,
+  ledLeft: 2.2, ledTop: 5, ledStep: 1.2, ledWidth: 0.8, ledHeight: 0.5, nameTop: 8.2, corner: 2,
+};
+const GEOMETRY: Readonly<Record<PartSize, ProbeGeometry>> = { large: LARGE, medium: MEDIUM, small: SMALL };
 
-/** 口ごとのピンの並び (上の帯で左から。1 番 = 橙・2 番 = 黒・3 番 = 黄。公式のケーブルの図の色の順)。値は口の真ん中からの mm。 */
-const PROBE_SLOTS: Readonly<Record<string, { readonly port: 'U' | 'D'; readonly offset: number }>> = {
-  TX: { port: 'U', offset: -MM.pinStep }, UGND: { port: 'U', offset: 0 }, RX: { port: 'U', offset: MM.pinStep },
-  SC: { port: 'D', offset: -MM.pinStep }, DGND: { port: 'D', offset: 0 }, SD: { port: 'D', offset: MM.pinStep },
+/** 口ごとのピンの並び (上の帯で左から。1 番 = 橙・2 番 = 黒・3 番 = 黄。公式のケーブルの図の色の順)。値はピンの間を単位にした口の真ん中からの隔たり。 */
+const PROBE_SLOTS: Readonly<Record<string, { readonly port: 'U' | 'D'; readonly step: number }>> = {
+  TX: { port: 'U', step: -1 }, UGND: { port: 'U', step: 0 }, RX: { port: 'U', step: 1 },
+  SC: { port: 'D', step: -1 }, DGND: { port: 'D', step: 0 }, SD: { port: 'D', step: 1 },
 };
 
 /** 口の真ん中 (上の帯の向きで、ケースの左の縁からの mm)。 */
-const portCentre = (port: 'U' | 'D'): number =>
-  CASE_SIDE + MM.boardShort / 2 + (port === 'U' ? -MM.portOffset : MM.portOffset);
+const portCentre = (g: ProbeGeometry, port: 'U' | 'D'): number =>
+  g.caseSide + g.boardShort / 2 + (port === 'U' ? -g.portOffset : g.portOffset);
 
 const CASE_FILL = '#eef0f2';
 const CASE_EDGE = '#9aa1a9';
@@ -79,27 +121,35 @@ const LEDS = ['#e5484d', '#3fb950', '#e3b341', '#3fb950', '#e3b341'] as const;
 /** 2.54 mm = 1 ピッチの図で、1 mm が何 px か。 */
 export const pxPerMmOf = (pitch: number): number => pitch / 2.54;
 
-/** 姿の幅と高さ (px)。**実寸** — 基板とケースの mm に `pxPerMm` を掛ける。 */
-export const lookSize = (_look: DeviceLookName, pxPerMm: number): { readonly width: number; readonly height: number } => ({
-  width: (MM.boardShort + 2 * CASE_SIDE) * pxPerMm,
-  height: (MM.boardLong + 2 * CASE_END) * pxPerMm,
-});
+/** 姿の幅と高さ (px)。基板とケースの mm に `pxPerMm` を掛ける。 */
+export const lookSize = (
+  _look: DeviceLookName, pxPerMm: number, size: PartSize = DEFAULT_PART_SIZE,
+): { readonly width: number; readonly height: number } => {
+  const g = GEOMETRY[size];
+  return { width: (g.boardShort + 2 * g.caseSide) * pxPerMm, height: (g.boardLong + 2 * g.caseEnd) * pxPerMm };
+};
 
 /**
  * ピンの x (px)。**どのピンを書いたかに依らず、口の中の位置は実物で決まる**。
  * 姿に無いピンは null (表のピンだけが書けるので、来ない)。
  */
-export function lookPinX(_look: DeviceLookName, pin: string, rect: LookRect, side: 'top' | 'bottom', pxPerMm: number): number | null {
+export function lookPinX(
+  _look: DeviceLookName, pin: string, rect: LookRect, side: 'top' | 'bottom', pxPerMm: number, size: PartSize = DEFAULT_PART_SIZE,
+): number | null {
   if (!Object.hasOwn(PROBE_SLOTS, pin)) return null;
   const slot = PROBE_SLOTS[pin];
   if (slot === undefined) return null;
-  const mm = portCentre(slot.port) + slot.offset;
+  const g = GEOMETRY[size];
+  const mm = portCentre(g, slot.port) + slot.step * g.pinStep;
   return side === 'top' ? rect.x + mm * pxPerMm : rect.x + rect.width - mm * pxPerMm;
 }
 
 /** 機器の USB の口 (基板の側と反対の辺の真ん中。差し込みが入る縁)。 */
-export function lookUsbPort(_look: DeviceLookName, rect: LookRect, side: 'top' | 'bottom', pxPerMm: number): UsbPort {
-  const mouth = (CASE_END - MM.usbJut) * pxPerMm;
+export function lookUsbPort(
+  _look: DeviceLookName, rect: LookRect, side: 'top' | 'bottom', pxPerMm: number, size: PartSize = DEFAULT_PART_SIZE,
+): UsbPort {
+  const g = GEOMETRY[size];
+  const mouth = (g.caseEnd - g.usbJut) * pxPerMm;
   return side === 'top'
     ? { x: rect.x + rect.width / 2, y: rect.y + mouth, dir: 'up', kind: 'micro-b' }
     : { x: rect.x + rect.width / 2, y: rect.y + rect.height - mouth, dir: 'down', kind: 'micro-b' };
@@ -112,6 +162,8 @@ export type LookOptions = {
   readonly label: string;
   readonly scale: number;
   readonly pxPerMm: number;
+  /** 大きさ。書かなければ `medium`。 */
+  readonly size?: PartSize;
   /** ピンの名前の字の大きさ (px)。**ほかの機器のピンの名前と同じ大きさ**を渡す。 */
   readonly pinFont: number;
   /** 書いたピン (配線の名前) と、刷る字 (`UGND` なら GND)。名前は姿が口の上に縦に刷る。 */
@@ -119,12 +171,16 @@ export type LookOptions = {
 };
 
 /**
- * Debug Probe の姿を**実寸で**描く。ケース (半透明の白) の中に緑の基板、USB の口 (外の辺)、3 ピンの口 2 つ
+ * Debug Probe の姿を描く。ケース (半透明の白) の中に緑の基板、USB の口 (外の辺)、3 ピンの口 2 つ
  * (基板の側の辺) と `U` `D` の字、LED 5 つ、名前。**ピンの名前も姿が描く** — 口の中のピンは 1 mm 間隔なので、
  * 名前は口の上に縦に刷る。ピンの足 (帯の外へ出る短い線) は呼ぶ側が描く。
  */
 export function drawDeviceLook(_look: DeviceLookName, options: LookOptions): string {
-  const { rect, side, label, scale, pxPerMm, pins, pinFont } = options;
+  const { rect, side, label, scale, pxPerMm, pins } = options;
+  const size = options.size ?? DEFAULT_PART_SIZE;
+  const g = GEOMETRY[size];
+  // `small` は口の中のピンの間が 0.7 mm なので、名前をその間に収まる大きさまで縮める (隣の名前と重ねない)。
+  const pinFont = size === 'small' ? Math.min(options.pinFont, g.pinStep * pxPerMm * 1.1) : options.pinFont;
   const top = side === 'top';
   const mm = (value: number): number => value * pxPerMm;
   // 上の帯の向き (USB が上、口が下) で mm を測り、下の帯では 180 度回す。
@@ -138,31 +194,31 @@ export function drawDeviceLook(_look: DeviceLookName, options: LookOptions): str
       ...attrs,
     });
   };
-  const centreX = CASE_SIDE + MM.boardShort / 2;
-  const boardBottom = CASE_END + MM.boardLong;
+  const centreX = g.caseSide + g.boardShort / 2;
+  const boardBottom = g.caseEnd + g.boardLong;
 
   const casing = element('rect', {
-    class: 'cf-look-case', x: num(rect.x), y: num(rect.y), width: num(rect.width), height: num(rect.height), rx: num(mm(3.5)),
+    class: 'cf-look-case', x: num(rect.x), y: num(rect.y), width: num(rect.width), height: num(rect.height), rx: num(mm(g.corner)),
     fill: CASE_FILL, stroke: CASE_EDGE, 'stroke-width': 1.5,
   });
-  const board = box(CASE_SIDE, CASE_END, MM.boardShort, MM.boardLong, {
+  const board = box(g.caseSide, g.caseEnd, g.boardShort, g.boardLong, {
     class: 'cf-look-board', rx: num(mm(1)), fill: BOARD_FILL, stroke: BOARD_EDGE,
   });
-  const usb = box(centreX - MM.usbWidth / 2, CASE_END - MM.usbJut, MM.usbWidth, MM.usbDepth, {
+  const usb = box(centreX - g.usbWidth / 2, g.caseEnd - g.usbJut, g.usbWidth, g.usbDepth, {
     rx: num(mm(0.5)), fill: METAL_FILL, stroke: METAL_EDGE,
   });
 
   const font = 8 * scale;
-  const housingTop = boardBottom - MM.housingDepth;
+  const housingTop = boardBottom - g.housingDepth;
   const ports = (['U', 'D'] as const).map((port) => {
-    const centre = portCentre(port);
-    const housing = box(centre - MM.housingWidth / 2, housingTop, MM.housingWidth, MM.housingDepth, {
+    const centre = portCentre(g, port);
+    const housing = box(centre - g.housingWidth / 2, housingTop, g.housingWidth, g.housingDepth, {
       rx: 1.5, fill: HOUSING_FILL, stroke: HOUSING_EDGE,
     });
     // ピンの金物: 口の奥からケースの縁まで (線はケースの外で足に続く)。
     const leads = [-1, 0, 1].map((step) => {
-      const x = px(centre + step * MM.pinStep);
-      return element('line', { x1: num(x), y1: num(py(housingTop + 1)), x2: num(x), y2: num(py(boardBottom + CASE_END)), stroke: METAL_EDGE, 'stroke-width': 1.2 });
+      const x = px(centre + step * g.pinStep);
+      return element('line', { x1: num(x), y1: num(py(housingTop + g.housingDepth * 0.25)), x2: num(x), y2: num(py(boardBottom + g.caseEnd)), stroke: METAL_EDGE, 'stroke-width': 1.2 });
     }).join('');
     // 口の字は口の上 (ピンの名前のさらに上)。
     const mark = svgText(px(centre), py(housingTop - 1.2) - (top ? 1 : -1) * (pinFont * 2.2 + font * 0.6) + font * 0.4, port, { 'font-size': num(font * 1.15), 'font-weight': 'bold', fill: SILK });
@@ -172,7 +228,7 @@ export function drawDeviceLook(_look: DeviceLookName, options: LookOptions): str
   const names = pins.flatMap((pin) => {
     const slot = Object.hasOwn(PROBE_SLOTS, pin.name) ? PROBE_SLOTS[pin.name] : undefined;
     if (slot === undefined) return [];
-    const x = px(portCentre(slot.port) + slot.offset);
+    const x = px(portCentre(g, slot.port) + slot.step * g.pinStep);
     const y = py(housingTop - 0.6);
     const anchor = top ? 'start' : 'end';
     return [element('g', { transform: `translate(${num(x + pinFont * 0.35)} ${num(y)}) rotate(-90)` },
@@ -180,10 +236,10 @@ export function drawDeviceLook(_look: DeviceLookName, options: LookOptions): str
   }).join('');
 
   const leds = LEDS.map((fill, index) =>
-    box(CASE_SIDE + 2.5 + index * 1.6, CASE_END + 6.5, 1.0, 0.7, { fill, stroke: '#1d2b22', 'stroke-width': 0.5 })).join('');
+    box(g.ledLeft + index * g.ledStep, g.ledTop, g.ledWidth, g.ledHeight, { fill, stroke: '#1d2b22', 'stroke-width': 0.5 })).join('');
   // 名前は基板の幅に収める (字幅は字の大きさの 0.6 倍で見積もる)。
-  const nameSize = Math.min(font * 1.2, mm(MM.boardShort - 2) / Math.max(1, label.length * 0.6));
-  const name = svgText(px(centreX), py(CASE_END + 13) + nameSize * 0.35, label, { 'font-size': num(nameSize), fill: SILK });
+  const nameSize = Math.min(font * 1.2, mm(g.boardShort - 2) / Math.max(1, label.length * 0.6));
+  const name = svgText(px(centreX), py(g.nameTop) + nameSize * 0.35, label, { 'font-size': num(nameSize), fill: SILK });
 
   // USB の口はケースの開口から見えるので、ケースと基板より上に描く。
   return `${casing}${board}${usb}${leds}${name}${ports}${names}`;

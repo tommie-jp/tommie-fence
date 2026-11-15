@@ -1,4 +1,4 @@
-import { deviceProductName, resolveDeviceModel } from 'fence-kit';
+import { deviceLookOf, deviceProductName, lookupPartSize, partSizes, resolveDeviceModel } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS, clampText, isPinName, isReferenceable } from '../limits.ts';
 import { isAddressSpelling } from '../model/address.ts';
@@ -13,7 +13,7 @@ import type { Parsed } from './parts.ts';
  */
 
 const SIDES: readonly DeviceSide[] = ['top', 'bottom'];
-const KEYS = ['type', 'at', 'label', 'model', 'pins'] as const;
+const KEYS = ['type', 'at', 'label', 'model', 'pins', 'size'] as const;
 
 const fail = (message: string, token?: string): Parsed<never> =>
   ({ ok: false, error: fenceError(message, null, token) });
@@ -91,6 +91,16 @@ export function parseDevice(id: string, entries: Record<string, unknown>): Parse
     names.push(name);
   }
 
+  // **姿の大きさ (`size:`)。** 帯に並べる姿のある機器 (Debug Probe) にだけ書ける。
+  const resolvedModel = fromModel === null || !fromModel.ok ? null : fromModel.model;
+  const size = entries.size === undefined ? null : typeof entries.size === 'string' ? lookupPartSize(entries.size) : null;
+  if (entries.size !== undefined && size === null) {
+    return fail(`${safeToken(id)} の size は ${partSizes().join(' / ')} のどれかです`, String(entries.size));
+  }
+  if (size !== null && deviceLookOf(resolvedModel) === null) {
+    return fail(`${safeToken(id)}: size は姿のある機器 (model: RPI-DEBUG-PROBE) と USB ケーブルにだけ書けます`, String(entries.size));
+  }
+
   return {
     ok: true,
     value: {
@@ -100,7 +110,8 @@ export function parseDevice(id: string, entries: Record<string, unknown>): Parse
       where,
       label: clampText(label, LIMITS.labelLength),
       pins: names,
-      model: fromModel === null || !fromModel.ok ? null : fromModel.model,
+      model: resolvedModel,
+      size,
       line: null,
     },
   };

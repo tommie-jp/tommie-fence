@@ -8,7 +8,7 @@ describe('parseDevice', () => {
     const result = read({ type: 'device', at: 'bottom', label: '電池 3V', pins: ['+', '-'] });
 
     expect(result.ok && result.value).toEqual({
-      id: 'BAT', at: 'bottom', where: null, label: '電池 3V', pins: ['+', '-'], model: null, line: null,
+      id: 'BAT', at: 'bottom', where: null, label: '電池 3V', pins: ['+', '-'], model: null, size: null, line: null,
     });
   });
 

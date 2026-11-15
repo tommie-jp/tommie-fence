@@ -336,7 +336,7 @@ function readFence(source: string): ParseResult {
           const cable = readUsbCable(entries, safeToken);
           if (cable.ok) {
             const label = cable.label === null ? null : clampText(cable.label, LIMITS.labelLength);
-            cables.push({ id, partId: cable.partId, far: cable.far, label, line });
+            cables.push({ id, partId: cable.partId, far: cable.far, label, size: cable.size, line });
           } else errors.push(fenceError(`${safeToken(id)}: ${cable.message}`, line, cable.token));
           continue;
         }

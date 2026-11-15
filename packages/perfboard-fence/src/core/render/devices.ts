@@ -65,7 +65,7 @@ const CRAMPED = PIN_GAP / 2;
 const boxWidth = (device: DeviceSpec, inBand = false): number => {
   // 姿のある機器 (Debug Probe) は姿の幅。帯に並べたときだけ姿で描く (番地で置けばピンは穴の格子に載る箱)。
   const look = inBand ? deviceLookOf(device.model ?? null) : null;
-  if (look !== null) return lookSize(look, PX_PER_MM).width;
+  if (look !== null) return lookSize(look, PX_PER_MM, device.size ?? undefined).width;
   const widest = device.pins.reduce((most, name) => Math.max(most, pinNameWidth(name)), 0);
   const pitch = Math.max(PIN_GAP, widest * PIN_NAME_SIZE + PIN_NAME_GAP);
   // 帯に並べたピンは箱の幅を (本数 + 1) で割った所に来るので、その間で名前が入るように。
@@ -107,7 +107,7 @@ export function deviceBandHeight(devices: readonly DeviceSpec[], side: DeviceSid
     .filter((device) => device.where === null && device.at === side)
     .reduce((most, device) => {
       const look = deviceLookOf(device.model ?? null);
-      return look === null ? most : Math.max(most, lookSize(look, PX_PER_MM).height + LEG + PIN_LABEL);
+      return look === null ? most : Math.max(most, lookSize(look, PX_PER_MM, device.size ?? undefined).height + LEG + PIN_LABEL);
     }, 0);
 }
 
@@ -189,7 +189,7 @@ export function layoutDevices(devices: readonly DeviceSpec[], layout: Layout, sp
       // 姿のある機器は帯の高さを全部使う (ピンの名前は姿の中に刷るので、名前の段が要らない)。
       const look = deviceLookOf(device.model ?? null);
       // 姿は実寸。ピンの先 (基板の側) は箱の機器とそろえ、背は帯の外の側へ伸ばす (帯はそのぶん高い)。
-      const tall = look === null ? height : lookSize(look, PX_PER_MM).height;
+      const tall = look === null ? height : lookSize(look, PX_PER_MM, device.size ?? undefined).height;
       const tipLine = side === 'top' ? band.y + band.height - PIN_LABEL : band.y + PIN_LABEL;
       const box: Band = {
         x, y: side === 'top' ? tipLine - LEG - tall : tipLine + LEG, width, height: tall,
@@ -197,7 +197,7 @@ export function layoutDevices(devices: readonly DeviceSpec[], layout: Layout, sp
       const tip = side === 'top' ? box.y + box.height + LEG : box.y - LEG;
       const step = width / (device.pins.length + 1);
       const pinX = (name: string, pin: number): number =>
-        (look === null ? null : lookPinX(look, name, box, side, PX_PER_MM)) ?? box.x + step * (pin + 1);
+        (look === null ? null : lookPinX(look, name, box, side, PX_PER_MM, device.size ?? undefined)) ?? box.x + step * (pin + 1);
       const pins = new Map<string, Point>(
         device.pins.map((name, pin) => [name, { x: pinX(name, pin), y: tip }]),
       );
@@ -281,6 +281,7 @@ function renderLooked(placed: PlacedDevice, look: NonNullable<ReturnType<typeof 
   const scale = theme.metrics.textSize / 9;
   return drawDeviceLook(look, {
     rect: box, side: top ? 'top' : 'bottom', label: device.label, scale, pxPerMm: PX_PER_MM, pins, pinFont: theme.metrics.textSize,
+    ...(device.size ? { size: device.size } : {}),
   }) + legs;
 }
 

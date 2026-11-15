@@ -87,9 +87,10 @@ export {
   deviceLookOf, deviceProductName, deviceRole, deviceSilk, deviceWireColor, lookupModule, moduleModels, moduleTable, resolveDeviceModel,
 } from './parts/modules.ts';
 export {
-  USB_STAMP, drawDeviceLook, lookPinX, lookSize, lookUsbPort, lookupUsbKind, pxPerMmOf, usbKinds,
+  DEFAULT_PART_SIZE, USB_STAMP, drawDeviceLook, lookPinX, lookSize, lookUsbPort, lookupPartSize, lookupUsbKind, partSizes, pxPerMmOf,
+  usbKinds,
 } from './parts/deviceLooks.ts';
-export type { DeviceLookName, LookOptions, LookRect, UsbKind, UsbPort } from './parts/deviceLooks.ts';
+export type { DeviceLookName, LookOptions, LookRect, PartSize, UsbKind, UsbPort } from './parts/deviceLooks.ts';
 export {
   USB_CABLE_TYPE, drawUsbCable, readUsbCable, usbCableBox, usbCableListValue, usbCableMinLength,
 } from './parts/usbCable.ts';

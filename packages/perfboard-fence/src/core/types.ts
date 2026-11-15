@@ -1,4 +1,4 @@
-import type { UsbKind } from 'fence-kit';
+import type { PartSize, UsbKind } from 'fence-kit';
 import type { PartRatings } from 'fence-kit';
 import type { Lang } from 'fence-kit';
 import { THEME_NAMES } from './limits.ts';
@@ -174,6 +174,8 @@ export type DeviceSpec = {
   readonly pins: readonly string[];
   /** 機器の型番 (`model:`、表の代表の綴り)。姿・刷る字・線の既定の色を表から引く。書かなければ null。 */
   readonly model?: string | null;
+  /** 姿の大きさ (`size:`)。姿のある機器だけ。書かなければ null (既定の medium)。 */
+  readonly size?: PartSize | null;
   /** 書かれていた行。ERC のお知らせを書いた場所に返すために持つ。 */
   readonly line: number | null;
 };
@@ -354,5 +356,7 @@ export type CableSpec = {
   /** 向こうの端の差し込みの種類。 */
   readonly far: UsbKind;
   readonly label: string | null;
+  /** 大きさ (`size:`)。書かなければ medium。 */
+  readonly size: PartSize;
   readonly line: number | null;
 };

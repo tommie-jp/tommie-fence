@@ -23,6 +23,7 @@ describe('validateExpandedPart', () => {
       holes: [],
       color: null,
       model: null,
+      size: null,
     });
   });
 

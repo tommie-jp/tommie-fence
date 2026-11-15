@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Debug Probe (`model: RPI-DEBUG-PROBE`) と USB ケーブル (`type: usb-cable`) に `size: large | medium | small` を書ける。**既定は `medium`** (口とコネクタは実寸、全体は小さく)。前の版の実寸の姿は `size: large`
+
 ## [0.71.1] - 2026-11-15
 
 ### Fixed

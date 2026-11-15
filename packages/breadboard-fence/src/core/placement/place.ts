@@ -302,6 +302,7 @@ function placePart(spec: PartSpec, board: Board): Result<PlacedPart> {
       kind: 'device',
       at: spec.at ?? 'top',
       model: spec.model ?? null,
+      size: spec.size ?? null,
       bridges: [],
       pins: spec.pins.map((name) => ({ name, address: null })),
     });

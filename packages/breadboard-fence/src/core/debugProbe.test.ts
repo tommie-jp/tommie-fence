@@ -86,3 +86,34 @@ describe('USB ケーブル', () => {
     expect(errors.map((one) => one.message).join('\n')).toContain('二重');
   });
 });
+
+describe('大きさ (size:)', () => {
+  const width = (source: string): number => Number(/viewBox="0 0 ([\d.]+) [\d.]+"/.exec(renderBreadboard(source).svg)?.[1]);
+  const height = (source: string): number => Number(/viewBox="0 0 [\d.]+ ([\d.]+)"/.exec(renderBreadboard(source).svg)?.[1]);
+  const withSize = (size: string): string => fence('parts-list: none', 'parts:', ...probe(), `    size: ${size}`);
+
+  test('makes the band taller as the probe grows: small < medium (the default) < large', () => {
+    const small = height(withSize('small'));
+    const medium = height(fence('parts-list: none', 'parts:', ...probe()));
+    expect(height(withSize('medium'))).toBe(medium);
+    expect(small).toBeLessThan(medium);
+    expect(medium).toBeLessThan(height(withSize('large')));
+    expect(width(withSize('large'))).toBeGreaterThan(0);
+  });
+
+  test('shortens the cable out of the probe as the size goes down', () => {
+    const cable = (size: string): number => height(fence('parts-list: none', 'parts:', ...probe(),
+      '  W1:', '    type: usb-cable', '    from: PROBE.USB', `    size: ${size}`));
+    expect(cable('small')).toBeLessThan(cable('medium'));
+    expect(cable('medium')).toBeLessThan(cable('large'));
+  });
+
+  test.each([
+    [['  PROBE:', '    type: device', '    model: RPI-DEBUG-PROBE', '    size: huge'], 'size は large / medium / small'],
+    [['  BAT:', '    type: device', '    pins: [P, N]', '    size: small'], '姿のある機器'],
+    [['  MCU: pico2 @ h15', '  W1:', '    type: usb-cable', '    from: MCU.USB', '    size: tiny'], 'size: は large / medium / small'],
+  ])('refuses %j', (lines, message) => {
+    const { errors } = renderBreadboard(fence('parts:', ...lines));
+    expect(errors.map((one) => one.message).join('\n')).toContain(message);
+  });
+});

@@ -1141,12 +1141,12 @@ parts:
 | `NRF24L01+` (`NRF24L01` `NRF24L01P`) | `GND` `VCC` `CE` `CSN` `SCK` `MOSI` `MISO` `IRQ` | 2.4 GHz の無線モジュール (nRF24L01+、SPI)。PCB アンテナの小型品 (2 × 4 のピンヘッダ)。並びはピンの番号順 (1 番 GND は角パッド。奇数 1・3・5・7 と偶数 2・4・6・8 が 2 列に分かれ、列の間も 2.54 mm)。**2 列が 2.54 mm で隣り合うので、ブレッドボードに挿すと向かいのピンがつながる**。線でつなぐ。電源は 3.3 V (5 V は不可)。`CSN` は L で選ぶ |
 | `EC11` (`EC11E` `EC11E15244G1`) | `A` `C` `B` `D` `E` | ロータリーエンコーダ (押しスイッチつき)。Alps Alpine EC11E15244G1 (縦型、軸 20 mm、30 クリック 15 パルス、押しスイッチつき)。並びは取付面から見て: 一列に A・C・B (2.5 mm 間隔)、14.5 mm 離れた列に D・E (5 mm 間隔、D が A の側)。`A` `B` が 2 相の出力、`C` が共通。`D` `E` が押しスイッチ。**列の間 14.5 mm は 2.54 mm の格子に乗らない**ので、穴に挿す形は無い (挿せるのはモジュールの `KY-040`) |
 | `DRV8833-POLOLU` (`POLOLU-2130` `POLOLU2130`) | `GND` `VMM` `BIN1` `BIN2` `AIN2` `AIN1` `SLP` `FLT` `GND2` `VIN` `BOUT1` `BOUT2` `AOUT2` `AOUT1` `AISEN` `BISEN` | モータドライバ (DRV8833、2 回路の H ブリッジ)。Pololu 2130 (DRV8833 Dual Motor Driver Carrier、0.5 × 0.8 インチ)。並びは部品面を上にして、左の列を上から (GND〜FLT)、続けて右の列を上から (GND2〜BISEN)。2 列 × 8 本、列の間は 0.4 インチ = 10.16 mm (ブレッドボードの溝 0.3 インチより広い)。右の列の GND は `GND2` (基板の中で GND とつながる)。`SLP` (nSLEEP) は H で動く。`VIN` が電源の入力で、`VMM` は逆接保護を通した後 |
-| `RPI-DEBUG-PROBE` (`RASPBERRY-PI-DEBUG-PROBE`) | `TX` `UGND` `RX` `SC` `DGND` `SD` | デバッグプローブ (Raspberry Pi、SWD と UART)。Raspberry Pi Debug Probe (ケースと 3 種のケーブルつき。USB の口は micro-B)。並びはUSB を上、3 ピンの口を下にして上から見て: 左の口 U (左から TX・GND・RX)、右の口 D (左から SC・GND・SD)。名前は **Probe の側から見た名前** (`TX` は Probe から出る) なので、U の `TX` を相手の RX (Pico の GP1) へ、`RX` を相手の TX (GP0) へ。D の `SC` `GND` `SD` は Pico の SWCLK・GND・SWDIO へ。GND は 2 つあるので `UGND` `DGND` と呼び、図には GND と刷る。**線の色を書かなければ付属のケーブルの色** (橙 = TX・SC、黒 = GND、黄 = RX・SD)。I/O は 3.3 V。**帯に並べると箱ではなく実物の姿を実寸で描く** (ケース 31 × 37 mm。ロゴは描かない)。名札と部品表には正式名称 Raspberry Pi Debug Probe が出る |
+| `RPI-DEBUG-PROBE` (`RASPBERRY-PI-DEBUG-PROBE`) | `TX` `UGND` `RX` `SC` `DGND` `SD` | デバッグプローブ (Raspberry Pi、SWD と UART)。Raspberry Pi Debug Probe (ケースと 3 種のケーブルつき。USB の口は micro-B)。並びはUSB を上、3 ピンの口を下にして上から見て: 左の口 U (左から TX・GND・RX)、右の口 D (左から SC・GND・SD)。名前は **Probe の側から見た名前** (`TX` は Probe から出る) なので、U の `TX` を相手の RX (Pico の GP1) へ、`RX` を相手の TX (GP0) へ。D の `SC` `GND` `SD` は Pico の SWCLK・GND・SWDIO へ。GND は 2 つあるので `UGND` `DGND` と呼び、図には GND と刷る。**線の色を書かなければ付属のケーブルの色** (橙 = TX・SC、黒 = GND、黄 = RX・SD)。I/O は 3.3 V。**帯に並べると箱ではなく実物の姿で描く** (`size:` で large = 実寸・medium (既定)・small。ロゴは描かない)。名札と部品表には正式名称 Raspberry Pi Debug Probe が出る |
 
 ### Debug Probe (`RPI-DEBUG-PROBE`)
 
-Raspberry Pi Debug Probe は `model: RPI-DEBUG-PROBE` で置く。**帯に並べると箱ではなく実物の姿を実寸で**
-(半透明のケース・緑の基板・3 ピンの口 `U` `D`・LED・USB の口) 描き、**色を書かない線は付属のケーブルの色**になる
+Raspberry Pi Debug Probe は `model: RPI-DEBUG-PROBE` で置く。**帯に並べると箱ではなく実物の姿**
+(半透明のケース・緑の基板・3 ピンの口 `U` `D`・LED・USB の口) で描き、**色を書かない線は付属のケーブルの色**になる
 (橙 = `TX` `SC`、黒 = `UGND` `DGND`、黄 = `RX` `SD`。公式の文書のケーブルの色)。
 
 ```yaml
@@ -1168,8 +1168,15 @@ wires:
 - 口の中の並びは公式のケーブルの図の色の順 (1 番 = 橙・2 番 = 黒・3 番 = 黄。3 ピンのデバッグコネクタの仕様
   RP-003139-SP の 1 番 SC/TX・2 番 GND・3 番 SD/RX)。書いたピンの数に依らず、ピンは口の中の位置に出る
 - **下の帯では 180 度回した姿** (`U` が右・`D` が左になり、口の中の並びも逆)。線を交えたくなければ上の帯 (`at: top`) に置く
-- **実寸で描く**: 基板 22 × 32 mm と口の位置は寸法図 RP-008192-DS、ケース 31 × 37 mm は公式の値が無いのでレビュー記事の実測。
-  帯はケースの背の高さまで伸びる。口の中のピンは 1 mm 間隔なので、ピンの名前は口の上に縦に刷る
+- **大きさは `size:` で選ぶ** (書かなければ `medium`)。帯は姿の背の高さまで伸びる
+
+  | `size:` | 姿 |
+  | --- | --- |
+  | `large` | 実寸。基板 22 × 32 mm と口の位置は寸法図 RP-008192-DS、ケース 31 × 37 mm は公式の値が無いのでレビュー記事の実測 |
+  | `medium` (既定) | 口 (USB・3 ピンの口・ピンの間 1 mm) は実寸のまま、基板 18 × 24 mm・ケース 21 × 27 mm に縮める |
+  | `small` | 口も 0.7 倍にし、基板 13 × 17 mm・ケース 15 × 19 mm に縮める |
+
+- 口の中のピンは 1 mm 間隔なので、ピンの名前は口の上に縦に刷る (ほかの機器のピンの名前と同じ大きさ。`small` だけはピンの間に収まる大きさ)
 - `label:` を書かなければ名札は正式名称 (Raspberry Pi Debug Probe)。部品表の値の欄は、名札を書いても正式名称
 - **ラズベリーのロゴは描かない** —
   商標の決まりがロゴの再現を許していないため
@@ -1196,11 +1203,13 @@ parts:
 | `from:` | 挿す口 (`部品の ID.USB`)。口を持つのはマイコンボード (`pico` `pico2` ほか、`tang-nano-9k`) と、帯に並べた `model: RPI-DEBUG-PROBE` | 必須 |
 | `plug:` | 向こうの端 (パソコンや充電器の側) の差し込み。`usb-c` `usb-a` `micro-b` | `usb-c` |
 | `label:` | 部品表の値の欄に出す字 | `USB-C – micro-B` のように両端の種類 |
+| `size:` | 差し込みの大きさ。`large` (実寸)・`medium` (金物と胴の幅は実寸、胴を短く)・`small` (金物も胴も小さく) | `medium` |
 
 - **手前の差し込みの種類は書かない** — 口の種類で決まる (Pico は micro-B、Tang Nano 9K は USB-C)。口と合わない差し込みを書き間違えないため
 - マイコンボードの口からは基板の縁の外まで、Debug Probe の口からは帯の外 (基板と反対の向き) へ伸ばし、そのぶん画布を広げる
-- **差し込みとケーブルは実寸** (micro-B の胴 10.6 × 25.6 mm、USB-C 12.2 × 35 mm、USB-A 15.7 × 36 mm、金物は USB-IF の規格書の値、ケーブルの太さ 3.8 mm)。
-  マイコンボードの USB の口も実寸 (Pico は幅 7.5 mm、基板の縁から 1.3 mm 出る)
+- `size: large` の差し込みとケーブルは実寸 (micro-B の胴 10.6 × 25.6 mm、USB-C 12.2 × 35 mm、USB-A 15.7 × 36 mm、金物は USB-IF の規格書の値、ケーブルの太さ 3.8 mm)。
+  `medium` は胴の長さを 0.45 倍、`small` は金物と胴の幅を 0.6 倍・胴の長さを 0.3 倍にする。
+  マイコンボードの USB の口は `size:` に依らず実寸 (Pico は幅 7.5 mm、基板の縁から 1.3 mm 出る)
 - 向こうの端の相手 (パソコン) は描かない。ケーブルどうしや機器どうしを結ぶ書き方 (`to:`) はまだ無い
 - 中の 4 本は書かないので、ネットリストには入らない
 - マイコンボードの口の脇には、ケーブルを描かなくても口の種類 (`micro-B` `USB-C`) を刷る
