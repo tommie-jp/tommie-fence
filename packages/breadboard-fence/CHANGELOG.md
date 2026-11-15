@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.70.0] - 2026-11-15
+
 ### Added
 
 - 部品カード (`*.part.yaml`) の型番を描ける。`renderBreadboard` `scenesOfBreadboard` の `cards`、`createBreadboardEditor({ cards })`、プレビューの plugin の 2 つめの引数で渡す

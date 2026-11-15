@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.45.0] - 2026-11-15
+
 ### Added
 
 - 部品カード (`*.part.yaml`) の本体 (`parts/cards/`)。YAML を読んだ後の値を検める `readCard` (欄・姿・本数・ピンの名前の決まり。`source:` の無いカードは読まない)、表を組む `buildCardTable` (同梱の型番と重なれば同梱が勝ち、知らせる)、描いている間だけカードの表を有効にする `withCards` `withCardsUsed`、殻の全部の操作を包む `editorWithCards`

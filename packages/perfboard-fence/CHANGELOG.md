@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.67.0] - 2026-11-15
+
 ### Added
 
 - 部品カード (`*.part.yaml`) の型番を描ける。`renderPerfboard` `scenesOfPerfboard` の `cards`、`createPerfboardEditor({ cards })`、プレビューの plugin の 2 つめの引数で渡す

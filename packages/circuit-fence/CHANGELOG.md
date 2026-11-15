@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.52.0] - 2026-11-15
+
 ### Added
 
 - 部品カード (`*.part.yaml`) の型番を描ける。`compileCircuit` の `cards`、`scenesOfCircuit` と `pinProbe` の引数、`createCircuitEditor(look, { cards })`、`circuitPlugin(figures, cards)` で渡す。回路図の `ic` の箱はカードの `ic:` の割り振りで描く
