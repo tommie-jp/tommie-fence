@@ -1,7 +1,7 @@
 import { escapeMarkup, normalizeNewlines } from 'fence-kit';
 import type { IssueRow } from 'fence-kit';
 import { errorLine, sourceRows } from '../render/errorText.ts';
-import { renderPerfboard } from '../index.ts';
+import { drawnForEdit } from './drawn.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { resolveStyle } from '../render/theme.ts';
 import type { FenceError } from '../types.ts';
@@ -59,7 +59,7 @@ const shift = (fenceLine: number) => (error: FenceError): FenceError =>
  * 置いたその場で直す間違いで、中間状態ではない。
  */
 export function issuesOf(source: string, fenceLine = 0): readonly IssueRow[] {
-  const { errors, notices } = renderPerfboard(source);
+  const { errors, notices } = drawnForEdit(source);
   const at = shift(fenceLine);
   const shown = showsNotices(source) ? notices : [];
 
@@ -71,7 +71,7 @@ export function issuesOf(source: string, fenceLine = 0): readonly IssueRow[] {
  * 畳むので、`issuesOf` とは別に取り出す。`style: check: off` の図では空。
  */
 export function ercOf(source: string, fenceLine = 0): readonly IssueRow[] {
-  return renderPerfboard(source).erc.map(shift(fenceLine)).map(rowOf('erc'));
+  return drawnForEdit(source).erc.map(shift(fenceLine)).map(rowOf('erc'));
 }
 
 /** Problems の 1 行。**文面は本文だけ** — 行も出どころも Problems が別の欄に出す。 */
@@ -87,7 +87,7 @@ const problemOf = (kind: IssueRow['kind']) => (error: FenceError): IssueRow => (
  * (帯は `issuesOf` と `ercOf` で 2 回描いている)。
  */
 export function problemsOf(source: string, fenceLine: number, want: { readonly erc: boolean }): readonly IssueRow[] {
-  const { errors, notices, erc } = renderPerfboard(source);
+  const { errors, notices, erc } = drawnForEdit(source);
   const at = shift(fenceLine);
   const shown = showsNotices(source) ? notices : [];
 

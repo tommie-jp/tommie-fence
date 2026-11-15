@@ -20,7 +20,7 @@ import {
   setNoteField, turnNote,
 } from './note.ts';
 import { extractBreadboardFences } from '../fences.ts';
-import { renderBreadboard } from '../index.ts';
+import { drawnForEdit } from './drawn.ts';
 import { parseAddress, isCrossing } from '../model/address.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
@@ -71,7 +71,7 @@ function oneSheetEditor(): FenceEditor {
 
     view: (source, fenceLine) => ({
       // **図そのものが升目。** 掴む層は編集のときだけ重なる。
-      map: renderBreadboard(source, { edit: true }).svg,
+      map: drawnForEdit(source).svg,
       issues: renderIssues(issuesOf(source, fenceLine)),
     }),
     // ERC を持たないので `want` は見ない。

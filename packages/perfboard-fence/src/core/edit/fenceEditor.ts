@@ -19,7 +19,7 @@ import { deviceCells, deviceSpans, deviceTarget, isDevice, moveDevice } from './
 import { movePoint, nodeSpans } from './point.ts';
 import { deletePart, deleteWire } from './remove.ts';
 import { extractPerfboardFences } from '../fences.ts';
-import { renderPerfboard } from '../index.ts';
+import { drawnForEdit } from './drawn.ts';
 import { isCrossing, parseAddress } from '../model/address.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import type { Spelling } from '../types.ts';
@@ -78,7 +78,7 @@ function oneSheetEditor(): FenceEditor {
 
     view: (source, fenceLine) => ({
       // **図そのものが升目。** 掴む層は編集のときだけ重なる。
-      map: renderPerfboard(source, { edit: true }).svg,
+      map: drawnForEdit(source).svg,
       issues: renderIssues(issuesOf(source, fenceLine)),
       // **ERC は数えるだけで、広げるかは殻が決める** (帯の「検査 N」の釦)。
       erc: ercView(source, fenceLine),

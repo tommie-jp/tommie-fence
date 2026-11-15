@@ -1,7 +1,7 @@
 import { normalizeNewlines } from 'fence-kit';
 import { applyLineEdits } from 'fence-kit';
 import type { Edit, LineEdit, NetDiff } from 'fence-kit';
-import { renderPerfboard } from '../index.ts';
+import { drawnForEdit } from './drawn.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { applyEdits } from './shared.ts';
 
@@ -29,7 +29,7 @@ function connectionsOf(source: string): Set<string> {
   const named = new Set(doc.points.map((point) => point.name));
 
   const pairs = new Set<string>();
-  for (const net of renderPerfboard(source).netlist) {
+  for (const net of drawnForEdit(source).netlist) {
     const refs = [...net.refs, ...(named.has(net.name) ? [net.name] : [])].sort();
     for (let i = 0; i < refs.length; i += 1) {
       for (let j = i + 1; j < refs.length; j += 1) pairs.add(`${refs[i]}${SEPARATOR}${refs[j]}`);

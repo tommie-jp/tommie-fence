@@ -1,7 +1,7 @@
 import type { IssueRow } from 'fence-kit';
 import { escapeXml } from '../render/svg.ts';
 import { errorLine } from '../render/errorText.ts';
-import { renderBreadboard } from '../index.ts';
+import { drawnForEdit } from './drawn.ts';
 import { normalizeNewlines } from '../newlines.ts';
 import { parseFence } from '../parser/parseFence.ts';
 import { resolveStyle } from '../render/theme.ts';
@@ -61,7 +61,7 @@ const rowOf = (kind: IssueRow['kind']) => (error: FenceError): IssueRow => ({
  * 読めなかった行は伏せられない — 伏せると直せるはずの間違いに気づけなくなる。
  */
 export function issuesOf(source: string, fenceLine = 0): readonly IssueRow[] {
-  const { errors, notices } = renderBreadboard(source);
+  const { errors, notices } = drawnForEdit(source);
   const at = shift(fenceLine);
   const shown = showsNotices(source) ? notices : [];
 
@@ -81,7 +81,7 @@ const problemOf = (kind: IssueRow['kind']) => (error: FenceError): IssueRow => (
  * 頼まれても足すものが無い (列が最初から導通していて、繋ぎ忘れが目に留まる)。
  */
 export function problemsOf(source: string, fenceLine: number): readonly IssueRow[] {
-  const { errors, notices } = renderBreadboard(source);
+  const { errors, notices } = drawnForEdit(source);
   const at = shift(fenceLine);
   const shown = showsNotices(source) ? notices : [];
 
