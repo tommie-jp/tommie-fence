@@ -1,5 +1,5 @@
 import type { Layout } from '../model/layout.ts';
-import type { PlacedPart, Point, Rect } from '../types.ts';
+import type { DeviceSide, PlacedPart, Point, Rect } from '../types.ts';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
 import { element, num, svgText } from './svg.ts';
@@ -33,9 +33,22 @@ const STAGGER_LINE = 1.2;
 
 export type DevicePlacement = {
   readonly rect: Rect;
-  readonly side: 'top' | 'bottom';
+  readonly side: DeviceSide;
   readonly pins: ReadonlyMap<string, Point>;
 };
+
+/** 左右の帯に置いた機器か。 */
+export const isSideways = (side: DeviceSide | null | undefined): side is 'left' | 'right' =>
+  side === 'left' || side === 'right';
+
+// 左右の帯の箱 (52 の docs/159)。ピンは基板に向いた辺に縦に並べ、名前は箱の内側に横書きで刷る。
+/** 縦に並ぶピンの間 (穴 1 つぶん)。 */
+const SIDE_PIN_SPACING = PITCH;
+/** 箱の上の、名前を刷る段の高さ。 */
+const SIDE_LABEL_BAND = 30;
+const SIDE_MIN_WIDTH = 72;
+/** 左右の帯に並べる機器の間。 */
+const SIDE_GAP = 16;
 
 const captionOf = (part: PlacedPart): string => part.label ?? part.id;
 
@@ -65,6 +78,78 @@ export function deviceBandHeight(devices: readonly PlacedPart[], side: 'top' | '
     }, DEVICE_HEIGHT);
 }
 
+/** 左右の帯の箱の大きさ。幅は名前とピンの名前の長いほう、高さはピンの数から。 */
+function sideBoxOf(part: PlacedPart, scale: number): { readonly width: number; readonly height: number } {
+  const widestPin = part.pins.reduce((most, pin) => Math.max(most, pinNameWidth(pin.name) * scale * PIN_FONT), 0);
+  const width = Math.max(SIDE_MIN_WIDTH, captionOf(part).length * scale * CHAR_WIDTH + 20, widestPin + 2 * NAME_INSET + 12);
+  const height = Math.max(DEVICE_HEIGHT, SIDE_LABEL_BAND + part.pins.length * SIDE_PIN_SPACING);
+  return { width, height };
+}
+
+/** 左右の帯の幅 (その側に置く機器の箱の幅のいちばん広いもの。無ければ 0)。 */
+export function sideBandWidth(devices: readonly PlacedPart[], side: 'left' | 'right', scale: number): number {
+  return devices
+    .filter((device) => device.at === side)
+    .reduce((most, device) => Math.max(most, sideBoxOf(device, scale).width), 0);
+}
+
+/** 左右の帯の機器を上から詰めて並べる。ピンは基板に向いた辺に縦に並ぶ。 */
+function layoutSideDevices(
+  devices: readonly PlacedPart[], layout: Layout, scale: number, placements: Map<string, DevicePlacement>,
+): void {
+  for (const side of ['left', 'right'] as const) {
+    const band = layout.deviceBands[side];
+    if (!band) continue;
+    let cursor = band.y;
+    for (const device of devices.filter((one) => one.at === side)) {
+      const { width, height } = sideBoxOf(device, scale);
+      // 基板の側の縁を帯の縁にそろえる (ピンの先がそろう)。
+      const x = side === 'right' ? band.x : band.x + band.width - width;
+      const rect: Rect = { x, y: cursor, width, height };
+      const pinX = side === 'right' ? rect.x - PIN_LENGTH : rect.x + rect.width + PIN_LENGTH;
+      placements.set(device.id, {
+        rect,
+        side,
+        pins: new Map(device.pins.map((pin, index) => [
+          pin.name, { x: pinX, y: rect.y + SIDE_LABEL_BAND + (index + 0.5) * SIDE_PIN_SPACING },
+        ])),
+      });
+      cursor += height + SIDE_GAP;
+    }
+  }
+}
+
+/** 左右の帯の箱を描く。名前は上の段、ピンの名前は基板の側の縁に沿って横書き。 */
+function renderSideDevice(part: PlacedPart, placement: DevicePlacement, theme: RenderTheme): string {
+  const { rect, side } = placement;
+  const { palette } = theme;
+  const scale = textScale(theme);
+  const edgeX = side === 'right' ? rect.x : rect.x + rect.width;
+  const body = element('rect', {
+    x: num(rect.x), y: num(rect.y), width: num(rect.width), height: num(rect.height), rx: 6,
+    fill: palette.deviceBody, stroke: palette.deviceEdge,
+  }) + svgText(rect.x + rect.width / 2, rect.y + 20, captionOf(part), {
+    'font-size': num(scale * LABEL_FONT),
+    fill: palette.deviceText,
+  });
+  const pins = part.pins.map((pin) => {
+    const point = placement.pins.get(pin.name);
+    if (!point) return '';
+    const stub = element('line', {
+      x1: num(edgeX), y1: num(point.y), x2: num(point.x), y2: num(point.y),
+      stroke: palette.chipPin, 'stroke-width': 3,
+    });
+    const inward = side === 'right' ? 1 : -1;
+    const name = svgText(edgeX + inward * (NAME_INSET + 2), point.y + scale * PIN_FONT * 0.35, pin.name, {
+      'font-size': num(scale * PIN_FONT),
+      fill: palette.chipPin,
+      anchor: side === 'right' ? 'start' : 'end',
+    });
+    return stub + name;
+  }).join('');
+  return `${body}${pins}`;
+}
+
 const boxWidthOf = (part: PlacedPart, scale: number): number =>
   Math.max(part.pins.length * pinSpacingOf(part, scale), captionOf(part).length * scale * CHAR_WIDTH + 28, MIN_WIDTH);
 
@@ -80,6 +165,7 @@ export function layoutDevices(
 ): Map<string, DevicePlacement> {
   const fontScale = textScale(theme);
   const placements = new Map<string, DevicePlacement>();
+  layoutSideDevices(devices, layout, fontScale, placements);
 
   for (const side of ['top', 'bottom'] as const) {
     const band = layout.deviceBands[side];
@@ -145,6 +231,7 @@ export function layoutDevices(
 }
 
 export function renderDevice(part: PlacedPart, placement: DevicePlacement, theme: RenderTheme): string {
+  if (isSideways(placement.side)) return renderSideDevice(part, placement, theme);
   const { rect, side } = placement;
   const { palette } = theme;
   const scale = textScale(theme);

@@ -110,8 +110,11 @@ type RowGap = { readonly above: number; readonly below: number };
  * - 溝の向こうのブロック。どの部品のピンの名前か読めない
  */
 function rowGaps(layout: Layout, legY: number): RowGap[] {
-  const rows = BLOCKS[legY < layout.ravineY ? 0 : 1] ?? [];
-  const inBlock = rows.slice(1).map((row, index) => ({ above: layout.rowY(rows[index] ?? row), below: layout.rowY(row) }));
+  const tier = layout.tierAt(legY);
+  const rows = BLOCKS[legY < layout.ravineNear(legY) ? 0 : 1] ?? [];
+  const inBlock = rows.slice(1).map((row, index) => ({
+    above: layout.rowY(rows[index] ?? row, tier), below: layout.rowY(row, tier),
+  }));
   return inBlock
     .filter((gap) => gap.above > 0 && gap.below > gap.above)
     .sort((a, b) => a.above - b.above);
@@ -297,7 +300,7 @@ export function renderThreeLead(
 
   const { palette } = theme;
   const reach = bodyHalfHeight(part, layout);
-  const towardRavine = center.y < layout.ravineY ? 1 : -1;
+  const towardRavine = center.y < layout.ravineNear(center.y) ? 1 : -1;
 
   // **胴から離れたピンは線で胴へつなぐ** (`j14 j18 j22` のように広げて挿したとき)。
   // ピンの四角だけでは、どの穴が胴のピンか読めなかった。隣の穴 (1 ピッチ) のピンは今までどおり四角だけ。

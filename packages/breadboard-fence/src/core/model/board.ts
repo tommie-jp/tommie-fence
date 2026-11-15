@@ -46,6 +46,12 @@ export function railOrder(pattern: string): RailOrder | null {
  * 直す手は違うので、どちらなのかを言い分けないと手がかりにならない。
  */
 export function offBoardReason(board: Board, address: Address): string | null {
+  const tier = address.tier ?? 1;
+  if (tier > board.stack) {
+    return board.stack === 1
+      ? `${formatAddress(address)} は ${tier} 枚めの基板ですが、基板は 1 枚です (board の stack で継げます)`
+      : `${formatAddress(address)} は ${tier} 枚めの基板ですが、基板は ${board.stack} 枚です`;
+  }
   if (address.kind === 'rail' && board.rails === null) {
     return `${formatAddress(address)} は電源レールですが、このボードにレールはありません (board の rails で付けられます)`;
   }
@@ -64,8 +70,11 @@ export function isOnBoard(board: Board, address: Address): boolean {
  * 同じ列の a〜e (と f〜j) は内部でつながり、電源レールは 1 本まるごとつながる。
  */
 export function stripOf(address: Address): StripId {
-  if (address.kind === 'rail') return `rail:${address.polarity}${address.side}`;
-  return `${isTopBlock(address.row) ? 'top' : 'bottom'}:${address.col}`;
+  const tier = address.tier ?? 1;
+  // **導通は枚ごとに別。** 継ぎ目は樹脂の凸凹だけで、電気はつながらない (52 の docs/159)。
+  const prefix = tier > 1 ? `${tier}/` : '';
+  if (address.kind === 'rail') return `${prefix}rail:${address.polarity}${address.side}`;
+  return `${prefix}${isTopBlock(address.row) ? 'top' : 'bottom'}:${address.col}`;
 }
 
 /** 部品を持たない仮想ストリップ (ボード外の機器のピン)。 */

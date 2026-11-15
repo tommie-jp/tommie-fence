@@ -38,6 +38,7 @@ describe('parseFence', () => {
       rails: ['+t', '-t', '+b', '-b'],
       letters: 'upper',
       numbers: 'all',
+      stack: 1,
     });
   });
 
@@ -50,6 +51,7 @@ describe('parseFence', () => {
       rails: ['+t', '-t', '-b', '+b'],
       letters: 'lower',
       numbers: 'every-5',
+      stack: 1,
     });
   });
 
@@ -71,6 +73,7 @@ describe('parseFence', () => {
       rails: ['+t', '-t', '-b', '+b'],
       letters: 'lower',
       numbers: 'every-5',
+      stack: 1,
     });
   });
 

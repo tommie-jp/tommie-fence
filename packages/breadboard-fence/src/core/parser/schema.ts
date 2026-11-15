@@ -5,6 +5,8 @@ import { LIMITS, clampText, isPinName } from '../limits.ts';
 import { NO_TURN, TURN_WORD, refusalFor } from '../parts/orient.ts';
 import { splitPartType } from '../parts/variants.ts';
 import type { Turn } from '../parts/orient.ts';
+import { DEVICE_SIDES } from '../types.ts';
+import type { DeviceSide } from '../types.ts';
 
 /**
  * 部品を複数行のマップで書くときの形。
@@ -12,7 +14,7 @@ import type { Turn } from '../parts/orient.ts';
  */
 export type ExpandedPart = {
   readonly type: string;
-  readonly at: 'top' | 'bottom' | null;
+  readonly at: DeviceSide | null;
   readonly label: string | null;
   readonly value: string | null;
   readonly pins: readonly string[] | null;
@@ -65,10 +67,10 @@ export function validateExpandedPart(raw: unknown): Validation {
   const type = typeof raw.type === 'string' ? raw.type : null;
   if (type === null) return invalid('type に部品の種類を書きます');
 
-  if (raw.at !== undefined && raw.at !== 'top' && raw.at !== 'bottom') {
-    return invalid('at は top か bottom です');
+  if (raw.at !== undefined && !(DEVICE_SIDES as readonly unknown[]).includes(raw.at)) {
+    return invalid('at は top / bottom / left / right のどれかです');
   }
-  const at = raw.at ?? null;
+  const at = (raw.at ?? null) as DeviceSide | null;
 
   const label = raw.label === undefined ? null : asText(raw.label);
   if (raw.label !== undefined && label === null) return invalid('label は文字列です');

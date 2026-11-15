@@ -39,7 +39,8 @@ export function boardPadPoints(part: PlacedPart, layout: Layout): ReadonlyMap<st
   const pads = boardPads(points, pinOneOf(part), lookupBoardPart(part.type), layout.pitch);
   if (pads.length === 0) return new Map();
 
-  const rows = HOLE_ROWS.map((row) => layout.rowY(row)).sort((a, b) => a - b);
+  const tier = layout.tierAt(points[0]?.y ?? layout.board.y);
+  const rows = HOLE_ROWS.map((row) => layout.rowY(row, tier)).sort((a, b) => a - b);
   // **実物の位置 (0.1 インチ間隔) が穴の行に重ならなければ、そのまま描く。** 溝は 3 ピッチあるので、
   // Pico を溝の真ん中に置けば 3 つとも溝の中に入る (52 の docs/157)。
   const clear = layout.pitch * PAD_ROW_CLEAR;

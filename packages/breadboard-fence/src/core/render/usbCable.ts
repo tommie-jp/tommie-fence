@@ -49,7 +49,9 @@ function portOf(
     if (look === null) return { error: `${safeToken(part.id)} に USB の口がありません (USB の口を持つのは マイコンボードと model: RPI-DEBUG-PROBE)` };
     // 帯の位置は機器を並べたあとで決まる。決まる前 (画布を測る段) は null を返して飛ばす。
     const placement = devices?.get(part.id);
-    return placement === undefined ? null : { port: lookUsbPort(look, placement.rect, placement.side, pxPerMmOf(layout.pitch), part.size ?? undefined) };
+    // 姿のある機器は上下の帯にしか置けない (置く側が断る)。
+    if (placement === undefined || placement.side === 'left' || placement.side === 'right') return null;
+    return { port: lookUsbPort(look, placement.rect, placement.side, pxPerMmOf(layout.pitch), part.size ?? undefined) };
   }
   return { error: `${safeToken(part.id)} に USB の口がありません (USB の口を持つのは マイコンボードと model: RPI-DEBUG-PROBE)` };
 }

@@ -22,7 +22,7 @@ export function connectorShapeOf(part: PlacedPart, layout: Layout): ConnectorSha
     variant: part.variant,
     points,
     pitch: layout.pitch,
-    facing: connectorFacing(points, { x: x + width / 2, y: layout.ravineY }),
+    facing: connectorFacing(points, { x: x + width / 2, y: layout.ravineNear(points[0]?.y ?? layout.ravineY) }),
   };
 }
 

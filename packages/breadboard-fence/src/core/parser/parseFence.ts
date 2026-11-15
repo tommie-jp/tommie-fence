@@ -4,7 +4,7 @@ import { fenceError, notice, safeToken } from '../errors.ts';
 import { LIMITS, clampText, isReferenceable } from '../limits.ts';
 import { defaultRails, railOrder } from '../model/board.ts';
 import {
-  BOARD_SIZES, COLUMN_NUMBERS, DEFAULT_BOARD, DEFAULT_PARTS_LIST, LETTER_CASES, PARTS_LIST_MODES,
+  BOARD_SIZES, COLUMN_NUMBERS, DEFAULT_BOARD, DEFAULT_PARTS_LIST, LETTER_CASES, MAX_STACK, PARTS_LIST_MODES,
 } from '../types.ts';
 import type {
   BoardSpec, CableSpec, FenceDocument, FenceError, NoteSpec, PartSpec, PartsListMode, Result, StyleSpec, WireSpec,
@@ -344,7 +344,7 @@ function collectBoard(
 
   if (!isMap(node)) {
     errors.push(
-      fenceError(`board は ${SIZE_LIST} か、size / rails / letters / numbers のマップで書きます`, lineOf(node) ?? fallbackLine),
+      fenceError(`board は ${SIZE_LIST} か、size / rails / letters / numbers / stack のマップで書きます`, lineOf(node) ?? fallbackLine),
     );
     return kept;
   }
@@ -381,13 +381,19 @@ function collectBoard(
       const letters = pick(LETTER_CASES, value);
       if (letters) spec = { ...spec, letters };
       else errors.push(fenceError('board の letters は lower か upper です', keyLine));
+    } else if (key === 'stack') {
+      // 数は YAML の数として来る (`stack: 2`)。引用した字 (`"2"`) も同じに読む。
+      const raw = isScalar(pair.value) ? pair.value.value : null;
+      const stack = typeof raw === 'number' || typeof raw === 'string' ? Number(raw) : Number.NaN;
+      if (Number.isInteger(stack) && stack >= 1 && stack <= MAX_STACK) spec = { ...spec, stack };
+      else errors.push(fenceError(`board の stack は継ぐ枚数で、1〜${MAX_STACK} の整数です`, keyLine));
     } else if (key === 'numbers') {
       const numbers = pick(COLUMN_NUMBERS, value);
       if (numbers) spec = { ...spec, numbers };
       else errors.push(fenceError('board の numbers は every-5 か all です', keyLine));
     } else {
       errors.push(
-        fenceError(`board の知らないキーです: ${safeToken(key)} (size / rails / letters / numbers が使えます)`, keyLine),
+        fenceError(`board の知らないキーです: ${safeToken(key)} (size / rails / letters / numbers / stack が使えます)`, keyLine),
       );
     }
   }

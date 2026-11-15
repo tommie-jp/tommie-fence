@@ -6,7 +6,7 @@ import { trimmerNotices } from './parts/trimmerNotices.ts';
 import { attachSourceText, fail, fenceError, notice, ok, safeToken, shiftErrors } from './errors.ts';
 import { normalizeNewlines } from './newlines.ts';
 import { LIMITS } from './limits.ts';
-import { formatAddress, isCrossing, parseAddress } from './model/address.ts';
+import { formatAddress, isCrossing, parseAddress, withTier } from './model/address.ts';
 import { createBoard, devicePinStrip, isOnBoard, offBoardReason, stripOf } from './model/board.ts';
 import type { SheetListing, SheetPartsList } from './render/sheetPartsList.ts';
 import { createLayout } from './model/layout.ts';
@@ -20,7 +20,7 @@ import type { WireEnd } from './placement/relocate.ts';
 import { routeWire, routeWires } from './router/route.ts';
 import { renderDocument } from './render/document.ts';
 import type { RenderedWire } from './render/document.ts';
-import { deviceBandHeight, layoutDevices } from './render/devices.ts';
+import { deviceBandHeight, layoutDevices, sideBandWidth } from './render/devices.ts';
 import type { DevicePlacement } from './render/devices.ts';
 import type { NoteAnchor, ResolvedNote } from './render/notes.ts';
 import { captionDrops } from './render/captions.ts';
@@ -30,7 +30,7 @@ import { partObstacles } from './render/parts.ts';
 import { boardPadPoints, padEntry } from './render/boardPart.ts';
 import { renderErrorBanner } from './render/errorHtml.ts';
 import { DEFAULT_WIRE_COLOR, wireColor as lookupWireColor, wireColorNames } from './render/palette.ts';
-import { resolveStyle } from './render/theme.ts';
+import { resolveStyle, textScale } from './render/theme.ts';
 import type { RenderTheme } from './render/theme.ts';
 import { titleHeight } from './render/title.ts';
 import { HOLE_ROWS, RAIL_ROWS } from './types.ts';
@@ -245,9 +245,17 @@ function renderOneSheet(input: string, options: OneSheetOptions): RenderResult &
   const devices = placed.filter((part) => part.kind === 'device');
   // 機器の口 (Debug Probe) から帯の外へ出る USB ケーブルのぶん、画布の上下を空ける。
   const margins = cableMargins(parsed.doc.cables, placed);
+  // 左右の帯に置く機器の線の本数 (帯と基板の間の縦の通り道の幅を決める)。
+  const sideWires = (side: 'left' | 'right'): number => parsed.doc.wires.filter((wire) =>
+    [wire.from, wire.to].some((end) => devices.some((device) => device.at === side && end.startsWith(`${device.id}.`)))).length;
+  const textScaleOf = textScale(style.theme);
   const bands = {
-    deviceTop: devices.some((device) => device.at !== 'bottom'),
+    deviceTop: devices.some((device) => device.at === 'top' || device.at === null),
     deviceBottom: devices.some((device) => device.at === 'bottom'),
+    deviceLeftWidth: sideBandWidth(devices, 'left', textScaleOf),
+    deviceRightWidth: sideBandWidth(devices, 'right', textScaleOf),
+    sideLanesLeft: sideWires('left'),
+    sideLanesRight: sideWires('right'),
     marginTop: margins.top,
     marginBottom: margins.bottom,
     // 姿のある機器 (Debug Probe) は実寸なので、帯をその高さまで伸ばす。
@@ -340,7 +348,9 @@ function renderOneSheet(input: string, options: OneSheetOptions): RenderResult &
 
   const svg = renderDocument({
     ...(options.sheetList === undefined ? {} : { sheetList: options.sheetList }),
-    edit: options.edit === true ? editLayer(parsed.doc.parts, wires, parsed.doc.points) : null,
+    // **継いだ基板 (`board: stack:`) では掴む層を作らない** — 掴む層と行の書き換えが枚を知らない
+    // (52 の docs/159 の段 4)。図とお知らせは出る。
+    edit: options.edit === true && board.stack === 1 ? editLayer(parsed.doc.parts, wires, parsed.doc.points) : null,
     title: parsed.doc.title,
     board,
     layout,
@@ -371,7 +381,7 @@ function renderOneSheet(input: string, options: OneSheetOptions): RenderResult &
       wireEndKinds: drawable.map((wire) => wire.endKinds),
       // 電源・GND のネット (レールにつながるネット) の線か。
       wirePower: drawable.map((wire) =>
-        netlist.find((net) => net.strips.includes(wire.strip))?.strips.some((strip) => strip.startsWith('rail:')) ?? false),
+        netlist.find((net) => net.strips.includes(wire.strip))?.strips.some((strip) => /^(?:\d+\/)?rail:/.test(strip)) ?? false),
     }),
     ...report(errors, source, style.debug, options.offset ?? 0),
     anchors: sheetAnchors(parsed.doc.points, board, layout, titleHeight(parsed.doc.title, style.theme)),
@@ -708,7 +718,8 @@ const SAME_POINT_TOLERANCE = 0.5;
  * 寄せた部品のピンがここに入ると、線がピンの上を走って挿さっているように見える。
  */
 function pathCorridor(path: readonly Point[], board: Board, layout: Layout): Address[] {
-  const rows = HOLE_ROWS.map((row) => ({ row, y: layout.rowY(row) }));
+  const rows = layout.tiers.flatMap((_, index) =>
+    HOLE_ROWS.map((row) => ({ row, tier: index + 1, y: layout.rowY(row, index + 1) })));
   const holes: Address[] = [];
 
   for (let index = 0; index + 1 < path.length; index += 1) {
@@ -721,8 +732,8 @@ function pathCorridor(path: readonly Point[], board: Board, layout: Layout): Add
 
     const low = Math.min(a.y, b.y);
     const high = Math.max(a.y, b.y);
-    for (const { row, y } of rows) {
-      if (y > low && y < high) holes.push({ kind: 'hole', row, col });
+    for (const { row, tier, y } of rows) {
+      if (y > low && y < high) holes.push(withTier({ kind: 'hole', row, col }, tier));
     }
   }
 
@@ -749,6 +760,11 @@ function endpointPoint(
     return pad === undefined ? null : padEntry(board, layout, theme, endpoint.pin, otherY < pad.y);
   }
   const at = parts.find((part) => part.id === endpoint.partId)?.at ?? 'top';
+  if (at === 'left' || at === 'right') {
+    // 左右の帯の機器は、帯の基板の側の縁の上の端で代える (暫定の経路には横から来ることが効けばよい)。
+    const side = layout.deviceBands[at];
+    return side ? { x: at === 'right' ? side.x : side.x + side.width, y: side.y + layout.pitch } : null;
+  }
   const band = at === 'bottom' ? layout.deviceBands.bottom : layout.deviceBands.top;
   if (!band) return null;
   const anchorX = other.kind === 'hole' ? layout.point(other.address).x : layout.colX(1);

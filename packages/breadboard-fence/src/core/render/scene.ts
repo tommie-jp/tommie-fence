@@ -74,7 +74,7 @@ export function breadboardScene(input: SceneInput, sheet: string | null = null):
     captions,
     approximate: false,
     skipped: 0,
-    ravines: [layout.ravineY],
+    ravines: [...layout.ravines],
   };
 }
 

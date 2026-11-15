@@ -123,7 +123,9 @@ export function boardRow(board: Board, lang: Lang = 'ja'): Row {
   const labels = partsLabels(lang);
   const hasRails = board.rails !== null;
   const rails = hasRails === (board.size !== 'mini') ? '' : hasRails ? labels.railsOn : labels.railsOff;
-  return { id: labels.board, type: 'breadboard', value: `${labels.boardSize(board.size, HOLES[board.size])}${rails}`, mark: '' };
+  // 継いだ基板は枚数を添える (買う数が分かるように。52 の docs/159)。
+  const count = board.stack > 1 ? ` × ${board.stack}` : '';
+  return { id: labels.board, type: 'breadboard', value: `${labels.boardSize(board.size, HOLES[board.size])}${count}${rails}`, mark: '' };
 }
 
 /**

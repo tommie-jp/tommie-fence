@@ -149,3 +149,60 @@ notes:
 ```
 
 ![図06 レールを剥がした half](out/03-board-variants-6.svg)
+
+## 基板を縦に継ぐ (stack)
+
+実物のブレッドボードは縁の凸凹で何枚でも継げる。`stack:` に枚数を書くと、同じ基板を縁を接して縦に並べる。
+**2 枚めの穴は番地の頭に `2:` を付ける** (`2:a5` `2:+t5`)。頭の無い番地は 1 枚め。
+継ぎ目をまたげるのは線と 2 ピンの部品で、**導通は枚ごとに別** (継ぎ目は電気を渡さない)。
+
+```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
+title: 図07 2 枚を継ぐ
+board:
+  size: half
+  stack: 2
+parts:
+  R1: resistor j8 2:a8 330
+  D1: led 2:b8(A) 2:b9(K) red
+wires:
+  - +b8 -- i8 red
+  - 2:a9 -- 2:-t9 black
+  - -b2 -- 2:-t2 black
+notes:
+  - source blue
+```
+
+![図07 2 枚を継ぐ](out/03-board-variants-7.svg)
+
+- 1 枚めの j 行から 2 枚めの a 行までは 7 ピッチ (穴の格子に乗る)。またぐ抵抗は縦にまっすぐ届く
+- 部品表の基板の行は `half (400 穴) × 2` になる
+
+## 機器を基板の横に置く (at: left / right)
+
+ボード外の機器は `at: left` / `at: right` で基板の横にも置ける。ピンは基板に向いた辺に縦に並び、
+線は基板の外を縦に走ってから行と行の間を横に入る (レールへは行に沿って入る)。
+
+```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
+title: 図08 電池を基板の右に置く
+board: half
+parts:
+  R1: resistor a20 a25 330
+  D1: led b27(A) b28(K) red
+  BAT:
+    type: device
+    at: right
+    label: 電池 3V
+    pins: ["+", "-"]
+wires:
+  - BAT.+ -- +t30 red
+  - BAT.- -- -t30 black
+  - +t20 -- a20 red
+  - a25 -- b27
+  - c28 -- -t28 black
+notes:
+  - source blue
+```
+
+![図08 電池を基板の右に置く](out/03-board-variants-8.svg)

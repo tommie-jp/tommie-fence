@@ -19,11 +19,17 @@ export type RailRow = (typeof RAIL_ROWS)[number];
  */
 export type Fraction = { readonly rows?: number; readonly cols?: number };
 
-export type HoleAddress = Fraction & {
+/**
+ * 継いだ基板の何枚めか (`board: stack:`。52 の docs/159)。**2 枚め以降だけが持つ** —
+ * 1 枚めの番地は今までと同じ形のまま (`{ kind, row, col }` を比べているところが多い)。
+ */
+export type Tier = { readonly tier?: number };
+
+export type HoleAddress = Fraction & Tier & {
   readonly kind: 'hole'; readonly row: HoleRow; readonly col: number;
 };
 
-export type RailAddress = Fraction & {
+export type RailAddress = Fraction & Tier & {
   readonly kind: 'rail';
   readonly polarity: '+' | '-';
   readonly side: 't' | 'b';
@@ -33,6 +39,13 @@ export type RailAddress = Fraction & {
 export type Address = HoleAddress | RailAddress;
 
 export type Point = { readonly x: number; readonly y: number };
+
+/**
+ * ボード外の機器を置く帯。上下は基板の上と下、**左右は基板の横** (52 の docs/159)。
+ * 左右に置けるのは箱の機器だけ (姿のある機器は上下のまま)。
+ */
+export const DEVICE_SIDES = ['top', 'bottom', 'left', 'right'] as const;
+export type DeviceSide = (typeof DEVICE_SIDES)[number];
 
 export type Rect = { readonly x: number; readonly y: number; readonly width: number; readonly height: number };
 
@@ -63,13 +76,22 @@ export type BoardSpec = {
   readonly rails: RailOrder | null;
   readonly letters: LetterCase;
   readonly numbers: ColumnNumbers;
+  /**
+   * 縦に継ぐ枚数 (1 = 継がない)。**N 枚とも同じ基板**で、縁を接して上から 1 枚め・2 枚め…と並べる。
+   * 2 枚め以降の穴は番地の頭に枚の番号を付けて書く (`2:a5`)。導通は枚ごとに別 (52 の docs/159)。
+   */
+  readonly stack: number;
 };
+
+/** 継げる枚数の上限。図が読める大きさで切る。 */
+export const MAX_STACK = 4;
 
 export const DEFAULT_BOARD: BoardSpec = {
   size: 'half',
   rails: RAIL_ROWS,
   letters: 'lower',
   numbers: 'every-5',
+  stack: 1,
 };
 
 export type Board = BoardSpec & { readonly columns: number };
@@ -86,7 +108,10 @@ export type PartsListMode = (typeof PARTS_LIST_MODES)[number];
 
 export const DEFAULT_PARTS_LIST: PartsListMode = 'symbols';
 
-/** 導通グループの識別子。`top:5` / `bottom:5` / `rail:+t` / `pin:AD2.W1`。 */
+/**
+ * 導通グループの識別子。`top:5` / `bottom:5` / `rail:+t` / `pin:AD2.W1`。
+ * 継いだ基板の 2 枚め以降は頭に枚を付ける (`2/top:5` / `2/rail:+t`)。
+ */
 export type StripId = string;
 
 export type Net = { readonly name: string; readonly strips: readonly StripId[]; readonly refs: readonly string[] };
@@ -153,7 +178,7 @@ export type PartSpec = {
   readonly turn: Turn;
   readonly value: string | null;
   readonly label: string | null;
-  readonly at: 'top' | 'bottom' | null;
+  readonly at: DeviceSide | null;
   readonly pins: readonly string[] | null;
   /** 部品の基板の色 (書かれたままの綴り。`blue`)。基板のある部品だけが持つ。 */
   readonly color?: string | null;
@@ -379,7 +404,7 @@ export type PlacedPart = {
   readonly bridges: readonly PinBridge[];
   readonly value: string | null;
   readonly label: string | null;
-  readonly at: 'top' | 'bottom' | null;
+  readonly at: DeviceSide | null;
   /** 部品の基板の色 (書かれたままの綴り)。描くときに `partPlateColor` で色に直す。 */
   readonly color?: string | null;
   /** 機器の型番 (表の代表の綴り)。姿・刷る字・線の既定の色を引く。 */

@@ -114,7 +114,7 @@ const plateOption = (part: PlacedPart): { plate?: string } => {
   return plate === null ? {} : { plate };
 };
 
-const sipNameSide = (first: Point, layout: Layout): 1 | -1 => (first.y < layout.ravineY ? 1 : -1);
+const sipNameSide = (first: Point, layout: Layout): 1 | -1 => (first.y < layout.ravineNear(first.y) ? 1 : -1);
 
 /**
  * ピンの名前が胴の縁から出る深さ。fence-kit の `sipLegends` と同じ寸法

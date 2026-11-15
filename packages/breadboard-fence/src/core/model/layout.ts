@@ -21,6 +21,12 @@ const EDGE_TO_BLOCK = RAIL_TO_BLOCK;
 /** 機器の帯の既定の高さ (箱の機器の高さ)。 */
 export const DEVICE_HEIGHT = 62;
 const DEVICE_GAP = 54;
+/**
+ * 左右の帯と基板の間。**機器のピンから基板へ向かう線が縦に走る通り道** (52 の docs/159)。
+ * 線 1 本ぶんの幅 (`SIDE_LANE_STEP`) を本数だけ取る。
+ */
+export const SIDE_GAP = 40;
+export const SIDE_LANE_STEP = 8;
 
 /** 配線が通れる横レーン。halfHeight は重なりを避けるためにずらせる幅。 */
 export type Lane = { readonly y: number; readonly halfHeight: number };
@@ -44,6 +50,12 @@ export type LayoutOptions = {
   /** 機器の帯の高さ (実寸で描く姿のある機器のため。52 の docs/157)。既定の高さより低くはしない。 */
   readonly deviceTopHeight?: number;
   readonly deviceBottomHeight?: number;
+  /** 左右の帯の幅 (0 か省けば帯は無い)。 */
+  readonly deviceLeftWidth?: number;
+  readonly deviceRightWidth?: number;
+  /** 左右の帯と基板の間に縦に通す線の本数 (通り道の幅を決める)。 */
+  readonly sideLanesLeft?: number;
+  readonly sideLanesRight?: number;
 };
 
 export type Layout = {
@@ -51,12 +63,27 @@ export type Layout = {
   readonly columns: number;
   readonly width: number;
   readonly height: number;
+  /** 基板の外形。**継いだ基板 (`board: stack:`) では全部の枚を合わせた外形**。 */
   readonly board: Rect;
+  /** 枚ごとの外形 (上から 1 枚め・2 枚め…)。継がない図では `board` 1 つ。 */
+  readonly tiers: readonly Rect[];
+  /** 1 枚めの溝の真ん中。 */
   readonly ravineY: number;
+  /** 枚ごとの溝の真ん中。 */
+  readonly ravines: readonly number[];
   readonly lanes: readonly Lane[];
-  readonly deviceBands: { readonly top: Rect | null; readonly bottom: Rect | null };
+  readonly deviceBands: {
+    readonly top: Rect | null; readonly bottom: Rect | null;
+    /** 左右の帯。高さは基板と同じで、機器は上から詰める。 */
+    readonly left: Rect | null; readonly right: Rect | null;
+  };
   colX(col: number): number;
-  rowY(row: HoleRow | RailRow): number;
+  /** 行の y。`tier` は何枚めか (省けば 1 枚め)。 */
+  rowY(row: HoleRow | RailRow, tier?: number): number;
+  /** y に一番近い溝の真ん中 (その点が溝の上下どちらのブロックにあるかを読む)。 */
+  ravineNear(y: number): number;
+  /** y が載っている枚 (1 始まり)。基板の外は近いほうの端の枚。 */
+  tierAt(y: number): number;
   point(address: Address): Point;
 };
 
@@ -131,6 +158,15 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
     y += EDGE_TO_BLOCK;
   }
 
+  // **継いだ基板は縁を接して下へ並べる** (隙間 0。52 の docs/159)。枚の中の並びは 1 枚めと同じ。
+  const tierHeight = y - boardY;
+  const stack = Math.max(1, board.stack);
+  const tierLanes = [...lanes].filter((lane) => lane.y > boardY && lane.y < boardY + tierHeight);
+  for (let tier = 2; tier <= stack; tier += 1) {
+    const offset = (tier - 1) * tierHeight;
+    lanes.push(...tierLanes.map((lane) => ({ ...lane, y: lane.y + offset })));
+  }
+  y += (stack - 1) * tierHeight;
   const boardHeight = y - boardY;
   const boardWidth = BOARD_PAD_X * 2 + (board.columns - 1) * PITCH;
   y += bottom;
@@ -143,12 +179,22 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
     y += DEVICE_GAP + bottomHeight;
   }
 
-  const boardX = OUTER_MARGIN + left;
-  const width = boardWidth + OUTER_MARGIN * 2 + left + right;
+  const leftWidth = Math.max(0, options.deviceLeftWidth ?? 0);
+  const rightWidth = Math.max(0, options.deviceRightWidth ?? 0);
+  const gapOf = (lanes: number | undefined): number => SIDE_GAP + Math.max(0, (lanes ?? 0) - 1) * SIDE_LANE_STEP;
+  const leftGap = leftWidth > 0 ? gapOf(options.sideLanesLeft) : 0;
+  const rightGap = rightWidth > 0 ? gapOf(options.sideLanesRight) : 0;
+  const boardX = OUTER_MARGIN + left + leftWidth + leftGap;
+  const width = boardWidth + OUTER_MARGIN * 2 + left + right + leftWidth + leftGap + rightWidth + rightGap;
   const height = y + OUTER_MARGIN + Math.max(0, options.marginBottom ?? 0);
   const bandWidth = boardWidth;
 
   const colX = (col: number): number => boardX + BOARD_PAD_X + (col - 1) * PITCH;
+  const offsetOf = (tier: number | undefined): number => (Math.min(Math.max(tier ?? 1, 1), stack) - 1) * tierHeight;
+  const ravines = Array.from({ length: stack }, (_, index) => ravineY + index * tierHeight);
+  const tiers: Rect[] = Array.from({ length: stack }, (_, index) => ({
+    x: boardX, y: boardY + index * tierHeight, width: boardWidth, height: tierHeight,
+  }));
 
   return {
     pitch: PITCH,
@@ -156,14 +202,27 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
     width,
     height,
     board: { x: boardX, y: boardY, width: boardWidth, height: boardHeight },
+    tiers,
     ravineY,
+    ravines,
     lanes,
     deviceBands: {
       top: topBand ? { ...topBand, x: boardX, width: bandWidth } : null,
       bottom: bottomBand ? { ...bottomBand, x: boardX, width: bandWidth } : null,
+      left: leftWidth > 0 ? { x: OUTER_MARGIN, y: boardY, width: leftWidth, height: boardHeight } : null,
+      right: rightWidth > 0
+        ? { x: boardX + boardWidth + right + rightGap, y: boardY, width: rightWidth, height: boardHeight }
+        : null,
     },
     colX,
-    rowY: (row) => rowY.get(row) ?? 0,
+    // レールの無い基板のレールの行は 0 (基板の外) のまま。枚の分ずらすと基板の中に落ちる。
+    rowY: (row, tier) => {
+      const at = rowY.get(row);
+      return at === undefined ? 0 : at + offsetOf(tier);
+    },
+    tierAt: (at) => Math.min(Math.max(Math.floor((at - boardY) / tierHeight) + 1, 1), stack),
+    ravineNear: (at) => ravines.reduce((best, candidate) =>
+      (Math.abs(candidate - at) < Math.abs(best - at) ? candidate : best), ravineY),
     // **端数は次の行までの隔たりで測る。** 行の間隔は一定ではない (溝をまたぐ
      // ところとレールの外側が広い) ので、ピッチを掛けると溝の真ん中が真ん中に
      // ならない。0.5 と書けば、その行と次の行のちょうど間に来る。
@@ -174,7 +233,7 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
       const rows = address.rows ?? 0;
       return {
         x: colX(address.col) + (address.cols ?? 0) * PITCH,
-        y: at + (rows === 0 ? 0 : rows * stepBelow(rowY, at)),
+        y: at + (rows === 0 ? 0 : rows * stepBelow(rowY, at)) + offsetOf(address.tier),
       };
     },
   };

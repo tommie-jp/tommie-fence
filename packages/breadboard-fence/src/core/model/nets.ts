@@ -8,7 +8,19 @@ export type NetInput = Omit<CoreInput, 'preferredName'>;
 
 const RAIL_ORDER: readonly string[] = RAIL_ROWS;
 
-const railName = (strip: StripId): string | null => (strip.startsWith('rail:') ? strip.slice('rail:'.length) : null);
+/** レールのストリップの名前 (`+t`、2 枚め以降は `2:+t`)。 */
+const railName = (strip: StripId): string | null => {
+  const match = /^(?:(\d+)\/)?rail:(.+)$/.exec(strip);
+  if (!match) return null;
+  const [, tier, rail = ''] = match;
+  return tier === undefined ? rail : `${tier}:${rail}`;
+};
+
+/** 並べる順: 枚が先、枚の中はレールの上からの順。 */
+const railRank = (name: string): number => {
+  const [tier, rail] = name.includes(':') ? name.split(':') as [string, string] : ['1', name];
+  return Number(tier) * RAIL_ORDER.length + RAIL_ORDER.indexOf(rail);
+};
 
 /**
  * 電源レールを含むネットには、レールの名前を付ける (`+t/-t` のように並べる)。
@@ -18,7 +30,7 @@ function railNameOf(strips: readonly StripId[]): string | null {
   const rails = strips
     .map(railName)
     .filter((name): name is string => name !== null)
-    .sort((a, b) => RAIL_ORDER.indexOf(a) - RAIL_ORDER.indexOf(b));
+    .sort((a, b) => railRank(a) - railRank(b));
   return rails.length > 0 ? rails.join('/') : null;
 }
 

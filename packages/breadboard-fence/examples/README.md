@@ -9,7 +9,7 @@
 | --- | --- |
 | [01-led.md](01-led.md) | 抵抗と LED だけの最小例 |
 | [02-themes.md](02-themes.md) | 同じ回路を 5 つのテーマで描き比べる (`style:`) |
-| [03-board-variants.md](03-board-variants.md) | ボードの印字を手元の実物に寄せる (`board:` のマップ形式) |
+| [03-board-variants.md](03-board-variants.md) | ボードの印字を手元の実物に寄せる (`board:` のマップ形式)。基板を縦に継ぐ (`stack:`)・機器を基板の横に置く (`at: right`) |
 | [04-parts-list.md](04-parts-list.md) | 図の下の部品リストと、その消し方 (`parts-list:`) |
 | [05-capacitors.md](05-capacitors.md) | 部品の姿を選ぶ (`capacitor/ceramic`、LED の大きさ、TO-220) |
 | [06-switches.md](06-switches.md) | タクトスイッチ・半固定抵抗・スライドスイッチ |
@@ -24,7 +24,7 @@
 | [14-named-chips.md](14-named-chips.md) | リレー・フォトカプラ・7 セグ (ピンに名前のある DIP 型) |
 | [15-wide-dip.md](15-wide-dip.md) | 幅広 DIP (600 mil。AS6C62256 などの 28 ピン SRAM、`dip28/wide`) |
 | [16-sheets.md](16-sheets.md) | 複数のブレッドボード (`sheets:` と `links:`) |
-| [17-soft-fpga-td4.md](17-soft-fpga-td4.md) | Soft-FPGA TD4 (Pico 2 + DIP スイッチ + LED。GitHub のブレッドボード図を描き直したもの) |
+| [17-soft-fpga-td4.md](17-soft-fpga-td4.md) | Soft-FPGA TD4 (Pico 2 + DIP スイッチ + LED。GitHub のブレッドボード図を描き直したもの。図02 は 2 枚を継いで GitHub の図と同じ並び) |
 | [18-gallery-leads.md](18-gallery-leads.md) | 部品ギャラリー: 穴を並べて置く部品の全種類と全部の姿 (2 ピン・3 ピン・巻き物・スイッチ・USB・端子台) |
 | [19-gallery-chips.md](19-gallery-chips.md) | 部品ギャラリー: ピンの名前の表にある型番を全部 (DIP・1 列・DIP 化キット・変換基板) |
 | [20-gallery-discretes.md](20-gallery-discretes.md) | 部品ギャラリー: 型番のあるトランジスタ・FET・レギュレータを全部 |

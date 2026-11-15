@@ -11,7 +11,8 @@ import type {
 } from '../types.ts';
 
 // `b12(A)` `f11(+)` — ピン名には極性の記号も使う。
-const TAGGED_HOLE = /^([+\-\w]+)\(([+\-\w]+)\)$/;
+// 継いだ基板の枚の頭 (`2:b27(A)`) も含めて読む (52 の docs/159)。
+const TAGGED_HOLE = /^((?:[1-9]:)?[+\-\w]+)\(([+\-\w]+)\)$/;
 
 /**
  * `l=OLED` — 図に出るラベルだけを差し替える (マップ形式の `label:` と同じ意味)。
@@ -147,7 +148,7 @@ export function parseCompactPart(
     const written = tag?.[1] ?? joined;
     const label = written ? clampText(written, LIMITS.labelLength) : null;
     const labelTagged = tag !== null;
-    if (target === 'top' || target === 'bottom') return ok({ ...base, at: target, label, anchored: true, labelTagged, ...captionOf, ...colorOf, ...usesOf });
+    if (target === 'top' || target === 'bottom' || target === 'left' || target === 'right') return ok({ ...base, at: target, label, anchored: true, labelTagged, ...captionOf, ...colorOf, ...usesOf });
     return ok({
       ...base, holes: [{ addr: target, tag: '1', tagged: false, written: target }],
       turn: turn.value.turn, label, anchored: true, labelTagged, ...captionOf, ...colorOf, ...usesOf,

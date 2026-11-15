@@ -22,6 +22,8 @@ const EMPTY_PAIR = 'a0';
 const PAIR = '(?:[a-j][0-9])?';
 
 const HOLE_PATTERN = new RegExp(`^([a-j])(\\d{1,2})(${PAIR})$`);
+/** 継いだ基板の枚の頭 (`2:`)。1 桁だけ (継げるのは `MAX_STACK` 枚まで)。 */
+const TIER_PATTERN = /^([1-9]):(.+)$/;
 const RAIL_PATTERN = new RegExp(`^([+-])([tb])(\\d{1,2})(${PAIR})$`);
 
 /**
@@ -43,8 +45,31 @@ function pairOf(address: Address): string {
   return rows === 0 && cols === 0 ? '' : `${FRACTION_LETTERS[rows] ?? 'a'}${cols}`;
 }
 
-/** 穴番地 (`a5`) と電源レール番地 (`+t5`)、その端数付き。列数の上限はボードが判定する。 */
+/** 枚の番号を番地に足す。**1 枚めは鍵ごと持たない** (今までの番地と同じ形のまま)。 */
+export function withTier<T extends Address>(address: T, tier: number): T {
+  const { tier: _dropped, ...rest } = address;
+  return (tier > 1 ? { ...rest, tier } : rest) as T;
+}
+
+/** 番地の枚 (1 始まり)。 */
+export const tierOf = (address: Address): number => address.tier ?? 1;
+
+/**
+ * 穴番地 (`a5`) と電源レール番地 (`+t5`)、その端数付き。列数の上限はボードが判定する。
+ * 継いだ基板の 2 枚め以降は頭に枚の番号を付ける (`2:a5` `2:+t5`)。`1:a5` は `a5` と同じ。
+ */
 export function parseAddress(text: string): Address | null {
+  const tiered = TIER_PATTERN.exec(text);
+  if (tiered) {
+    const [, digit = '1', rest = ''] = tiered;
+    const inner = parseLocal(rest);
+    return inner === null ? null : withTier(inner, Number(digit));
+  }
+  return parseLocal(text);
+}
+
+/** 1 枚の中の番地 (枚の頭を外したもの)。 */
+function parseLocal(text: string): Address | null {
   // 行ラベルは大文字でも印字できる (board.letters) ので、番地は大小どちらでも受けて小文字に正規化する。
   const token = text.toLowerCase();
 
@@ -73,7 +98,8 @@ export function formatAddress(address: Address): string {
   const head = address.kind === 'hole'
     ? `${address.row}${address.col}`
     : `${address.polarity}${address.side}${address.col}`;
-  return `${head}${pairOf(address)}`;
+  const tier = tierOf(address);
+  return `${tier > 1 ? `${tier}:` : ''}${head}${pairOf(address)}`;
 }
 
 /** 交点そのものか (端数を持たないか)。**穴に挿すものは交点だけ**。 */

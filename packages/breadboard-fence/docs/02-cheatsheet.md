@@ -10,7 +10,7 @@
 title: 図01 …          # 任意。図の左上に載る 1 行
 points:                # 任意。番地に名前を付ける
   vin: a5
-board: half            # mini (17 列) / half (30 列、既定) / full (63 列)
+board: half            # mini (17 列) / half (30 列、既定) / full (63 列)。継ぐなら size: と stack: 2 のマップ
 style: dark            # テーマ名か、下の表のマップ
 parts-list: below      # below (既定) / none
 lang: ja               # 図の中の固定の字 (部品リストの見出しなど)。ja (既定) / en
@@ -28,6 +28,7 @@ notes:                 # 任意。図に重ねる印と字
 | 形 | 意味 |
 | --- | --- |
 | `a5` … `j30` | 穴。行 `a`〜`e` が上ブロック、`f`〜`j` が下ブロック。大小どちらでも可 |
+| `2:a5` `2:+t5` | 継いだ基板 (`board: stack: 2`) の 2 枚めの穴とレール。頭の無い番地は 1 枚め。導通は枚ごとに別 |
 | `+t5` `-t5` `-b5` `+b5` | レール。極性 + 上下 + 列 |
 | `U1.7` `AD2.V+` | ピン参照 (配線の端点にだけ書ける) |
 | `vin` | `points:` で付けた名前 |
@@ -113,7 +114,7 @@ xtal=crystal  scr=thyristor  btn=pushbutton=button
 parts:
   AD2:
     type: device
-    at: top            # top (既定) / bottom
+    at: top            # top (既定) / bottom / left / right (左右は箱の機器だけ)
     label: Analog Discovery 2
     pins: [W1, GND]
 ```
@@ -372,6 +373,7 @@ style:
 - **`board: full` は 63 列。** half (30 列) のつもりで 40 列に置くとはみ出す。
 - **`board: mini` (17 列) にはレールが無い。** `+t5` のようなレール番地はエラーになる。
   付けたいときは `rails: "+--+"` と書く (逆に `rails: none` でどのサイズからも外せる)。
+- **継いだ基板の継ぎ目は電気を渡さない。** 2 枚めの GND は線でつなぐ。継ぎ目をまたげるのは線と 2 ピンの部品だけ。
 - 迂回ヒントを書く行は端点を 2 つだけにする。
 - **値と `l=` の両方は書けない** (図に出るのは値)。
 - **名札は線を避けない。** 線が名札に掛かったら `cap=` で置き場所を書く

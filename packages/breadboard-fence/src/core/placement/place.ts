@@ -1,5 +1,5 @@
 import { fail, notice, ok, safeToken } from '../errors.ts';
-import { formatAddress, isCrossing, parseAddress } from '../model/address.ts';
+import { formatAddress, isCrossing, parseAddress, tierOf, withTier } from '../model/address.ts';
 import { offBoardReason } from '../model/board.ts';
 import { HOLE_ROWS } from '../types.ts';
 import type {
@@ -9,7 +9,7 @@ import type {
 } from '../types.ts';
 import type { BoardPart, Connector, NamedChip } from 'fence-kit';
 import {
-  adapterFor, drawsOwnLeads, isDirectSmd, lookupDiscrete, lookupNamedChip, lookupPinout, pinoutModels, smdLooksOf, smdSuggestion,
+  adapterFor, deviceLookOf, drawsOwnLeads, isDirectSmd, lookupDiscrete, lookupNamedChip, lookupPinout, pinoutModels, smdLooksOf, smdSuggestion,
   tappedTransformerPins,
 } from 'fence-kit';
 import type { Turn } from '../parts/orient.ts';
@@ -194,6 +194,9 @@ function spannedHoles(part: PlacedPart): Address[] {
 
   const holes = pins.filter((address): address is HoleAddress => address.kind === 'hole');
   if (holes.length === 0) return [];
+  // 継ぎ目をまたぐ部品 (`j27 2:a27`) の胴は、穴の無い継ぎ目の上に寝る。塞ぐ穴は数えない。
+  const tier = tierOf(holes[0]!);
+  if (pins.some((address) => tierOf(address) !== tier)) return [];
 
   const rows = holes.map((hole) => HOLE_ROWS.indexOf(hole.row));
   const cols = holes.map((hole) => hole.col);
@@ -204,7 +207,7 @@ function spannedHoles(part: PlacedPart): Address[] {
     const name = HOLE_ROWS[row];
     if (!name) continue;
     for (let col = Math.min(...cols); col <= Math.max(...cols); col += 1) {
-      const address: Address = { kind: 'hole', row: name, col };
+      const address: Address = withTier({ kind: 'hole', row: name, col }, tier);
       if (!own.has(formatAddress(address))) covered.push(address);
     }
   }
@@ -213,13 +216,13 @@ function spannedHoles(part: PlacedPart): Address[] {
 
 /** 同じレールに並ぶピンの間。ピンが別々のレールに散っていれば、間に穴は無い。 */
 function spannedOnRail(rails: readonly RailAddress[]): Address[] {
-  const [{ polarity, side }] = rails as [RailAddress];
-  if (rails.some((rail) => rail.polarity !== polarity || rail.side !== side)) return [];
+  const [{ polarity, side, tier }] = rails as [RailAddress];
+  if (rails.some((rail) => rail.polarity !== polarity || rail.side !== side || rail.tier !== tier)) return [];
 
   const cols = rails.map((rail) => rail.col);
   const between: Address[] = [];
   for (let col = Math.min(...cols) + 1; col < Math.max(...cols); col += 1) {
-    between.push({ kind: 'rail', polarity, side, col });
+    between.push(withTier({ kind: 'rail', polarity, side, col }, tier ?? 1));
   }
   return between;
 }
@@ -256,7 +259,46 @@ function findConflict(
   return null;
 }
 
+/** 継ぎ目をまたいで置ける部品の形 (2 ピンの部品だけ。52 の docs/159)。 */
+const SEAM_CROSSING_KINDS: ReadonlySet<string> = new Set(['two-lead']);
+/** 書いた穴がそのままピンの形。枚の頭を付けたまま読める。 */
+const DIRECT_KINDS: ReadonlySet<string> = new Set(['two-lead', 'three-lead', 'wound', 'connector', 'device']);
+
+/**
+ * 継いだ基板の枚を見て置く。**`@` で置く形 (DIP・ボードなど) は 1 枚めに置いたつもりで並べ、
+ * 並んだピンを書いた枚へ移す** — 並べる側は行と列だけで穴を組み立てるので、枚を知らなくてよい。
+ * 継ぎ目をまたげるのは 2 ピンの部品だけ。
+ */
 function placePart(spec: PartSpec, board: Board): Result<PlacedPart> {
+  const footprint = lookupFootprint(spec.type);
+  const tiers = [...new Set(spec.holes.map((hole) => {
+    const address = parseAddress(hole.addr);
+    return address === null ? 1 : tierOf(address);
+  }))];
+  if (footprint && tiers.length > 1 && !SEAM_CROSSING_KINDS.has(footprint.kind)) {
+    return fail(
+      `部品 ${safeToken(spec.id)}: 継ぎ目をまたいで置けるのは 2 ピンの部品だけです (ピンを同じ枚の穴に書きます)`,
+      spec.line,
+    );
+  }
+  const tier = tiers[0] ?? 1;
+  if (!footprint || tier === 1 || DIRECT_KINDS.has(footprint.kind)) return placeOnTier(spec, board);
+  if (tier > board.stack) {
+    const reason = offBoardReason(board, parseAddress(spec.holes[0]?.addr ?? '') ?? { kind: 'hole', row: 'a', col: 1, tier });
+    return fail(reason ?? `部品 ${safeToken(spec.id)}: ${tier} 枚めの基板はありません`, spec.line);
+  }
+  const local = { ...spec, holes: spec.holes.map((hole) => ({ ...hole, addr: hole.addr.replace(/^\d:/, '') })) };
+  const placed = placeOnTier(local, board);
+  if (!placed.ok) return placed;
+  const move = (pin: PlacedPin): PlacedPin => (pin.address ? { ...pin, address: withTier(pin.address, tier) } : pin);
+  return ok({
+    ...placed.value,
+    pins: placed.value.pins.map(move),
+    ...(placed.value.pads ? { pads: placed.value.pads.map(move) } : {}),
+  });
+}
+
+function placeOnTier(spec: PartSpec, board: Board): Result<PlacedPart> {
   const footprint = lookupFootprint(spec.type);
   if (!footprint) {
     return fail(
@@ -297,6 +339,12 @@ function placePart(spec: PartSpec, board: Board): Result<PlacedPart> {
   if (footprint.kind === 'device') {
     if (!spec.pins || spec.pins.length === 0) {
       return fail(`部品 ${safeToken(spec.id)}: ボード外の機器には pins (ピン名の配列) が要ります`, spec.line);
+    }
+    // **左右の帯に置けるのは箱の機器だけ。** 姿のある機器 (Debug Probe) は実寸の姿を横に
+    // 寝かせる絵が無いので、上下に置く (52 の docs/159)。
+    const sideways = spec.at === 'left' || spec.at === 'right';
+    if (sideways && deviceLookOf(spec.model ?? null) !== null) {
+      return fail(`部品 ${safeToken(spec.id)}: 姿のある機器は at: top か bottom に置きます (left / right に置けるのは箱の機器だけ)`, spec.line);
     }
     return ok({
       ...base,

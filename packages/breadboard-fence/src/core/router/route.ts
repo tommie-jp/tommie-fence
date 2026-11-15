@@ -1,4 +1,5 @@
 import type { Lane, Layout } from '../model/layout.ts';
+import { SIDE_LANE_STEP } from '../model/layout.ts';
 import { isTopBlock } from '../model/address.ts';
 import { HOLE_ROWS, RAIL_ROWS } from '../types.ts';
 import type { Point, Rect, WireHint } from '../types.ts';
@@ -27,6 +28,10 @@ export type WireRequest = {
 };
 
 const SAME_AXIS_TOLERANCE = 0.5;
+/** 左右の通り道の 1 本め の、基板の縁からの距離。 */
+const SIDE_LANE_INSET = 12;
+/** 下へ向かう線を上へ向かう線より外の通り道に並べるための、並べる鍵の下駄。 */
+const SIDE_DOWN_FIRST = 1e6;
 /** これより近い穴どうしは、実物の短いジャンパと同じでレーンを経由せず直接つなぐ。 */
 const SHORT_HOP_PITCHES = 3;
 const SLOT_SPACING = 4;
@@ -62,6 +67,8 @@ const dedupe = (points: readonly Point[]): readonly Point[] =>
  */
 export function routeWire(from: Point, to: Point, layout: Layout, options: RouteOptions = {}): readonly Point[] {
   if (options.hints && options.hints.length > 0) return dedupe(followHints(from, to, options.hints, layout));
+  const side = sideOf(from, to, layout);
+  if (side !== null) return sidePath(from, to, side, sideLaneX(side, 0, layout), layout);
   const obstacles = options.obstacles ?? [];
   if (needsSidestep(from, to, layout)) {
     return sidestepPath(from, to, sidestepOf(from, to, layout, obstacles, noReservations), layout);
@@ -88,10 +95,15 @@ export function routeWire(from: Point, to: Point, layout: Layout, options: Route
  */
 type BoardRow = { readonly y: number; readonly group: string };
 
-const boardRows = (layout: Layout): readonly BoardRow[] => [
-  ...HOLE_ROWS.map((row) => ({ y: layout.rowY(row), group: isTopBlock(row) ? 'top' : 'bottom' })),
-  ...RAIL_ROWS.map((rail) => ({ y: layout.rowY(rail), group: rail as string })),
-].filter((row) => onBoardRow({ x: 0, y: row.y }, layout));
+const boardRows = (layout: Layout): readonly BoardRow[] => layout.tiers.flatMap((_, index) => {
+  // 継いだ基板の行は枚ごとに別のまとまり (導通が枚ごとに別なので)。
+  const tier = index + 1;
+  const prefix = tier > 1 ? `${tier}/` : '';
+  return [
+    ...HOLE_ROWS.map((row) => ({ y: layout.rowY(row, tier), group: `${prefix}${isTopBlock(row) ? 'top' : 'bottom'}` })),
+    ...RAIL_ROWS.map((rail) => ({ y: layout.rowY(rail, tier), group: `${prefix}${rail}` })),
+  ];
+}).filter((row) => onBoardRow({ x: 0, y: row.y }, layout));
 
 /** その点が載っている行のまとまり。穴の行に無い点 (機器のピン・端数の番地) は null。 */
 const groupAt = (point: Point, layout: Layout): string | null =>
@@ -452,7 +464,93 @@ const onBoard = (x: number, layout: Layout): boolean =>
  * 寄り道はスロットより先に決める。**横に振ればレーンを走る区間の端が動く**ので、
  * 動いたあとの区間でスロットを配らないと、離したはずの 2 本がまた重なる。
  */
+/**
+ * 左右の帯の機器と基板を結ぶ線の向き (機器が基板の右か左か)。そうでない線は null。
+ * **横から来る線は基板の外の縦の通り道を通り、行と行の間で横に入る** (52 の docs/159)。
+ */
+type Side = 'left' | 'right';
+
+function sideOf(from: Point, to: Point, layout: Layout): Side | null {
+  const { x, width } = layout.board;
+  const outside = (point: Point): Side | null => (point.x > x + width ? 'right' : point.x < x ? 'left' : null);
+  const [a, b] = [outside(from), outside(to)];
+  // 両端とも横の帯なら、基板を通らずに結ぶ (同じ側の機器どうし)。向きは端の片方で決める。
+  return a ?? b;
+}
+
+/** 通り道の k 本め (基板に近いほうから) の x。 */
+function sideLaneX(side: Side, slot: number, layout: Layout): number {
+  const { x, width } = layout.board;
+  const first = SIDE_LANE_INSET + slot * SIDE_LANE_STEP;
+  return side === 'right' ? x + width + first : x - first;
+}
+
+/**
+ * 横の帯の機器のピン → 通り道 → 行と行の間 → 穴。**レールへは行の上をまっすぐ入る**
+ * (レールは 1 本まるごと同じ導通なので、通り過ぎる穴とつながって見えても読み違えない)。
+ */
+function sidePath(from: Point, to: Point, side: Side, laneX: number, layout: Layout): readonly Point[] {
+  const outside = (point: Point): boolean =>
+    side === 'right' ? point.x > layout.board.x + layout.board.width : point.x < layout.board.x;
+  const [pin, hole] = outside(from) ? [from, to] : [to, from];
+  if (outside(hole)) {
+    // 同じ側の機器どうし: 通り道を縦に走るだけ。
+    const path = [pin, { x: laneX, y: pin.y }, { x: laneX, y: hole.y }, hole];
+    return dedupe(outside(from) ? path : [...path].reverse());
+  }
+  const entryY = isRailRow(hole, layout) ? hole.y : hole.y + layout.pitch / 2 * (hole.y < layout.ravineNear(hole.y) ? -1 : 1);
+  const path = [pin, { x: laneX, y: pin.y }, { x: laneX, y: entryY }, { x: hole.x, y: entryY }, hole];
+  return dedupe(outside(from) ? path : [...path].reverse());
+}
+
+/** その点がレールの行に載っているか。 */
+const isRailRow = (point: Point, layout: Layout): boolean =>
+  layout.tiers.some((_, index) => RAIL_ROWS.some((rail) => {
+    const y = layout.rowY(rail, index + 1);
+    return y > 0 && Math.abs(y - point.y) < SAME_AXIS_TOLERANCE;
+  }));
+
+/**
+ * 横の帯の線に通り道の何本めを配る。**上へ向かう線は下のピンから、下へ向かう線は上のピンから
+ * 基板に近い通り道を取る** — そうすると、ピンから通り道へ出る横の区間と、ほかの線の縦の区間が交わらない。
+ */
+function sideSlots(requests: readonly WireRequest[], layout: Layout): readonly (number | null)[] {
+  const slots: (number | null)[] = requests.map(() => null);
+  for (const side of ['left', 'right'] as const) {
+    const mine = requests
+      .map((request, index) => ({ request, index }))
+      .filter(({ request }) => request.hints.length === 0 && sideOf(request.from, request.to, layout) === side);
+    const keyOf = ({ request }: { readonly request: WireRequest }): number => {
+      const pinOutside = (point: Point): boolean => (side === 'right' ? point.x > layout.board.x + layout.board.width : point.x < layout.board.x);
+      const [pin, hole] = pinOutside(request.from) ? [request.from, request.to] : [request.to, request.from];
+      return hole.y < pin.y ? -pin.y : SIDE_DOWN_FIRST + pin.y;
+    };
+    [...mine].sort((a, b) => keyOf(a) - keyOf(b)).forEach(({ index }, slot) => { slots[index] = slot; });
+  }
+  return slots;
+}
+
 export function routeWires(
+  requests: readonly WireRequest[],
+  layout: Layout,
+  options: RouteWiresOptions = {},
+): readonly (readonly Point[])[] {
+  const slots = sideSlots(requests, layout);
+  const sideRoutes = requests.map((request, index) => {
+    const slot = slots[index];
+    const side = sideOf(request.from, request.to, layout);
+    return slot === null || slot === undefined || side === null
+      ? null
+      : sidePath(request.from, request.to, side, sideLaneX(side, slot, layout), layout);
+  });
+  // 基板の中の線だけを今までの引き方に渡し、横の線は番号で戻す。
+  const onBoard = requests.flatMap((request, index) => (sideRoutes[index] === null ? [{ request, index }] : []));
+  const routed = routeBoardWires(onBoard.map(({ request }) => request), layout, options);
+  const byIndex = new Map(onBoard.map(({ index }, order) => [index, routed[order] ?? []]));
+  return requests.map((_, index) => sideRoutes[index] ?? byIndex.get(index) ?? []);
+}
+
+function routeBoardWires(
   requests: readonly WireRequest[],
   layout: Layout,
   options: RouteWiresOptions = {},
