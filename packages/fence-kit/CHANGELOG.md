@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.49.0] - 2026-11-15
+
 ### Changed
 
 - マイコンボードの USB の口を基板の上に描き (実物も上面実装)、口の内側に種類 (`micro-B`) を刷る。Debug Probe の USB の口の内側にも `micro-B` を刷る

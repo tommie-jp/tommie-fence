@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.71.0] - 2026-11-15
+
 ### Changed
 
 - Pico と Debug Probe の USB の口の内側に種類 (`micro-B`) を刷る
