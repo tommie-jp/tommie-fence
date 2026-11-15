@@ -21,26 +21,26 @@ board:
 style:
   check: off
 parts:
-  Q1: transistor d2 d3 d4 2SC1815
-  Q2: transistor d9 d10 d11 2SA1015
-  Q3: transistor d16 d17 d18 2SC2120
-  Q4: transistor d23 d24 d25 2SA950
-  Q5: transistor d29 d30 d31 2SC2655
-  Q6: transistor d36 d37 d38 2SA1020
-  Q7: transistor i2 i3 i4 2SC3355
-  Q8: transistor i9 i10 i11 2N3904
-  Q9: transistor i15 i16 i17 2N3906
-  Q10: transistor i21 i22 i23 2N2222A
-  Q11: transistor i28 i29 i30 P2N2222A
-  Q12: transistor i35 i36 i37 2SC1008
-  Q13: transistor i42 i43 i44 2N5109
-  Q14: transistor n2 n3 n4 2N3866
-  Q15: transistor n8 n9 n10 2SK30A
-  Q16: transistor n14 n15 n16 J310
-  Q17: transistor n20 n21 n22 2SK170
-  Q18: transistor n26 n27 n28 2SK117
-  Q19: transistor n32 n33 n34 2SJ74
-  Q20: transistor n38 n39 n40 2N7000
+  Q1: transistor d2 d3 d4 2N2222A
+  Q2: transistor d9 d10 d11 2N3866
+  Q3: transistor d15 d16 d17 2N3904
+  Q4: transistor d21 d22 d23 2N3906
+  Q5: transistor d27 d28 d29 2N5109
+  Q6: transistor d33 d34 d35 2N7000
+  Q7: transistor d39 d40 d41 2N7002
+  Q8: transistor i2 i3 i4 2SA1015
+  Q9: transistor i9 i10 i11 2SA1020
+  Q10: transistor i16 i17 i18 2SA950
+  Q11: transistor i22 i23 i24 2SB772
+  Q12: transistor i28 i29 i30 2SC1008
+  Q13: transistor i35 i36 i37 2SC1815
+  Q14: transistor n2 n3 n4 2SC2120
+  Q15: transistor n9 n10 n11 2SC2655
+  Q16: transistor n16 n17 n18 2SC3355
+  Q17: transistor n23 n24 n25 2SD882
+  Q18: transistor n29 n30 n31 2SJ74
+  Q19: transistor n35 n36 n37 2SK117
+  Q20: transistor n41 n42 n43 2SK170
 ```
 
 ![図01 トランジスタ・FET・レギュレータの型番 (1/2)](out/15-gallery-discretes-1.svg)
@@ -56,19 +56,19 @@ board:
 style:
   check: off
 parts:
-  Q1: transistor d2 d3 d4 BS170
-  Q2: transistor d8 d9 d10 2N7002
-  Q3: transistor d14 d15 d16 BSS84
-  Q4: transistor/to220 d20 d21 d22 IRF520
-  Q5: transistor/to220 d28 d29 d30 IRF9540
-  Q6: transistor d37 d38 d39 2SK2231
-  Q7: transistor i2 i3 i4 2SD882
-  Q8: transistor i8 i9 i10 2SB772
-  U1: regulator/to220 i14 i15 i16 7805
-  U2: regulator i22 i23 i24 78L05
-  U3: regulator/to220 i28 i29 i30 7905
-  U4: regulator i36 i37 i38 79L05
-  U5: regulator/to220 n2 n3 n4 LM317
+  Q1: transistor d2 d3 d4 2SK2231
+  Q2: transistor d9 d10 d11 2SK30A
+  U1: regulator/to220 d15 d16 d17 7805
+  U2: regulator d23 d24 d25 78L05
+  U3: regulator/to220 d29 d30 d31 7905
+  U4: regulator d37 d38 d39 79L05
+  Q3: transistor i2 i3 i4 BS170
+  Q4: transistor i8 i9 i10 BSS84
+  Q5: transistor/to220 i14 i15 i16 IRF520
+  Q6: transistor/to220 i22 i23 i24 IRF9540
+  Q7: transistor i31 i32 i33 J310
+  U5: regulator/to220 i37 i38 i39 LM317
+  Q8: transistor n2 n3 n4 P2N2222A
 ```
 
 ![図02 トランジスタ・FET・レギュレータの型番 (2/2)](out/15-gallery-discretes-2.svg)

@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [2SK117, 2SK117-BL, 2SK117-GR, 2SK117-Y]
+package: transistor
+kind: nch-jfet
+case: TO-92
+role: N チャネル JFET (低雑音)
+pins: [D, G, S]
+source: 東芝 2SK117 (1997-04-10)、2-5F1D

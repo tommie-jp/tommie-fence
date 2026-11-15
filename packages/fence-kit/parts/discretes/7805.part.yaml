@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: ["7805", L7805, L7805CV, LM7805, MC7805, UA7805, "7809", "7812", "7815", L7809, L7812, L7815]
+package: regulator
+kind: regulator
+case: TO-220
+role: 三端子レギュレータ (正電圧)
+pins: [IN, GND, OUT]
+note: 78L05 (TO-92) は逆の並び
+source: TI uA78xx SLVS056P (2015-01)、KCS/KCT の 1 INPUT・2 COMMON・3 OUTPUT

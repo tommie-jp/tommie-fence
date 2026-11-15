@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [2SC3355, 2SC3355L, 2SC3355G, 2SC3355L-T92, 2SC3355G-T92]
+package: transistor
+kind: npn
+case: TO-92
+role: NPN 高周波 低雑音 (fT 6.5 GHz)
+pins: [B, E, C]
+note: "**B E C** (ベースが左)。2SC1815 (E C B) とも 2N3904 (E B C) とも違う"
+source: NEC 2SC3355 P10355EJ3V1DS00 (1997-03)、PACKAGE DIMENSIONS (底面図。1 Base・2 Emitter・3 Collector)。UTC 2SC3355 QW-R201-036.G (2017) の TO-92 も 1 B・2 E・3 C

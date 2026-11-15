@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [P2N2222A]
+package: transistor
+kind: npn
+case: TO-92
+role: NPN 40 V 600 mA
+pins: [C, B, E]
+note: onsemi の STYLE 17。`PN2222A` (E B C) と C と E が逆
+source: onsemi P2N2222A/D Rev. 7 (2013-01)、CASE 29-11 STYLE 17

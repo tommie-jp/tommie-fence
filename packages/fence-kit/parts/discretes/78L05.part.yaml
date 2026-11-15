@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [78L05, L78L05, UA78L05, MC78L05, 78L33, 78L09, 78L12]
+package: regulator
+kind: regulator
+case: TO-92
+role: 三端子レギュレータ (正電圧、100 mA)
+pins: [OUT, GND, IN]
+note: 7805 (TO-220) は逆の並び
+source: TI uA78L SLVS010X (2023-06)、Figure 5-2 (LP) の 1 OUTPUT・2 COMMON・3 INPUT

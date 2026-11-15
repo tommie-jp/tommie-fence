@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [79L05, L79L05, LM79L05, MC79L05, MC79L05A, UA79L05, 79L12, 79L15, LM79L12, LM79L15]
+package: regulator
+kind: regulator
+case: TO-92
+role: 三端子レギュレータ (負電圧、100 mA)
+pins: [GND, IN, OUT]
+note: "**78L05 (OUT GND IN) と並びが違う**。TI の図は底面 (Bottom View、平らな面が上) で、左から GND・-VIN・-VOUT。平らな面を手前にしても左右は同じ"
+source: TI LM79L05 SNOSBR8K (2013-04)、Figure 4 (LP、Bottom View)

@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [2N2222A, 2N2222, PN2222A, PN2222]
+package: transistor
+kind: npn
+case: TO-92 / TO-18
+role: NPN 40 V 600 mA
+pins: [E, B, C]
+note: "**onsemi の `P2N2222A` は C B E (STYLE 17) で逆**。金属缶 TO-18 は番号 (1=E 2=B 3=C) を穴の順に書く"
+source: Fairchild PN2222A (Rev. A1、2004-08) の図 E B C と、TO-18 の 1 E・2 B・3 C (CDIL・Microsemi)

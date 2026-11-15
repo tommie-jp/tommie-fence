@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [2SA1020, 2SA1020Y, 2SA1020O, 2SA1020-Y, 2SA1020-O]
+package: transistor
+kind: pnp
+case: TO-92MOD
+role: PNP -50 V -2 A
+pins: [E, C, B]
+note: 太い TO-92 (2-5J1A)
+source: 東芝 2SA1020 (2010-11-09)、2-5J1A

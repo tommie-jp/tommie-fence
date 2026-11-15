@@ -65,15 +65,15 @@ describe('代表の行をカードで書く', () => {
     ['AE-DC-POWER-JACK-DIP.part.yaml', 'AE-DC-POWER-JACK-DIP'],
     ['3SK291.part.yaml', '3SK291'],
   ])('%s gives the same row as the pin name table', (name, model) => {
-    expect(plain(chipRows([card(name)], 'local')[0]!)).toEqual(tsRow(pinoutTable(), model));
+    expect(plain(chipRows([card(name)], 'local')[0]!)).toEqual(plain(tsRow(pinoutTable(), model) ?? {}));
   });
 
   test('2SC1815 gives the same row as the three-pin table', () => {
-    expect(plain(discreteRows([card('2SC1815.part.yaml')], 'local')[0]!)).toEqual(tsRow(discreteTable(), '2SC1815'));
+    expect(plain(discreteRows([card('2SC1815.part.yaml')], 'local')[0]!)).toEqual(plain(tsRow(discreteTable(), '2SC1815') ?? {}));
   });
 
   test('NRF24L01+ gives the same row as the module table', () => {
-    expect(plain(moduleRows([card('NRF24L01+.part.yaml')], 'local')[0]!)).toEqual(tsRow(moduleTable(), 'NRF24L01+'));
+    expect(plain(moduleRows([card('NRF24L01+.part.yaml')], 'local')[0]!)).toEqual(plain(tsRow(moduleTable(), 'NRF24L01+') ?? {}));
   });
 
   test('Tang Nano 9K gives the same board as the board table', () => {

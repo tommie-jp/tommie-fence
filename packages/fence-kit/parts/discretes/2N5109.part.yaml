@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [2N5109]
+package: transistor
+kind: npn
+case: TO-39
+role: NPN 高周波 広帯域増幅 20 V 400 mA (fT 1.2 GHz)
+pins: [E, B, C]
+note: 金属缶。番号 (1=E 2=B 3=C、出っ張りの隣が 1) を穴の順に書く。**缶がどの足とつながるかは資料に書かれていないので、テスタで確かめる**
+source: Advanced Power Technology 2N5109 Rev. - (2004-06)、1 Emitter・2 Base・3 Collector (TO-39)

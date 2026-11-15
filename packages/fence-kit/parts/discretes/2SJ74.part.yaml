@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [2SJ74, 2SJ74-BL, 2SJ74-GR, 2SJ74-V, 2SJ74BL, 2SJ74GR, 2SJ74V]
+package: transistor
+kind: pch-jfet
+case: TO-92
+role: P チャネル JFET (低雑音)
+pins: [D, G, S]
+note: 2SK170 の相補品。並びも同じ
+source: 東芝 2SJ74 (1997-04-10)、2-5F1D

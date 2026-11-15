@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [2SC1008]
+package: transistor
+kind: npn
+case: TO-92
+role: NPN 60 V 700 mA
+pins: [E, B, C]
+note: 同世代の 2SC1815 (E C B) と違い E B C。**原典の資料は見つからず JCET 製の資料による**
+source: JCET 2SC1008 (E 版、2017-08)、印字面の E B C

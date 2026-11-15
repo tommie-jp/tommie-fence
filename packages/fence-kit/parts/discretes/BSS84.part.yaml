@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [BSS84, BSS84-7-F, BSS84-13-F]
+package: transistor
+kind: pch-mos
+case: SOT-23
+role: P チャネル MOSFET -50 V 130 mA (面実装)
+pins: [G, S, D]
+note: "**面実装 (SOT-23)**。並びは 2N7002 と同じ 1 G・2 S・3 D とみなす (SOT-23 を挿せる変換基板の穴の並びは基板ごとに違うので、買った基板で確かめる)。ブレッドボードには `transistor/sot23-dip`"
+source: Diodes BSS84 DS30149 Rev. 27-2 (2026-05)、SOT23 の Top View (D が頂点、G が左下、S が右下。番号は SOT-23 の標準の 1 左下・2 右下・3 頂点に当てた)

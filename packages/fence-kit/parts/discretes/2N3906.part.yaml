@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [2N3906]
+package: transistor
+kind: pnp
+case: TO-92
+role: PNP 汎用 -40 V -200 mA
+pins: [E, B, C]
+source: onsemi 2N3906/D Rev. 4 (2010-02)、CASE 29 STYLE 1

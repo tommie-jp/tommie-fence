@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [BS170]
+package: transistor
+kind: nch-mos
+case: TO-92
+role: N チャネル MOSFET 60 V 500 mA
+pins: [D, G, S]
+note: "**2N7000 は S G D で逆**"
+source: "ON Semi BS170/D Rev. 5 (2005-08)、印字面の図 (CASE 29 STYLE 30: 1 D・2 G・3 S)"

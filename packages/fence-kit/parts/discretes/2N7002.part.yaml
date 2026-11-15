@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [2N7002, 2N7002K, 2N7002A]
+package: transistor
+kind: nch-mos
+case: SOT-23
+role: N チャネル MOSFET 60 V 300 mA (面実装)
+pins: [G, S, D]
+note: "**面実装 (SOT-23)**。穴の順は端子の番号 1 G・2 S・3 D とみなす (SOT-23 を挿せる変換基板の穴の並びは基板ごとに違うので、買った基板で確かめる)。ブレッドボードには `transistor/sot23-dip`"
+source: "Nexperia 2N7002 Rev. 7 (2011-09)、Table 2 Pinning (SOT23: 1 G・2 S・3 D)。Diodes 2N7002 DS11303 Rev. 33-2 (2013-07) の Top View も同じ (D が頂点、G が左下、S が右下)"

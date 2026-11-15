@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [2SA950, 2SA950Y, 2SA950O, 2SA950-Y, 2SA950-O]
+package: transistor
+kind: pnp
+case: TO-92
+role: PNP -30 V -800 mA
+pins: [E, C, B]
+source: 東芝 2SA950 (2007-11-01、秋月の配布)、2-5F1B

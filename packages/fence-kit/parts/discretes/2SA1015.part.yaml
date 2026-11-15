@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [2SA1015, 2SA1015Y, 2SA1015GR, 2SA1015-Y, 2SA1015-GR]
+package: transistor
+kind: pnp
+case: TO-92
+role: PNP 汎用 -50 V -150 mA
+pins: [E, C, B]
+source: 東芝 2SA1015 (2007-11-01)、2-5F1B

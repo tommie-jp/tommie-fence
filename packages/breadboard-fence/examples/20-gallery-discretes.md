@@ -14,22 +14,22 @@
 title: 図01 トランジスタ・FET・レギュレータの型番 (1/3)
 board: full
 parts:
-  Q1: transistor c2 c3 c4 2SC1815
-  Q2: transistor c10 c11 c12 2SA1015
-  Q3: transistor c18 c19 c20 2SC2120
-  Q4: transistor c26 c27 c28 2SA950
-  Q5: transistor c33 c34 c35 2SC2655
-  Q6: transistor c41 c42 c43 2SA1020
-  Q7: transistor c49 c50 c51 2SC3355
-  Q8: transistor c57 c58 c59 2N3904
-  Q9: transistor i2 i3 i4 2N3906
-  Q10: transistor i9 i10 i11 2N2222A
-  Q11: transistor i17 i18 i19 P2N2222A
-  Q12: transistor i25 i26 i27 2SC1008
-  Q13: transistor i33 i34 i35 2N5109
-  Q14: transistor i40 i41 i42 2N3866
-  Q15: transistor i47 i48 i49 2SK30A
-  Q16: transistor i54 i55 i56 J310
+  Q1: transistor c2 c3 c4 2N2222A
+  Q2: transistor c10 c11 c12 2N3866
+  Q3: transistor c17 c18 c19 2N3904
+  Q4: transistor c24 c25 c26 2N3906
+  Q5: transistor c31 c32 c33 2N5109
+  Q6: transistor c38 c39 c40 2N7000
+  Q7: transistor c45 c46 c47 2N7002
+  Q8: transistor c52 c53 c54 2SA1015
+  Q9: transistor i2 i3 i4 2SA1020
+  Q10: transistor i10 i11 i12 2SA950
+  Q11: transistor i17 i18 i19 2SB772
+  Q12: transistor i24 i25 i26 2SC1008
+  Q13: transistor i32 i33 i34 2SC1815
+  Q14: transistor i40 i41 i42 2SC2120
+  Q15: transistor i48 i49 i50 2SC2655
+  Q16: transistor i56 i57 i58 2SC3355
 ```
 
 ![図01 トランジスタ・FET・レギュレータの型番 (1/3)](out/20-gallery-discretes-1.svg)
@@ -39,22 +39,21 @@ parts:
 title: 図02 トランジスタ・FET・レギュレータの型番 (2/3)
 board: full
 parts:
-  Q1: transistor c2 c3 c4 2SK170
-  Q2: transistor c9 c10 c11 2SK117
-  Q3: transistor c16 c17 c18 2SJ74
-  Q4: transistor c23 c24 c25 2N7000
-  Q5: transistor c30 c31 c32 BS170
-  Q6: transistor c37 c38 c39 2N7002
-  Q7: transistor c44 c45 c46 BSS84
-  Q8: transistor/to220 c51 c52 c53 IRF520
-  Q9: transistor/to220 i2 i3 i4 IRF9540
-  Q10: transistor i12 i13 i14 2SK2231
-  Q11: transistor i20 i21 i22 2SD882
-  Q12: transistor i27 i28 i29 2SB772
-  U1: regulator/to220 i34 i35 i36 7805
-  U2: regulator i43 i44 i45 78L05
-  U3: regulator/to220 i50 i51 i52 7905
-  U4: regulator i59 i60 i61 79L05
+  Q1: transistor c2 c3 c4 2SD882
+  Q2: transistor c9 c10 c11 2SJ74
+  Q3: transistor c16 c17 c18 2SK117
+  Q4: transistor c23 c24 c25 2SK170
+  Q5: transistor c30 c31 c32 2SK2231
+  Q6: transistor c38 c39 c40 2SK30A
+  U1: regulator/to220 c45 c46 c47 7805
+  U2: regulator c54 c55 c56 78L05
+  U3: regulator/to220 i2 i3 i4 7905
+  U4: regulator i11 i12 i13 79L05
+  Q7: transistor i18 i19 i20 BS170
+  Q8: transistor i25 i26 i27 BSS84
+  Q9: transistor/to220 i32 i33 i34 IRF520
+  Q10: transistor/to220 i41 i42 i43 IRF9540
+  Q11: transistor i51 i52 i53 J310
 ```
 
 ![図02 トランジスタ・FET・レギュレータの型番 (2/3)](out/20-gallery-discretes-2.svg)
@@ -65,6 +64,7 @@ title: 図03 トランジスタ・FET・レギュレータの型番 (3/3)
 board: full
 parts:
   U1: regulator/to220 c2 c3 c4 LM317
+  Q1: transistor c11 c12 c13 P2N2222A
 ```
 
 ![図03 トランジスタ・FET・レギュレータの型番 (3/3)](out/20-gallery-discretes-3.svg)

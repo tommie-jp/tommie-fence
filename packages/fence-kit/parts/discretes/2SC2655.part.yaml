@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [2SC2655, 2SC2655Y, 2SC2655O, 2SC2655-Y, 2SC2655-O]
+package: transistor
+kind: npn
+case: TO-92MOD
+role: NPN 50 V 2 A
+pins: [E, C, B]
+note: 太い TO-92 (2-5J1A)
+source: 東芝 2SC2655 (2009-12-21)、2-5J1A

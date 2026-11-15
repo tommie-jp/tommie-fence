@@ -284,39 +284,39 @@ parts:
 
 | 型番 | 種類 | 穴の順 (印字面を手前、ピンを下にして左から) | パッケージ |
 | --- | --- | --- | --- |
-| `2SC1815` (`2SC1815Y` `2SC1815GR` `2SC1815BL` …) | `transistor` | `E` `C` `B` | TO-92。NPN 汎用 50 V 150 mA |
-| `2SA1015` (`2SA1015Y` `2SA1015GR` `2SA1015-Y` …) | `transistor` | `E` `C` `B` | TO-92。PNP 汎用 -50 V -150 mA |
-| `2SC2120` (`2SC2120Y` `2SC2120O` `2SC2120-Y` …) | `transistor` | `E` `C` `B` | TO-92。NPN 30 V 800 mA |
-| `2SA950` (`2SA950Y` `2SA950O` `2SA950-Y` …) | `transistor` | `E` `C` `B` | TO-92。PNP -30 V -800 mA |
-| `2SC2655` (`2SC2655Y` `2SC2655O` `2SC2655-Y` …) | `transistor` | `E` `C` `B` | TO-92MOD。NPN 50 V 2 A。太い TO-92 (2-5J1A) |
-| `2SA1020` (`2SA1020Y` `2SA1020O` `2SA1020-Y` …) | `transistor` | `E` `C` `B` | TO-92MOD。PNP -50 V -2 A。太い TO-92 (2-5J1A) |
-| `2SC3355` (`2SC3355L` `2SC3355G` `2SC3355L-T92` …) | `transistor` | `B` `E` `C` | TO-92。NPN 高周波 低雑音 (fT 6.5 GHz)。**B E C** (ベースが左)。2SC1815 (E C B) とも 2N3904 (E B C) とも違う |
+| `2N2222A` (`2N2222` `PN2222A` `PN2222`) | `transistor` | `E` `B` `C` | TO-92 / TO-18。NPN 40 V 600 mA。**onsemi の `P2N2222A` は C B E (STYLE 17) で逆**。金属缶 TO-18 は番号 (1=E 2=B 3=C) を穴の順に書く |
+| `2N3866` (`2N3866A`) | `transistor` | `E` `B` `C` | TO-39。NPN 高周波 小電力の送信 30 V 400 mA (fT 500 MHz)。金属缶。番号 (1=E 2=B 3=C、出っ張りの隣が 1) を穴の順に書く。**缶がどの足とつながるかは資料に書かれていないので、テスタで確かめる**。2N3866A は fT 800 MHz |
 | `2N3904` | `transistor` | `E` `B` `C` | TO-92。NPN 汎用 40 V 200 mA |
 | `2N3906` | `transistor` | `E` `B` `C` | TO-92。PNP 汎用 -40 V -200 mA |
-| `2N2222A` (`2N2222` `PN2222A` `PN2222`) | `transistor` | `E` `B` `C` | TO-92 / TO-18。NPN 40 V 600 mA。**onsemi の `P2N2222A` は C B E (STYLE 17) で逆**。金属缶 TO-18 は番号 (1=E 2=B 3=C) を穴の順に書く |
-| `P2N2222A` | `transistor` | `C` `B` `E` | TO-92。NPN 40 V 600 mA。onsemi の STYLE 17。`PN2222A` (E B C) と C と E が逆 |
-| `2SC1008` | `transistor` | `E` `B` `C` | TO-92。NPN 60 V 700 mA。同世代の 2SC1815 (E C B) と違い E B C。**原典の資料は見つからず JCET 製の資料による** |
 | `2N5109` | `transistor` | `E` `B` `C` | TO-39。NPN 高周波 広帯域増幅 20 V 400 mA (fT 1.2 GHz)。金属缶。番号 (1=E 2=B 3=C、出っ張りの隣が 1) を穴の順に書く。**缶がどの足とつながるかは資料に書かれていないので、テスタで確かめる** |
-| `2N3866` (`2N3866A`) | `transistor` | `E` `B` `C` | TO-39。NPN 高周波 小電力の送信 30 V 400 mA (fT 500 MHz)。金属缶。番号 (1=E 2=B 3=C、出っ張りの隣が 1) を穴の順に書く。**缶がどの足とつながるかは資料に書かれていないので、テスタで確かめる**。2N3866A は fT 800 MHz |
-| `2SK30A` (`2SK30ATM` `2SK30A-Y` `2SK30A-GR` …) | `transistor` | `S` `G` `D` | TO-92。N チャネル JFET (低雑音・汎用)。2SK170・2SK117 は D G S で S と D が逆 |
-| `J310` (`J309`) | `transistor` | `D` `S` `G` | TO-92。N チャネル JFET (VHF・UHF の増幅)。**ゲートは端 (3 番)**。InterFET 品は S D G で D と S が逆 (D と S は入れ替えて使える)。Fairchild 品は図に番号が無い |
-| `2SK170` (`2SK170-BL` `2SK170-GR` `2SK170-V` …) | `transistor` | `D` `G` `S` | TO-92。N チャネル JFET (低雑音)。2SK30A は S G D で S と D が逆 |
-| `2SK117` (`2SK117-BL` `2SK117-GR` `2SK117-Y`) | `transistor` | `D` `G` `S` | TO-92。N チャネル JFET (低雑音) |
-| `2SJ74` (`2SJ74-BL` `2SJ74-GR` `2SJ74-V` …) | `transistor` | `D` `G` `S` | TO-92。P チャネル JFET (低雑音)。2SK170 の相補品。並びも同じ |
 | `2N7000` | `transistor` | `S` `G` `D` | TO-92。N チャネル MOSFET 60 V 200 mA。**BS170 は D G S で逆**。**実物で確かめる: onsemi の 2007 年版の図は S G D、2022 年版の表は D G S で食い違い、表は 2007 年版 (S G D) に従う。実物はテスタで確かめる** |
-| `BS170` | `transistor` | `D` `G` `S` | TO-92。N チャネル MOSFET 60 V 500 mA。**2N7000 は S G D で逆** |
 | `2N7002` (`2N7002K` `2N7002A`) | `transistor` | `G` `S` `D` | SOT-23。N チャネル MOSFET 60 V 300 mA (面実装)。**面実装 (SOT-23)**。穴の順は端子の番号 1 G・2 S・3 D とみなす (SOT-23 を挿せる変換基板の穴の並びは基板ごとに違うので、買った基板で確かめる)。ブレッドボードには `transistor/sot23-dip` |
-| `BSS84` (`BSS84-7-F` `BSS84-13-F`) | `transistor` | `G` `S` `D` | SOT-23。P チャネル MOSFET -50 V 130 mA (面実装)。**面実装 (SOT-23)**。並びは 2N7002 と同じ 1 G・2 S・3 D とみなす (SOT-23 を挿せる変換基板の穴の並びは基板ごとに違うので、買った基板で確かめる)。ブレッドボードには `transistor/sot23-dip` |
-| `IRF520` (`IRF520N` `IRF540` `IRF540N` …) | `transistor` | `G` `D` `S` | TO-220。N チャネルパワー MOSFET。タブは D。IRLZ44N は Vgs 最大 ±16 V |
-| `IRF9540` (`IRF9540N` `IRF9Z34N`) | `transistor` | `G` `D` `S` | TO-220。P チャネルパワー MOSFET。並びは N チャネルと同じ G D S。タブは D |
-| `2SK2231` | `transistor` | `G` `D` `S` | PW-Mold (面実装)。N チャネル MOSFET 60 V 5 A。**TO-220 ではなく面実装 (DPAK 相当)**。タブは D。基板に挿すには変換基板が要る |
-| `2SD882` | `transistor` | `E` `C` `B` | TO-126。NPN 30 V 3 A。**実物で確かめる: ST の資料だけ図が B C E で、他は E C B。表は E C B。実物はテスタで確かめる** |
+| `2SA1015` (`2SA1015Y` `2SA1015GR` `2SA1015-Y` …) | `transistor` | `E` `C` `B` | TO-92。PNP 汎用 -50 V -150 mA |
+| `2SA1020` (`2SA1020Y` `2SA1020O` `2SA1020-Y` …) | `transistor` | `E` `C` `B` | TO-92MOD。PNP -50 V -2 A。太い TO-92 (2-5J1A) |
+| `2SA950` (`2SA950Y` `2SA950O` `2SA950-Y` …) | `transistor` | `E` `C` `B` | TO-92。PNP -30 V -800 mA |
 | `2SB772` | `transistor` | `E` `C` `B` | TO-126。PNP -30 V -3 A |
+| `2SC1008` | `transistor` | `E` `B` `C` | TO-92。NPN 60 V 700 mA。同世代の 2SC1815 (E C B) と違い E B C。**原典の資料は見つからず JCET 製の資料による** |
+| `2SC1815` (`2SC1815Y` `2SC1815GR` `2SC1815BL` …) | `transistor` | `E` `C` `B` | TO-92。NPN 汎用 50 V 150 mA |
+| `2SC2120` (`2SC2120Y` `2SC2120O` `2SC2120-Y` …) | `transistor` | `E` `C` `B` | TO-92。NPN 30 V 800 mA |
+| `2SC2655` (`2SC2655Y` `2SC2655O` `2SC2655-Y` …) | `transistor` | `E` `C` `B` | TO-92MOD。NPN 50 V 2 A。太い TO-92 (2-5J1A) |
+| `2SC3355` (`2SC3355L` `2SC3355G` `2SC3355L-T92` …) | `transistor` | `B` `E` `C` | TO-92。NPN 高周波 低雑音 (fT 6.5 GHz)。**B E C** (ベースが左)。2SC1815 (E C B) とも 2N3904 (E B C) とも違う |
+| `2SD882` | `transistor` | `E` `C` `B` | TO-126。NPN 30 V 3 A。**実物で確かめる: ST の資料だけ図が B C E で、他は E C B。表は E C B。実物はテスタで確かめる** |
+| `2SJ74` (`2SJ74-BL` `2SJ74-GR` `2SJ74-V` …) | `transistor` | `D` `G` `S` | TO-92。P チャネル JFET (低雑音)。2SK170 の相補品。並びも同じ |
+| `2SK117` (`2SK117-BL` `2SK117-GR` `2SK117-Y`) | `transistor` | `D` `G` `S` | TO-92。N チャネル JFET (低雑音) |
+| `2SK170` (`2SK170-BL` `2SK170-GR` `2SK170-V` …) | `transistor` | `D` `G` `S` | TO-92。N チャネル JFET (低雑音)。2SK30A は S G D で S と D が逆 |
+| `2SK2231` | `transistor` | `G` `D` `S` | PW-Mold (面実装)。N チャネル MOSFET 60 V 5 A。**TO-220 ではなく面実装 (DPAK 相当)**。タブは D。基板に挿すには変換基板が要る |
+| `2SK30A` (`2SK30ATM` `2SK30A-Y` `2SK30A-GR` …) | `transistor` | `S` `G` `D` | TO-92。N チャネル JFET (低雑音・汎用)。2SK170・2SK117 は D G S で S と D が逆 |
 | `7805` (`L7805` `L7805CV` `LM7805` …) | `regulator` | `IN` `GND` `OUT` | TO-220。三端子レギュレータ (正電圧)。78L05 (TO-92) は逆の並び |
 | `78L05` (`L78L05` `UA78L05` `MC78L05` …) | `regulator` | `OUT` `GND` `IN` | TO-92。三端子レギュレータ (正電圧、100 mA)。7805 (TO-220) は逆の並び |
 | `7905` (`L7905` `L7905CV` `LM7905` …) | `regulator` | `GND` `IN` `OUT` | TO-220。三端子レギュレータ (負電圧)。**7805 と並びが違う** (1 番が GND、2 番が IN)。**タブは IN (7805 の GND ではない)**。入力・出力とも負の電圧 |
 | `79L05` (`L79L05` `LM79L05` `MC79L05` …) | `regulator` | `GND` `IN` `OUT` | TO-92。三端子レギュレータ (負電圧、100 mA)。**78L05 (OUT GND IN) と並びが違う**。TI の図は底面 (Bottom View、平らな面が上) で、左から GND・-VIN・-VOUT。平らな面を手前にしても左右は同じ |
+| `BS170` | `transistor` | `D` `G` `S` | TO-92。N チャネル MOSFET 60 V 500 mA。**2N7000 は S G D で逆** |
+| `BSS84` (`BSS84-7-F` `BSS84-13-F`) | `transistor` | `G` `S` `D` | SOT-23。P チャネル MOSFET -50 V 130 mA (面実装)。**面実装 (SOT-23)**。並びは 2N7002 と同じ 1 G・2 S・3 D とみなす (SOT-23 を挿せる変換基板の穴の並びは基板ごとに違うので、買った基板で確かめる)。ブレッドボードには `transistor/sot23-dip` |
+| `IRF520` (`IRF520N` `IRF540` `IRF540N` …) | `transistor` | `G` `D` `S` | TO-220。N チャネルパワー MOSFET。タブは D。IRLZ44N は Vgs 最大 ±16 V |
+| `IRF9540` (`IRF9540N` `IRF9Z34N`) | `transistor` | `G` `D` `S` | TO-220。P チャネルパワー MOSFET。並びは N チャネルと同じ G D S。タブは D |
+| `J310` (`J309`) | `transistor` | `D` `S` `G` | TO-92。N チャネル JFET (VHF・UHF の増幅)。**ゲートは端 (3 番)**。InterFET 品は S D G で D と S が逆 (D と S は入れ替えて使える)。Fairchild 品は図に番号が無い |
 | `LM317` (`LM317T` `LM317MP`) | `regulator` | `ADJ` `OUT` `IN` | TO-220。可変三端子レギュレータ。`GND` ではなく `ADJ`。タブは OUT |
+| `P2N2222A` | `transistor` | `C` `B` `E` | TO-92。NPN 40 V 600 mA。onsemi の STYLE 17。`PN2222A` (E B C) と C と E が逆 |
 
 <!-- part-rows:discretes end -->
 

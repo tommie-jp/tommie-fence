@@ -16,73 +16,73 @@
 # 回路図 (tommie-fence の circuit フェンス)
 title: 図01 ギャラリー トランジスタ・FET・レギュレータの型番
 parts:
-  Q1: npn 2,2 2SC1815
-  Q2: pnp 4.25,2 2SA1015
-  Q3: npn 6.5,2 2SC2120
-  Q4: pnp 8.75,2 2SA950
-  Q5: npn 11.25,2 2SC2655
-  Q6: pnp 13.5,2 2SA1020
-  Q7: npn 2,4.5 2SC3355
-  Q8: npn 4.25,4.5 2N3904
-  Q9: pnp 6.5,4.5 2N3906
-  Q10: npn 8.75,4.5 2N2222A
-  Q11: npn 11.25,4.5 P2N2222A
+  Q1: npn 2,2 2N2222A
+  Q2: npn 4.25,2 2N3866
+  Q3: npn 6.5,2 2N3904
+  Q4: pnp 8.75,2 2N3906
+  Q5: npn 11.25,2 2N5109
+  Q6: nmos 13.5,2 2N7000
+  Q7: nmos 2,4.5 2N7002
+  Q8: pnp 4.25,4.5 2SA1015
+  Q9: pnp 6.5,4.5 2SA1020
+  Q10: pnp 8.75,4.5 2SA950
+  Q11: pnp 11.25,4.5 2SB772
   Q12: npn 13.5,4.5 2SC1008
-  Q13: npn 2,7 2N5109
-  Q14: npn 4.25,7 2N3866
-  Q15: njfet 6.5,7 2SK30A
-  Q16: njfet 8.75,7 J310
-  Q17: njfet 11.25,7 2SK170
-  Q18: njfet 13.5,7 2SK117
-  Q19: pjfet 2,9.5 2SJ74
-  Q20: nmos 4.25,9.5 2N7000
-  Q21: nmos 6.5,9.5 BS170
-  Q22: nmos 8.75,9.5 2N7002
-  Q23: pmos 11.25,9.5 BSS84
-  Q24: nmos 13.5,9.5 IRF520
-  Q25: pmos 2,12.5 IRF9540
-  Q26: nmos 4.25,12.5 2SK2231
-  Q27: npn 6.5,12.5 2SD882
-  Q28: pnp 8.75,12.5 2SB772
-  U1: regulator 11.25,12.5 7805
-  U2: regulator 13.5,12.5 78L05
-  U3: regulator 2,15.5 7905
-  U4: regulator 4.25,15.5 79L05
-  U5: regulator 6.5,15.5 LM317
+  Q13: npn 2,7 2SC1815
+  Q14: npn 4.25,7 2SC2120
+  Q15: npn 6.5,7 2SC2655
+  Q16: npn 8.75,7 2SC3355
+  Q17: npn 11.25,7 2SD882
+  Q18: pjfet 13.5,7 2SJ74
+  Q19: njfet 2,10 2SK117
+  Q20: njfet 4.25,10 2SK170
+  Q21: nmos 6.5,10 2SK2231
+  Q22: njfet 8.75,10 2SK30A
+  U1: regulator 11.25,10 7805
+  U2: regulator 13.5,10 78L05
+  U3: regulator 2,13 7905
+  U4: regulator 4.25,13 79L05
+  Q23: nmos 6.5,13 BS170
+  Q24: pmos 8.75,13 BSS84
+  Q25: nmos 11.25,13 IRF520
+  Q26: pmos 13.5,13 IRF9540
+  Q27: njfet 2,16 J310
+  U5: regulator 4.25,16 LM317
+  Q28: npn 6.5,16 P2N2222A
 notes:
   - text 2,3.08 small center: npn
-  - text 4.25,3.08 small center: pnp
+  - text 4.25,3.08 small center: npn
   - text 6.5,3.08 small center: npn
   - text 8.75,3.08 small center: pnp
   - text 11.25,3.08 small center: npn
-  - text 13.5,3.08 small center: pnp
-  - text 2,5.57 small center: npn
-  - text 4.25,5.57 small center: npn
+  - text 13.5,3.08 small center: nmos
+  - text 2,5.57 small center: nmos
+  - text 4.25,5.57 small center: pnp
   - text 6.5,5.57 small center: pnp
-  - text 8.75,5.57 small center: npn
-  - text 11.25,5.57 small center: npn
+  - text 8.75,5.57 small center: pnp
+  - text 11.25,5.57 small center: pnp
   - text 13.5,5.57 small center: npn
   - text 2,8.07 small center: npn
   - text 4.25,8.07 small center: npn
-  - text 6.5,8.07 small center: njfet
-  - text 8.75,8.07 small center: njfet
-  - text 11.25,8.07 small center: njfet
-  - text 13.5,8.07 small center: njfet
-  - text 2,10.58 small center: pjfet
-  - text 4.25,10.58 small center: nmos
-  - text 6.5,10.58 small center: nmos
-  - text 8.75,10.58 small center: nmos
-  - text 11.25,10.58 small center: pmos
-  - text 13.5,10.58 small center: nmos
-  - text 2,13.58 small center: pmos
-  - text 4.25,13.58 small center: nmos
-  - text 6.5,13.58 small center: npn
-  - text 8.75,13.58 small center: pnp
-  - text 11.25,13.58 small center: regulator
-  - text 13.5,13.58 small center: regulator
-  - text 2,16.43 small center: regulator
-  - text 4.25,16.43 small center: regulator
-  - text 6.5,16.43 small center: regulator
+  - text 6.5,8.07 small center: npn
+  - text 8.75,8.07 small center: npn
+  - text 11.25,8.07 small center: npn
+  - text 13.5,8.07 small center: pjfet
+  - text 2,11.08 small center: njfet
+  - text 4.25,11.08 small center: njfet
+  - text 6.5,11.08 small center: nmos
+  - text 8.75,11.08 small center: njfet
+  - text 11.25,11.08 small center: regulator
+  - text 13.5,11.08 small center: regulator
+  - text 2,14.08 small center: regulator
+  - text 4.25,14.08 small center: regulator
+  - text 6.5,14.08 small center: nmos
+  - text 8.75,14.08 small center: pmos
+  - text 11.25,14.08 small center: nmos
+  - text 13.5,14.08 small center: pmos
+  - text 2,17.08 small center: njfet
+  - text 4.25,17.08 small center: regulator
+  - text 6.5,17.08 small center: npn
 ```
 
 ![図01 ギャラリー トランジスタ・FET・レギュレータの型番](out/23-gallery-modules-1.png)

@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [J310, J309]
+package: transistor
+kind: nch-jfet
+case: TO-92
+role: N チャネル JFET (VHF・UHF の増幅)
+pins: [D, S, G]
+note: "**ゲートは端 (3 番)**。InterFET 品は S D G で D と S が逆 (D と S は入れ替えて使える)。Fairchild 品は図に番号が無い"
+source: onsemi J309/D Rev. 1 (2006-03)、TO-92 CASE 29-11 STYLE 5 (1 DRAIN・2 SOURCE・3 GATE)

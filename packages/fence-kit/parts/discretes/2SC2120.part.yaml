@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [2SC2120, 2SC2120Y, 2SC2120O, 2SC2120-Y, 2SC2120-O]
+package: transistor
+kind: npn
+case: TO-92
+role: NPN 30 V 800 mA
+pins: [E, C, B]
+source: 東芝 2SC2120 (2002-01-30、秋月の配布)、2-5F1B

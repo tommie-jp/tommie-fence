@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: ["7905", L7905, L7905CV, LM7905, MC7905, UA7905, UA79M05, 79M05, "7912", "7915", L7912, L7915, MC7912]
+package: regulator
+kind: regulator
+case: TO-220
+role: 三端子レギュレータ (負電圧)
+pins: [GND, IN, OUT]
+note: "**7805 と並びが違う** (1 番が GND、2 番が IN)。**タブは IN (7805 の GND ではない)**。入力・出力とも負の電圧"
+source: TI uA79M00 SLVS060K (2005-04)、KC/KCS の TOP VIEW (タブが INPUT、ピンは上から OUTPUT・INPUT・COMMON。タブを上・ピンを下に回すと左から COMMON・INPUT・OUTPUT)

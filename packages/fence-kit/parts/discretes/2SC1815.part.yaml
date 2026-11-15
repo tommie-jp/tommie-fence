@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [2SC1815, 2SC1815Y, 2SC1815GR, 2SC1815BL, 2SC1815-Y, 2SC1815-GR, 2SC2458]
+package: transistor
+kind: npn
+case: TO-92
+role: NPN 汎用 50 V 150 mA
+pins: [E, C, B]
+source: 東芝 2SC1815 (2007-11-01)、外形図 2-5F1B の端子 (1 EMITTER・2 COLLECTOR・3 BASE)

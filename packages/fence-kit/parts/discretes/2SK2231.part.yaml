@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [2SK2231]
+package: transistor
+kind: nch-mos
+case: PW-Mold (面実装)
+role: N チャネル MOSFET 60 V 5 A
+pins: [G, D, S]
+note: "**TO-220 ではなく面実装 (DPAK 相当)**。タブは D。基板に挿すには変換基板が要る"
+source: 東芝 2SK2231 (1998-11-12)、2-7B1B の 1 G・2 D・3 S

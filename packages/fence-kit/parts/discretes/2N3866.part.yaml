@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [2N3866, 2N3866A]
+package: transistor
+kind: npn
+case: TO-39
+role: NPN 高周波 小電力の送信 30 V 400 mA (fT 500 MHz)
+pins: [E, B, C]
+note: 金属缶。番号 (1=E 2=B 3=C、出っ張りの隣が 1) を穴の順に書く。**缶がどの足とつながるかは資料に書かれていないので、テスタで確かめる**。2N3866A は fT 800 MHz
+source: "Central Semiconductor 2N3866 series R2 (2010-09-15)、TO-39 の外形図 (出っ張りの隣が LEAD #1) と LEAD CODE 1) Emitter 2) Base 3) Collector。Advanced Power Technology 2N3866/2N3866A (2003-04) も同じ"

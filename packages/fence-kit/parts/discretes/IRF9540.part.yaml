@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [IRF9540, IRF9540N, IRF9Z34N]
+package: transistor
+kind: pch-mos
+case: TO-220
+role: P チャネルパワー MOSFET
+pins: [G, D, S]
+note: 並びは N チャネルと同じ G D S。タブは D
+source: Vishay IRF9540 (Doc 91078 Rev. C) の 1 G・2 D・3 S

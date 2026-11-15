@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [2SB772]
+package: transistor
+kind: pnp
+case: TO-126
+role: PNP -30 V -3 A
+pins: [E, C, B]
+source: Blue Rocket 2SB772 Rev. F (2016-03)、Inchange 2SB772 の 1 E・2 C・3 B
