@@ -16,7 +16,7 @@ const bundle = await rollup({
   // **tsconfig を名指しで渡す** (コアの dts.mjs と同じ)。渡さないと
   // rollup-plugin-dts は moduleResolution を node10 に落とし、型チェックと
   // 違う解決をする。束ね損ねても**落ちずに素通りする**ので、中身は CI が見る。
-  plugins: [dts({ respectExternal: true, tsconfig: 'tsconfig.json' })],
+  plugins: [dts({ respectExternal: true, tsconfig: 'tsconfig.dts.json' })],
 });
 
 await bundle.write({ file: 'dist/types/shell.d.ts', format: 'es' });

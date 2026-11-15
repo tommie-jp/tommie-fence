@@ -1,0 +1,8 @@
+{
+  // 型定義を束ねる (dts.mjs) ときだけ使う。Node の型を読まない。
+  // `types: ["node"]` のままだと rollup-plugin-dts が 4.4 GB 使い、Node の既定のヒープを越えて落ちた。
+  // 外すと 1.2 GB・4 秒になり、出てくる .d.ts は 1 バイトも変わらない (実測。52 の docs/161)。
+  // core は Node の API を使わない約束なので、ここが通ること自体がその見張りにもなる。
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "types": [] }
+}

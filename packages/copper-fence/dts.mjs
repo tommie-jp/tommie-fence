@@ -20,7 +20,7 @@ const bundle = await rollup({
   // moduleResolution を node10 に落とし、`exports` しか持たない fence-kit を
   // 解決できずに external 扱いする。**落ちずに素通りする**ので、
   // 束ねたはずの .d.ts が `from 'fence-kit'` を持ったまま出てくる。
-  plugins: [dts({ respectExternal: true, tsconfig: 'tsconfig.json' })],
+  plugins: [dts({ respectExternal: true, tsconfig: 'tsconfig.dts.json' })],
 });
 
 await bundle.write({ file: 'dist/types/index.d.ts', format: 'es' });

@@ -49,7 +49,7 @@
   "scripts": {
     "build": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
-    "types": "node --max-old-space-size=6144 dts.mjs",
+    "types": "node --max-old-space-size=2048 dts.mjs",
     "prepack": "rm -rf dist && node esbuild.mjs --production && npm run types",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
