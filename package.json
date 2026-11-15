@@ -30,6 +30,7 @@
     "profile:editor": "node --experimental-transform-types --disable-warning=ExperimentalWarning scripts/profile/editor.mjs",
     "profile:cli": "node scripts/profile/cli.mjs",
     "profile:render": "node --experimental-transform-types --expose-gc --disable-warning=ExperimentalWarning scripts/profile/render.mjs",
+    "profile:memory": "node --experimental-transform-types --expose-gc --disable-warning=ExperimentalWarning scripts/profile/memory.mjs",
     "cards": "node packages/part-card/scripts/bake.mjs",
     "rows": "node packages/part-card/scripts/rows.mjs",
     "cards:check": "node packages/part-card/scripts/bake.mjs --check && node packages/part-card/scripts/rows.mjs --check",

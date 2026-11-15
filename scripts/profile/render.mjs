@@ -13,10 +13,9 @@
 // - ヒープは、全部のフェンスを何巡も描いて GC したあとの大きさを並べる (増え続ければ漏れ)
 //
 // 本体には手を入れない。外から入口の関数を呼ぶだけ。
-import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { Session } from 'node:inspector/promises';
-import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { collectJobs, loadFences } from './fences.mjs';
 import { ROOT, round, save, summarize, table } from './lib.mjs';
 
 const args = process.argv.slice(2);
@@ -32,31 +31,7 @@ if (targets.length === 0) {
   process.exit(2);
 }
 
-const core = (name) => import(new URL(`packages/${name}-fence/src/core/index.ts`, ROOT).href);
-const [bread, perf, circuit, copper, vna, scope, spectrum, graph, logic] = await Promise.all(
-  ['breadboard', 'perfboard', 'circuit', 'copper', 'vna', 'scope', 'spectrum', 'graph', 'logic'].map(core),
-);
-
-/** フェンスごとの「取り出す」と「描く」。回路図は TeX を書き出すまで。 */
-const FENCES = [
-  { name: 'bread', extract: bread.extractBreadboardFences, draw: (source) => bread.renderBreadboard(source) },
-  { name: 'perf', extract: perf.extractPerfboardFences, draw: (source) => perf.renderPerfboard(source) },
-  { name: 'circuit', extract: circuit.extractCircuitFences, draw: (source) => circuit.compileCircuit(source) },
-  { name: 'copper', extract: copper.extractCopperFences, draw: (source) => copper.renderCopper(source) },
-  { name: 'vna', extract: vna.extractVnaFences, draw: (source) => vna.renderVna(source) },
-  { name: 'scope', extract: scope.extractScopeFences, draw: (source) => scope.renderScope(source) },
-  { name: 'spectrum', extract: spectrum.extractSpectrumFences, draw: (source) => spectrum.renderSpectrum(source) },
-  { name: 'graph', extract: graph.extractGraphFences, draw: (source) => graph.renderGraph(source) },
-  { name: 'logic', extract: logic.extractLogicFences, draw: (source) => logic.renderLogic(source) },
-].filter((fence) => only === null || only.includes(fence.name));
-
-const SKIPPED = new Set(['node_modules', 'out', 'dist', '.git']);
-const markdownFiles = (target) => (statSync(target).isDirectory()
-  ? readdirSync(target, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name)).flatMap((entry) => {
-    if (entry.isDirectory()) return SKIPPED.has(entry.name) || entry.name.startsWith('.') ? [] : markdownFiles(join(target, entry.name));
-    return entry.name.endsWith('.md') ? [join(target, entry.name)] : [];
-  })
-  : [target]);
+const FENCES = await loadFences({ only });
 
 /** 大きさの目安: `parts:` と `wires:` の下の行の数 (読み取りに頼らず字で数える)。 */
 function sizeOf(source) {
@@ -70,15 +45,7 @@ function sizeOf(source) {
   return count;
 }
 
-const jobs = [];
-for (const file of targets.flatMap((target) => markdownFiles(resolve(target)))) {
-  const text = readFileSync(file, 'utf8');
-  for (const fence of FENCES) {
-    for (const block of fence.extract(text)) {
-      jobs.push({ fence, file: relative(process.cwd(), file), line: block.line, source: block.source, size: sizeOf(block.source), bytes: block.source.length });
-    }
-  }
-}
+const jobs = collectJobs(targets, FENCES).map((job) => ({ ...job, size: sizeOf(job.source), bytes: job.source.length }));
 if (jobs.length === 0) {
   console.error('フェンスが 1 つもありません');
   process.exit(1);
