@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.69.0] - 2026-11-15
+
 ### Added
 
 - Debug Probe と USB ケーブルに `size: large | medium | small` を書ける (既定は `medium`。前の版の実寸は `large`)

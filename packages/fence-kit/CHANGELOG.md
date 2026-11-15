@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.47.0] - 2026-11-15
+
 ### Added
 
 - 姿と USB ケーブルの大きさ (`PartSize`: `large` `medium` `small`、既定は `medium`)。`lookSize` `lookPinX` `lookUsbPort` `drawDeviceLook` `usbCableMinLength` `usbCableBox` `drawUsbCable` が受け取り、`readUsbCable` が `size:` を読む
