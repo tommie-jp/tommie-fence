@@ -365,6 +365,19 @@ describe('7. wires that take the long way (detour)', () => {
     expect(detoursOf({ wires: [device, rail] })).toEqual([]);
   });
 
+  test('leaves out a jumper between the top and bottom rails, even when it steps aside between columns', () => {
+    // 上下のレールを渡す線は基板をまたぐのが当たり前。列の上を避けて半列ずれる (5 区間、348 px)。
+    const points: [number, number][] = [[602, 30], [602, 40], [612, 40], [612, 348], [602, 348], [602, 358]];
+    const jumper: SceneWire = { ...wire('wire(+t29-+b29)', points), ends: ['rail', 'rail'] };
+    expect(detoursOf({ wires: [jumper] })).toEqual([]);
+  });
+
+  test('still counts a long wire with only one end on a rail', () => {
+    const points: [number, number][] = [[0, 0], [0, 10], [10, 10], [10, 330], [0, 330], [0, 340]];
+    const half: SceneWire = { ...wire('wire(-t1-j1)', points), ends: ['rail', 'hole'] };
+    expect(detoursOf({ wires: [half] })).toHaveLength(1);
+  });
+
   test('is not looked for on schematics', () => {
     expect(detoursOf({ fence: 'circuit', wires: [wire('w', [[0, 0], [0, 40], [40, 40], [40, 0]])] })).toEqual([]);
   });

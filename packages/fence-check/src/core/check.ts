@@ -114,11 +114,13 @@ const lengthOf = (segments: readonly Segment[]): number =>
  * 線の長さが両端の隔たり (縦と横の和) の 2 倍以上か、15 ピッチ (300 px) 以上なら 1 件、量は長さ。
  *
  * 除くもの: 板の外の機器から入れる線 (端が `device`。板の外を回るのが当たり前)、部品のリード、
- * レールへ縦 1 本で降りる線 (電源の筋は長くてよい)。
+ * レールへ縦 1 本で降りる線 (電源の筋は長くてよい)、両端がレールの線 (上下のレールを渡す
+ * ジャンパ。基板をまたぐのが当たり前で、列の上を避けて半列ずれても遠回りではない)。
  */
 function detours(wires: readonly SceneWire[], make: Make): Finding[] {
   return wires.flatMap((wire) => {
     if (wire.lead === true || wire.ends?.includes('device')) return [];
+    if (wire.ends?.[0] === 'rail' && wire.ends[1] === 'rail') return [];
     const segments = segmentsOf(wire.points);
     if (segments.length === 0) return [];
     if (segments.length === 1 && wire.ends?.includes('rail')) return [];

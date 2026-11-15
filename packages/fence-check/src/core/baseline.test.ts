@@ -20,6 +20,15 @@ describe('keyOf', () => {
     ].map(keyOf);
     expect(new Set(keys).size).toBe(5);
   });
+
+  test('an auto-numbered net (N46 → N49) is the same key, because adding a net elsewhere renumbers it', () => {
+    expect(keyOf(row({ kind: 'detour', b: 'N49' }))).toBe(keyOf(row({ kind: 'detour', b: 'N46' })));
+  });
+
+  test('a named net or a part whose name starts with N is still its own key', () => {
+    const keys = [row({ b: 'N4' }), row({ b: 'VCC' }), row({ b: 'NE555' }), row({ b: 'N4x' })].map(keyOf);
+    expect(new Set(keys).size).toBe(4);
+  });
 });
 
 describe('diffBaseline', () => {

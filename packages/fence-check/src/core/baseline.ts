@@ -30,8 +30,14 @@ export type BaselineDiff = {
 
 type KeyFields = Pick<FindingRow, 'file' | 'title' | 'sheet' | 'kind' | 'a' | 'b'>;
 
+/** 名前の無いネットに道具が振る番号 (`N46`)。ほかの所にネットが 1 つ増えると振り直される。 */
+const AUTO_NET = /^N\d+$/;
+
+/** 鍵に入れる相手の名前。自動の番号は番号を落とす (番号の振り直しで別の件に見えないように)。 */
+const stableName = (name: string): string => (AUTO_NET.test(name) ? 'N#' : name);
+
 export const keyOf = (row: KeyFields): string =>
-  [row.file, row.title ?? '', row.sheet ?? '', row.kind, row.a, row.b].join('\t');
+  [row.file, row.title ?? '', row.sheet ?? '', row.kind, stableName(row.a), stableName(row.b)].join('\t');
 
 const countKeys = (rows: readonly KeyFields[]): Map<string, number> => {
   const counts = new Map<string, number>();
