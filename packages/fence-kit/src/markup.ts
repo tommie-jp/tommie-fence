@@ -21,15 +21,29 @@ const ILLEGAL = new RegExp('[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F
  * 使う側は自分の文脈に合う名前で包んでよい。
  */
 export const escapeMarkup = (text: string): string =>
-  text.replace(ILLEGAL, '').replace(/[&<>"']/g, (char) => ESCAPES[char] ?? char);
+  // **直す字が 1 つも無い値は、そのまま返す。** 図の字のほとんど (座標・色・class) はここで終わる。
+  // 置き換えを 2 回通すのは、直す字があるときだけ (実測で図を描く時間の 1 割がここだった。52 の docs/162)。
+  (NEEDS_WORK.test(text) ? text.replace(ILLEGAL, '').replace(/[&<>"']/g, (char) => ESCAPES[char] ?? char) : text);
+
+/** 直す字 (5 つの実体参照の字か、捨てる制御文字) を含むか。`g` を付けない (`test` が位置を覚えないように)。 */
+const NEEDS_WORK = new RegExp('[&<>"\'\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F-\\u009F]');
 
 export type Attributes = Record<string, string | number | undefined>;
 
-const attributes = (attrs: Attributes): string =>
-  Object.entries(attrs)
-    .filter(([, value]) => value !== undefined)
-    .map(([name, value]) => ` ${name}="${escapeMarkup(String(value))}"`)
-    .join('');
+/**
+ * 属性の並び。穴 1 つ・ピン 1 本ごとに呼ばれるので、配列を作らずに字を足していく
+ * (前は `Object.entries` → `filter` → `map` → `join` で、要素 1 つごとに配列を 3 つ作っていた)。
+ * 数はそのまま書く (数を字にした物に、直す字は入らない)。
+ */
+function attributes(attrs: Attributes): string {
+  let out = '';
+  for (const name of Object.keys(attrs)) {
+    const value = attrs[name];
+    if (value === undefined) continue;
+    out += typeof value === 'number' ? ` ${name}="${value}"` : ` ${name}="${escapeMarkup(value)}"`;
+  }
+  return out;
+}
 
 /**
  * 1 つの要素。**children は組み立て済みの markup として扱う**
