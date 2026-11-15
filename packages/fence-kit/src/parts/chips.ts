@@ -758,7 +758,7 @@ export function boardChip(options: BoardChipOptions): string {
     x: num(box.x), y: num(box.y), width: num(box.width), height: num(box.height), rx: 5,
     fill: ink.body, stroke: CHIP_EDGE,
   });
-  const usbStamp = definition === null ? '' : boardUsbStamp(definition, box, centre, alongX, nearStart, pitch, scale, ink);
+  const usbStamp = definition === null ? '' : boardUsbStamp(definition, box, centre, alongX, nearStart, pitch, scale);
 
   const chipSide = CHIP_SIDE * pitch;
   const chip = element('rect', {
@@ -814,29 +814,35 @@ export function boardChip(options: BoardChipOptions): string {
   const placedPads = options.pads ?? boardPads(points, pinOne, definition, pitch);
   const pads = drawPads(placedPads, ink)
     + (options.padNames === false ? '' : boardPadNames(placedPads, points, pinOne, box, fontSize, ink, PAD_NAME_GAP, boardLegends(names, points.length)));
-  return `${usb}${hdmi(definition, box, centre, alongX, nearStart, pitch)}${shell}${antenna(definition, box, centre, alongX, nearStart, ink.pin)}`
-    + `${chip}${chipName}${stubs}${legends}${pads}${usbStamp}`;
+  // **USB の口は基板の上に載る部品** (実物も上面実装)。基板より後に描き、口の内側に種類 (`micro-B`) を刷る。
+  return `${hdmi(definition, box, centre, alongX, nearStart, pitch)}${shell}${antenna(definition, box, centre, alongX, nearStart, ink.pin)}`
+    + `${usb}${usbStamp}${chip}${chipName}${stubs}${legends}${pads}`;
 }
 
 const USB_STAMP_FONT = 6.5;
 
 /**
- * USB の口の種類 (`micro-B`) を**ボードの外、口のすぐ外側**に、端の辺に沿って刷る。ボードの内側に刷ると、
- * 1 番と 40 番の列のピンの名前の縦書き (`use=` で `01 UART0 TX` のように長くなる) に重なる (52 の docs/157)。
- * ケーブルを挿した図では差し込みの胴に隠れる (胴にも種類を刷る)。字は地の色で縁取る。
+ * USB の口の種類 (`micro-B`) を**口の内側**に刷る (口の金物の上、口の長い辺に沿って)。字は金物の幅に収める
+ * (52 の docs/157)。ケーブルを挿した図でも、差し込みは口の外から入るので字は隠れない。
  */
 function boardUsbStamp(
-  definition: BoardPart, box: ChipBox, centre: ChipPoint, alongX: boolean, nearStart: boolean, pitch: number, scale: number, ink: ChipInk,
+  definition: BoardPart, box: ChipBox, centre: ChipPoint, alongX: boolean, nearStart: boolean, pitch: number, scale: number,
 ): string {
-  const size = USB_STAMP_FONT * scale;
-  const out = usbMm(USB_MM.jut, pitch) + size * 0.9;
-  const x = alongX ? (nearStart ? box.x - out : box.x + box.width + out) : centre.x;
-  const y = alongX ? centre.y : (nearStart ? box.y - out : box.y + box.height + out);
-  const text = svgText(0, size * 0.35, USB_STAMP[definition.usb], {
-    'font-size': num(size), fill: ink.outside, halo: ink.halo, haloWidth: ink.haloWidth,
-  });
-  return element('g', { class: 'cf-usb-kind', transform: `translate(${num(x)} ${num(y)})${alongX ? ' rotate(-90)' : ''}` }, text);
+  const jut = usbMm(USB_MM.jut, pitch);
+  const onBoard = usbMm(USB_MM.onBoard, pitch);
+  const width = usbMm(USB_MM.width, pitch);
+  const text = USB_STAMP[definition.usb];
+  // 口の長い辺 (幅 7.5 mm) に沿って書き、短い辺 (6 mm) の真ん中に置く。
+  const size = Math.min(USB_STAMP_FONT * scale, (width * 0.85) / (text.length * 0.55), (jut + onBoard) * 0.45);
+  const middle = (jut + onBoard) / 2;
+  const x = alongX ? (nearStart ? box.x - jut + middle : box.x + box.width + jut - middle) : centre.x;
+  const y = alongX ? centre.y : (nearStart ? box.y - jut + middle : box.y + box.height + jut - middle);
+  const label = svgText(0, size * 0.35, text, { 'font-size': num(size), fill: USB_STAMP_INK });
+  return element('g', { class: 'cf-usb-kind', transform: `translate(${num(x)} ${num(y)})${alongX ? ' rotate(-90)' : ''}` }, label);
 }
+
+/** 口の金物の上の字の色 (金物の銀に読める濃い灰)。 */
+const USB_STAMP_INK = '#2b2f36';
 
 /**
  * マイコンボードの USB の口 (差し込みが入る縁の真ん中と、ケーブルが出ていく向き)。

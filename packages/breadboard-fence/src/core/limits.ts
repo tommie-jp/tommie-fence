@@ -16,9 +16,9 @@ export const LIMITS = {
   pinNameLength: 24,
   idLength: 32,
   labelLength: 60,
-  /** 注釈の数と 1 つの字数。回路図フェンスと同じ数に揃えてある。 */
+  /** 注釈の数と 1 つの字数。字数は機器のそばに 1 文の説明を置けるよう 120 字 (ほかのフェンスは 60 字)。 */
   notes: 200,
-  noteLength: 60,
+  noteLength: 120,
   titleLength: 60,
   /**
    * `- source` が図に書き出すフェンスの行数。**切ったことは図に書く**ので

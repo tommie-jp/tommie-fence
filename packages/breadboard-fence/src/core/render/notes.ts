@@ -296,7 +296,8 @@ function renderText(
   const size = fontSizeOf(spec, theme);
   const align: NoteAlign = spec.align ?? 'left';
   const step = size * noteLeading(spec.leading, spec.kind);
-  const room = roomFor(anchor.center.x, align, layout);
+  // **基板の外を指した字** (帯の中の機器のピン `PROBE.TX` など) は、基板の幅で切らず画布の端まで使う。
+  const room = isOffBoard(anchor, layout) ? roomOnCanvas(anchor.center.x, align, layout) : roomFor(anchor.center.x, align, layout);
   // **反転は字を裏返さない。** 鏡文字は読めないので、指し先の**反対側**へ移す。
   // 上に何かあって字が重なるときに、下へ逃がすためのもの。
   const baseline = anchor.center.y + (spec.turn.mirror ? step + size * 0.4 : 0);
@@ -356,6 +357,25 @@ function haloOf(spec: NoteSpec, theme: RenderTheme) {
     inkOpacity: loud ? 1 : BOARD_INK_OPACITY,
   };
 }
+
+/** 指し先が基板の外 (上下の帯や左右の余白) か。 */
+const isOffBoard = (anchor: NoteAnchor, layout: Layout): boolean => {
+  const { x, y } = anchor.center;
+  const { board } = layout;
+  return y < board.y || y > board.y + board.height || x < board.x || x > board.x + board.width;
+};
+
+/** 基板の外に置く字の残りの幅 (画布の端から余白を引いた所まで)。 */
+function roomOnCanvas(x: number, align: NoteAlign, layout: Layout): number {
+  const left = x - CANVAS_MARGIN;
+  const right = layout.width - CANVAS_MARGIN - x;
+  if (align === 'left') return Math.max(0, right);
+  if (align === 'right') return Math.max(0, left);
+  return Math.max(0, Math.min(left, right)) * 2;
+}
+
+/** 画布の端に残す余白 (px)。 */
+const CANVAS_MARGIN = 6;
 
 /** その置き方で基板の中に残っている幅。 */
 function roomFor(x: number, align: NoteAlign, layout: Layout): number {

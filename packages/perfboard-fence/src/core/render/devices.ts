@@ -1,5 +1,5 @@
 import {
-  PIN_NAME_GAP, deviceLookOf, deviceSilk, drawDeviceLook, element, fit, lookPinX, lookSize, num,
+  PIN_NAME_GAP, deviceLookOf, deviceSilk, deviceWireColor, drawDeviceLook, wireColor, element, fit, lookPinX, lookSize, num,
   pinNameInner, pinNameRow, pinNameWidth, pxPerMmOf, svgText,
 } from 'fence-kit';
 import { PITCH } from '../model/layout.ts';
@@ -277,7 +277,12 @@ function renderLooked(placed: PlacedDevice, look: NonNullable<ReturnType<typeof 
       stroke: theme.palette.lead, 'stroke-width': 2, 'stroke-linecap': 'round',
     }))
     .join('');
-  const pins = device.pins.map((name) => ({ name, text: deviceSilk(device.model ?? null, name) }));
+  // ピンの名前は付属のケーブルの色で刷る (橙・黒・黄)。
+  const pins = device.pins.map((name) => {
+    const colorName = deviceWireColor(device.model ?? null, name);
+    const color = colorName === null ? null : wireColor(colorName);
+    return { name, text: deviceSilk(device.model ?? null, name), ...(color === null ? {} : { color }) };
+  });
   const scale = theme.metrics.textSize / 9;
   return drawDeviceLook(look, {
     rect: box, side: top ? 'top' : 'bottom', label: device.label, scale, pxPerMm: PX_PER_MM, pins, pinFont: theme.metrics.textSize,

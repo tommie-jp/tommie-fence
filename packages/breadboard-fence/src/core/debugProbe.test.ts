@@ -134,3 +134,22 @@ describe('使う機能 (use=)', () => {
     expect(errors.map((one) => one.message).join('\n')).toContain('GP2 に ADC0 はありません');
   });
 });
+
+describe('基板の外の注釈 (機器のピンを指す)', () => {
+  const long = 'UART は TX と RX を入れ違いにつなぐ (Probe の TX → Pico の RX = GP1)。名前は Probe の側から見た名前';
+
+  test('places a text by a device pin outside the board, not cut to the board width', () => {
+    // 例 (07-pico.md の図02) と同じ置き方。Probe は線の先 (左寄り) に来るので、右へ長い字が入る。
+    const { svg, errors } = renderBreadboard(fence('parts-list: none', 'parts:', '  MCU: pico2 @ h15', ...probe('bottom', '[TX, UGND, RX]'),
+      'wires:', '  - PROBE.TX -- j16', '  - PROBE.RX -- j15', '  - PROBE.UGND -- j17',
+      'notes:', `  - text PROBE.TX red bold: ${long}`));
+    expect(errors).toEqual([]);
+    expect(svg).toContain(`>${long}<`);
+    expect(svg).not.toMatch(/名前は …</);
+  });
+
+  test('refuses a pin the device does not have', () => {
+    const { errors } = renderBreadboard(fence('parts:', ...probe('bottom', '[TX]'), 'notes:', '  - text PROBE.SD: x'));
+    expect(errors.map((one) => one.message).join('\n')).toContain('機器のピン');
+  });
+});

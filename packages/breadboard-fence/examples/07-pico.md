@@ -161,6 +161,9 @@ wires:
   - PROBE.TX -- j16
   - PROBE.RX -- j15
   - PROBE.UGND -- j17
+notes:
+  # 機器のピン (PROBE.TX) を指すと、基板の外 (Probe の口のそば) に字を置ける
+  - text PROBE.TX red bold: UART は TX と RX を入れ違いにつなぐ (Probe の TX → Pico の RX = GP1)。名前は Probe の側から見た名前
 ```
 
 ![図02 Debug Probe を UART につなぐ](out/07-pico-2.svg)
@@ -213,7 +216,7 @@ wires:
 
 USB ケーブルは**部品**として書く (`type: usb-cable`)。`from:` に挿す口を書くと、口から外へ伸びた
 ケーブルを描き、両端の差し込みに種類を刷る。**手前の差し込みは口で決まる** (Pico も Debug Probe も
-micro-B)。向こうの端 (パソコンの側) は書かなければ USB-C、`plug: usb-a` で USB-A。
+micro-B)。向こうの端 (パソコンの側) は**書かなければ USB-C** (`plug: usb-a` と書けば USB-A)。
 
 ```bread
 # ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
@@ -232,7 +235,6 @@ parts:
   W2:
     type: usb-cable
     from: PROBE.USB
-    plug: usb-a
 wires:
   - PROBE.SC -- MCU.SWCLK
   - PROBE.DGND -- MCU.SWGND
@@ -242,7 +244,7 @@ wires:
 ![図04 Pico 2 と Debug Probe に USB ケーブルを挿す](out/07-pico-4.svg)
 
 - Probe とケーブルの大きさは `size:` で選ぶ (`large` は実寸、既定の `medium` は口とコネクタだけ実寸で全体は小さく、
-  `small` はコネクタも小さく)。実寸 (`large`) では USB-A の胴だけで 15.7 × 36 mm あり、図がかなり大きくなる
+  `small` はコネクタも小さく)。実寸 (`large`) では USB-C の胴だけで 12.2 × 35 mm あり、図がかなり大きくなる
 - Pico の USB の口の脇の `micro-B` は、ケーブルを描かなくても刷る。Type-C のケーブルしか無いと挿さらない
 - 部品表には `W1 usb-cable USB-C – micro-B` のように両端の種類が出る。買う物がそのまま読める
 
@@ -253,7 +255,7 @@ Debug Probe と USB ケーブルは、`size:` で大きさを選べる。**書�
 
 | `size:` | Debug Probe | USB ケーブル |
 | --- | --- | --- |
-| `large` | 実寸 (ケース 31 × 37 mm) | 実寸 (USB-A の胴 15.7 × 36 mm) |
+| `large` | 実寸 (ケース 31 × 37 mm) | 実寸 (USB-C の胴 12.2 × 35 mm) |
 | `medium` (既定) | 口は実寸、ケース 21 × 27 mm | 金物と胴の幅は実寸、胴の長さ 0.45 倍 |
 | `small` | 口も 0.7 倍、ケース 15 × 21 mm | 金物と胴の幅 0.6 倍、胴の長さ 0.3 倍 |
 
@@ -275,7 +277,6 @@ parts:
   W2:
     type: usb-cable
     from: PROBE.USB
-    plug: usb-a
     size: large
 ```
 
@@ -301,7 +302,6 @@ parts:
   W2:
     type: usb-cable
     from: PROBE.USB
-    plug: usb-a
     size: medium
 ```
 
@@ -327,7 +327,6 @@ parts:
   W2:
     type: usb-cable
     from: PROBE.USB
-    plug: usb-a
     size: small
 ```
 

@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Pico と Debug Probe の USB の口の内側に種類 (`micro-B`) を刷る
+- Debug Probe のピンの名前を付属のケーブルの色 (橙・黒・黄) で刷る
+
 ## [0.70.0] - 2026-11-15
 
 ### Changed

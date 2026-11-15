@@ -4,7 +4,7 @@ import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
 import { element, num, svgText } from './svg.ts';
 import {
-  PIN_NAME_GAP, deviceLookOf, deviceSilk, drawDeviceLook, lookPinX, lookSize, pinNameInner, pinNameRow, pinNameWidth, pxPerMmOf,
+  PIN_NAME_GAP, deviceLookOf, deviceSilk, deviceWireColor, drawDeviceLook, wireColor, lookPinX, lookSize, pinNameInner, pinNameRow, pinNameWidth, pxPerMmOf,
 } from 'fence-kit';
 import { DEVICE_HEIGHT, PITCH } from '../model/layout.ts';
 
@@ -158,7 +158,12 @@ export function renderDevice(part: PlacedPart, placement: DevicePlacement, theme
   // **姿のある機器 (Debug Probe)** は実寸で描き、ピンの名前も姿が刷る (口の中は 1 mm 間隔なので縦書き)。
   const look = deviceLookOf(part.model ?? null);
   if (look !== null) {
-    const pins = part.pins.map((pin) => ({ name: pin.name, text: deviceSilk(part.model ?? null, pin.name) }));
+    // ピンの名前は付属のケーブルの色で刷る (橙・黒・黄)。線の色と名前を見比べられるように。
+    const pins = part.pins.map((pin) => {
+      const colorName = deviceWireColor(part.model ?? null, pin.name);
+      const color = colorName === null ? null : wireColor(colorName);
+      return { name: pin.name, text: deviceSilk(part.model ?? null, pin.name), ...(color === null ? {} : { color }) };
+    });
     const body = drawDeviceLook(look, {
       rect, side, label: captionOf(part), scale, pxPerMm: PX_PER_MM, pins, pinFont: scale * PIN_FONT, ...(part.size ? { size: part.size } : {}),
     });

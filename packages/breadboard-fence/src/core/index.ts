@@ -542,7 +542,13 @@ function resolveNoteTarget(
     return { center: point, rx: NOTE_HOLE_RADIUS, ry: NOTE_HOLE_RADIUS, part: false };
   }
 
-  errors.push(fenceError(`注釈の指し先 ${safeToken(target)}: そんな部品も穴もありません`, spec.line, target));
+  // **ボード外の機器のピン** (`PROBE.TX`)。ピンの足の先 (基板の側) を指す。帯の中の機器のそばに字を置くため。
+  const pinRef = /^([\w-]+)\.(\S+)$/.exec(target);
+  const device = pinRef === null ? undefined : parts.find((candidate) => candidate.id === pinRef[1] && candidate.kind === 'device');
+  const pinPoint = device === undefined || pinRef === null ? undefined : placements.get(device.id)?.pins.get(pinRef[2] ?? '');
+  if (pinPoint !== undefined) return { center: pinPoint, rx: NOTE_HOLE_RADIUS, ry: NOTE_HOLE_RADIUS, part: false };
+
+  errors.push(fenceError(`注釈の指し先 ${safeToken(target)}: そんな部品も穴も機器のピンもありません`, spec.line, target));
   return null;
 }
 

@@ -48,7 +48,12 @@ function slotOf(word: string): WordSlot | null {
 }
 
 /** 指し先として書ける形か。部品があるか・穴が基板の中かは、あとで図を組むときに見る。 */
-const isNoteTarget = (token: string): boolean => parseAddress(token) !== null || isReferenceable(token);
+/** 指し先は穴番地・部品 ID・ボード外の機器のピン (`PROBE.TX`。ピンの名前はどんな字でも、ID の部分は ID の綴り)。 */
+const isNoteTarget = (token: string): boolean => {
+  if (parseAddress(token) !== null || isReferenceable(token)) return true;
+  const dot = token.indexOf('.');
+  return dot > 0 && dot < token.length - 1 && isReferenceable(token.slice(0, dot)) && !/\s/.test(token);
+};
 
 const isPlace = (token: string): token is NotePlace => (NOTE_PLACES as readonly string[]).includes(token);
 
@@ -107,7 +112,7 @@ export function parseNoteLine(
   }
   for (const target of targets) {
     if (!isNoteTarget(target)) {
-      return fail(`注釈の指し先として読めません: ${safeToken(target)} (部品 ID か穴番地を書きます)`, line, target);
+      return fail(`注釈の指し先として読めません: ${safeToken(target)} (部品 ID か穴番地か機器のピン (PROBE.TX) を書きます)`, line, target);
     }
   }
 

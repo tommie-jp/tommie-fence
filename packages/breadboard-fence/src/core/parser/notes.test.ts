@@ -129,9 +129,9 @@ describe('parseNoteLine', () => {
   });
 
   test('cuts a text that is longer than the limit, instead of dropping it', () => {
-    const long = 'あ'.repeat(80);
+    const long = 'あ'.repeat(160);
 
-    expect([...(noteOf('text a5', long).text ?? '')].length).toBeLessThanOrEqual(61);
+    expect([...(noteOf('text a5', long).text ?? '')].length).toBeLessThanOrEqual(121);
   });
 });
 

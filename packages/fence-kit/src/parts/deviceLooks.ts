@@ -118,6 +118,11 @@ const METAL_EDGE = '#8a929c';
 /** LED の色 (回路図 RP-008194-DS: 電源の赤と、UART・DAP の緑と黄)。 */
 const LEDS = ['#e5484d', '#3fb950', '#e3b341', '#3fb950', '#e3b341'] as const;
 
+/** USB の口の内側の字 (種類) の大きさと色 (金物の銀に読める濃い灰)。 */
+const USB_FONT = 6.5;
+const USB_INK = '#2b2f36';
+/** 色つきのピンの名前の縁の太さ (px)。 */
+const NAME_HALO = 2.5;
 /** 名前の行の送り (字の大きさに対する比)。字と字の間が 1/4 em。 */
 const NAME_LINE = 1.25;
 /** 姿に刷る名前の字の大きさ (USB の差し込みに刷る字と同じ)。 */
@@ -182,8 +187,11 @@ export type LookOptions = {
   readonly size?: PartSize;
   /** ピンの名前の字の大きさ (px)。**ほかの機器のピンの名前と同じ大きさ**を渡す。 */
   readonly pinFont: number;
-  /** 書いたピン (配線の名前) と、刷る字 (`UGND` なら GND)。名前は姿が口の上に縦に刷る。 */
-  readonly pins: readonly { readonly name: string; readonly text: string }[];
+  /**
+   * 書いたピン (配線の名前) と、刷る字 (`UGND` なら GND)。名前は姿が口の上に縦に刷る。
+   * `color` を渡すとその色で刷る (付属のケーブルの色: 橙・黒・黄)。渡さなければ白。
+   */
+  readonly pins: readonly { readonly name: string; readonly text: string; readonly color?: string }[];
 };
 
 /**
@@ -223,9 +231,12 @@ export function drawDeviceLook(_look: DeviceLookName, options: LookOptions): str
   const board = box(g.caseSide, g.caseEnd, g.boardShort, g.boardLong, {
     class: 'cf-look-board', rx: num(mm(1)), fill: BOARD_FILL, stroke: BOARD_EDGE,
   });
+  const usbFont = Math.min(USB_FONT * scale, (mm(g.usbWidth) * 0.85) / (USB_STAMP['micro-b'].length * 0.55));
   const usb = box(centreX - g.usbWidth / 2, g.caseEnd - g.usbJut, g.usbWidth, g.usbDepth, {
     rx: num(mm(0.5)), fill: METAL_FILL, stroke: METAL_EDGE,
-  });
+  })
+    // 口の内側に種類 (`micro-B`) を刷る。字は口の幅に収める。
+    + svgText(px(centreX), py(g.caseEnd - g.usbJut + g.usbDepth / 2) + usbFont * 0.35, USB_STAMP['micro-b'], { 'font-size': num(usbFont), fill: USB_INK });
 
   const font = 8 * scale;
   const housingTop = boardBottom - g.housingDepth;
@@ -250,8 +261,12 @@ export function drawDeviceLook(_look: DeviceLookName, options: LookOptions): str
     const x = px(portCentre(g, slot.port) + slot.step * nameStep);
     const y = py(housingTop - 0.6);
     const anchor = top ? 'start' : 'end';
+    // 色つきの字は、緑の基板の上で読めるよう白い縁で囲む。
+    const ink = pin.color === undefined
+      ? { fill: SILK }
+      : { fill: pin.color, halo: SILK, haloWidth: NAME_HALO, 'font-weight': 'bold' };
     return [element('g', { transform: `translate(${num(x + pinFont * 0.35)} ${num(y)}) rotate(-90)` },
-      svgText(0, 0, pin.text, { 'font-size': num(pinFont), fill: SILK, anchor }))];
+      svgText(0, 0, pin.text, { 'font-size': num(pinFont), anchor, ...ink }))];
   }).join('');
 
   const leds = LEDS.map((fill, index) =>
