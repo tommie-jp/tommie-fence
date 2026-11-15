@@ -159,7 +159,7 @@ export function renderDevice(part: PlacedPart, placement: DevicePlacement, theme
   const look = deviceLookOf(part.model ?? null);
   if (look !== null) {
     const pins = part.pins.map((pin) => ({ name: pin.name, text: deviceSilk(part.model ?? null, pin.name) }));
-    const body = drawDeviceLook(look, { rect, side, label: captionOf(part), scale, pxPerMm: PX_PER_MM, pins });
+    const body = drawDeviceLook(look, { rect, side, label: captionOf(part), scale, pxPerMm: PX_PER_MM, pins, pinFont: scale * PIN_FONT });
     const stubs = part.pins.map((pin) => {
       const point = placement.pins.get(pin.name);
       return point === undefined ? '' : stubOf(point);

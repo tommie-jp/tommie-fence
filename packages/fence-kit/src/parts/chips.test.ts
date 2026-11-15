@@ -359,12 +359,24 @@ describe('boardChip', () => {
     expect(boardPads(points, 0, lookupBoardPart('tang-nano-9k'), PITCH)).toEqual([]);
   });
 
-  test('draws the SWD pads with their names on the far side from pin 1', () => {
+  test('draws the SWD pads with their names inside the board, toward pin 1', () => {
     const svg = drawn(0);
 
     for (const name of ['SWCLK', 'SWGND', 'SWDIO']) expect(svg).toContain(`>${name}<`);
-    // 名前は板の端の外 (x > 390) から右へ書く。
-    expect(svg).toMatch(/<text x="396"[^>]*text-anchor="start"[^>]*>SWCLK</);
+    // 名前はパッド (板の端) の内側から左へ書く (`text-anchor="end"`)。板の外 (x > 390) には出さない。
+    const swclk = /<text x="([\d.]+)"[^>]*text-anchor="end"[^>]*>SWCLK</.exec(svg);
+    expect(swclk).not.toBeNull();
+    expect(Number(swclk?.[1])).toBeLessThan(390);
+  });
+
+  test('moves a pad name up or down off the vertical pin names it would touch (Pico W)', () => {
+    const definition = lookupBoardPart('pico-w');
+    const svg = boardChip({ points, names: definition?.pins ?? [], definition, pitch: PITCH, scale: 1, ink: INK });
+    const y = (name: string): number => Number(new RegExp(`<text x="[\\d.]+" y="([\\d.]+)"[^>]*>${name}<`).exec(svg)?.[1]);
+    // 並びの順 (SWCLK・SWGND・SWDIO) は変えず、真ん中の側へ寄せる (パッドの間 20 px より詰まる)。
+    const [clk, gnd, dio] = [y('SWCLK'), y('SWGND'), y('SWDIO')];
+    expect(Math.sign(gnd - clk)).toBe(Math.sign(dio - gnd));
+    expect(Math.abs(dio - clk)).toBeLessThan(40);
   });
 
   test('leaves the names to the caller when asked, so they can go above the wires', () => {

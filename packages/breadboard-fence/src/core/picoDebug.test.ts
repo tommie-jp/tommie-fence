@@ -54,15 +54,14 @@ describe('SWD のパッド', () => {
     for (const name of ['SWCLK', 'SWGND', 'SWDIO']) expect(svg).toContain(`>${name}<`);
   });
 
-  test('keeps the pad names clear of the wires: pad, then the wires going down, then the names', () => {
+  test('keeps the pad names clear of the wires: the wires come from outside, the names sit inside the board', () => {
     const source = fence(...probe(), ...swd);
     const { svg } = renderBreadboard(source);
-    const wireHalf = 2; // 線の太さ 4 の半分 (既定のテーマ)
-    const wireRight = Math.max(...polylines(source).flatMap((points) => points.slice(-3).map((point) => point.x)));
+    // パッドへ入る線のいちばん内側 (パッドに触れる端) より、名前の書き終わり (右端) が内側 (左)。
+    const wireLeft = Math.min(...polylines(source).map((points) => points[points.length - 1]?.x ?? Infinity));
     for (const name of ['SWCLK', 'SWGND', 'SWDIO']) {
-      const x = Number(new RegExp(`<text x="(-?[\\d.]+)"[^>]*>${name}<`).exec(svg)?.[1]);
-      // 名前の書き出しは、パッドへ降りてくるどの線よりも外 (右)。線が名前の下を通らない。
-      expect(x).toBeGreaterThan(wireRight + wireHalf);
+      const x = Number(new RegExp(`<text x="(-?[\\d.]+)"[^>]*text-anchor="end"[^>]*>${name}<`).exec(svg)?.[1]);
+      expect(x).toBeLessThan(wireLeft);
     }
   });
 

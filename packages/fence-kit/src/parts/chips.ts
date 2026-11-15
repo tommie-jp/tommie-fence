@@ -813,7 +813,7 @@ export function boardChip(options: BoardChipOptions): string {
 
   const placedPads = options.pads ?? boardPads(points, pinOne, definition, pitch);
   const pads = drawPads(placedPads, ink)
-    + (options.padNames === false ? '' : boardPadNames(placedPads, points, pinOne, box, fontSize, ink));
+    + (options.padNames === false ? '' : boardPadNames(placedPads, points, pinOne, box, fontSize, ink, PAD_NAME_GAP, boardLegends(names, points.length)));
   return `${usb}${hdmi(definition, box, centre, alongX, nearStart, pitch)}${shell}${antenna(definition, box, centre, alongX, nearStart, ink.pin)}`
     + `${chip}${chipName}${stubs}${legends}${pads}${usbStamp}`;
 }
@@ -917,17 +917,15 @@ function drawPads(pads: readonly BoardPad[], ink: ChipInk): string {
 }
 
 /**
- * パッドの名前。**1 番の反対の側 (USB と反対の側) へ**横に書く — 1 番の側はピンの名前の
- * 縦書きが詰まっていて、横の字を置くと必ず重なる。名前はピンと同じで、印字 (GND) ではなく
- * 配線に書く名前 (`SWGND`)。図の字と配線の字を突き合わせられるように。
+ * パッドの名前。**ボードの内側 (1 番の側) へ**横に書く。外に書くとパッドへ入る線の通り道と
+ * ブレッドボードの穴に重なる。名前はピンと同じで、印字 (GND) ではなく配線に書く名前 (`SWGND`)。
+ * 図の字と配線の字を突き合わせられるように。字はピンの名前より少し小さく (`PAD_NAME_SCALE`)。
  *
- * 字は縁取りを敷く。板の外 (Pico の端のパッド) では板の地に、板の上 (W の中ほどのパッド) では
- * ピンの名前の縦書きに重なるので、どちらでも下を消して読ませる。
- * **横に置いたボードだけ** (ブレッドボードは溝をまたぐので横だけ。縦に置いた perfboard は
- * 名前を伏せて輪だけ描く)。
+ * 内側にはピンの名前の縦書きがある。`legends` (点の順のピンの名前の字) を渡すと、名前の横の
+ * 広がりにかかる列の縦書きを避けて、名前を**ボードの真ん中の側へ上下にずらす**。字はボードの地で
+ * 縁取り、触れても下を消して読ませる。**横に置いたボードだけ** (縦に置いた perfboard は輪だけ描く)。
  *
- * `gap` はパッドの真ん中から名前の書き出しまで (px)。パッドへ線が入る図 (ブレッドボード) は、
- * パッドへ降りる線より外に名前を置くために広げて渡す — 線が名前の下を通らないように。
+ * `gap` はパッドの真ん中から名前の書き出しまで (px)。
  */
 export function boardPadNames(
   pads: readonly BoardPad[],
@@ -937,24 +935,59 @@ export function boardPadNames(
   fontSize: number,
   ink: ChipInk,
   gap = PAD_NAME_GAP,
+  legends: readonly string[] = [],
 ): string {
   const first = points[pinOne] ?? points[0];
   const sample = pads[0]?.point;
   if (!first || !sample || !chipAlongX(points)) return '';
-  const out = Math.sign(sample.x - first.x) || 1;
+  // 1 番の側が内側。
+  const inward = Math.sign(first.x - sample.x) || -1;
+  const size = fontSize * PAD_NAME_SCALE;
+  const centreY = box.y + box.height / 2;
 
   return pads.map(({ name, point }) => {
-    const x = point.x + out * gap;
-    const outside = out > 0 ? x >= box.x + box.width : x <= box.x;
-    return svgText(x, point.y + fontSize * 0.35, name, {
-      'font-size': num(fontSize),
-      fill: outside ? ink.outside : ink.chipText,
-      halo: outside ? ink.halo : ink.body,
+    const x = point.x + inward * gap;
+    const width = textWidth(name) * size;
+    const left = inward > 0 ? x : x - width;
+    const right = inward > 0 ? x + width : x;
+    // 名前の横の広がりにかかる列の縦書きが、上と下からどこまで届くか。
+    let top = -Infinity;
+    let bottom = Infinity;
+    points.forEach((pin, index) => {
+      const legend = legends[index] ?? '';
+      if (legend === '' || pin.x + fontSize / 2 < left || pin.x - fontSize / 2 > right) return;
+      const reach = PIN_NAME_GAP + textWidth(legend) * fontSize * LEGEND_WIDTH_MARGIN;
+      if (pin.y < centreY) top = Math.max(top, pin.y + reach);
+      else bottom = Math.min(bottom, pin.y - reach);
+    });
+    // 字の上端と下端 (基準線から上へ 0.75、下へ 0.25 字ぶん) が、届く範囲の外に出るまでずらす。
+    const lowest = top + size * 0.75 + PAD_NAME_CLEAR;
+    const highest = bottom - size * 0.25 - PAD_NAME_CLEAR;
+    const wanted = point.y + size * 0.35;
+    const y = lowest > highest ? wanted : Math.min(Math.max(wanted, lowest), highest);
+    return svgText(x, y, name, {
+      'font-size': num(size),
+      fill: ink.chipText,
+      halo: ink.body,
       haloWidth: ink.haloWidth,
-      anchor: out > 0 ? 'start' : 'end',
+      anchor: inward > 0 ? 'start' : 'end',
     });
   }).join('');
 }
+
+/** パッドの名前の字の大きさ (ピンの名前に対する比)。 */
+const PAD_NAME_SCALE = 0.85;
+/** パッドの名前とピンの名前の縦書きの間 (px)。 */
+const PAD_NAME_CLEAR = 3;
+/** 縦書きの字の長さの見積もりに掛ける余裕。`textWidth` は数字と大文字を少なめに見積もる (実測で 1〜2 割長い)。 */
+const LEGEND_WIDTH_MARGIN = 1.25;
+
+/**
+ * ピンの名前の縦書きの字 (`boardChip` と同じ形: `GP0 01`)。`boardPadNames` が縦書きを避けるのに使う。
+ * 字の長さだけが要るので、番号の前後は問わない。
+ */
+export const boardLegends = (names: readonly string[], count: number): readonly string[] =>
+  Array.from({ length: count }, (_, index) => (names[index] === undefined ? '' : `${names[index]} 00`));
 
 /** パッドの名前の字の大きさ (ピンの名前と同じ)。 */
 export const boardPadFont = (scale: number): number => scale * PIN_FONT;

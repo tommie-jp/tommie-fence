@@ -112,6 +112,8 @@ export type LookOptions = {
   readonly label: string;
   readonly scale: number;
   readonly pxPerMm: number;
+  /** ピンの名前の字の大きさ (px)。**ほかの機器のピンの名前と同じ大きさ**を渡す。 */
+  readonly pinFont: number;
   /** 書いたピン (配線の名前) と、刷る字 (`UGND` なら GND)。名前は姿が口の上に縦に刷る。 */
   readonly pins: readonly { readonly name: string; readonly text: string }[];
 };
@@ -122,7 +124,7 @@ export type LookOptions = {
  * 名前は口の上に縦に刷る。ピンの足 (帯の外へ出る短い線) は呼ぶ側が描く。
  */
 export function drawDeviceLook(_look: DeviceLookName, options: LookOptions): string {
-  const { rect, side, label, scale, pxPerMm, pins } = options;
+  const { rect, side, label, scale, pxPerMm, pins, pinFont } = options;
   const top = side === 'top';
   const mm = (value: number): number => value * pxPerMm;
   // 上の帯の向き (USB が上、口が下) で mm を測り、下の帯では 180 度回す。
@@ -151,7 +153,6 @@ export function drawDeviceLook(_look: DeviceLookName, options: LookOptions): str
   });
 
   const font = 8 * scale;
-  const pinFont = Math.min(font, mm(MM.pinStep) * 0.9);
   const housingTop = boardBottom - MM.housingDepth;
   const ports = (['U', 'D'] as const).map((port) => {
     const centre = portCentre(port);
@@ -164,7 +165,7 @@ export function drawDeviceLook(_look: DeviceLookName, options: LookOptions): str
       return element('line', { x1: num(x), y1: num(py(housingTop + 1)), x2: num(x), y2: num(py(boardBottom + CASE_END)), stroke: METAL_EDGE, 'stroke-width': 1.2 });
     }).join('');
     // 口の字は口の上 (ピンの名前のさらに上)。
-    const mark = svgText(px(centre), py(housingTop - 5.2) + font * 0.4, port, { 'font-size': num(font * 1.15), 'font-weight': 'bold', fill: SILK });
+    const mark = svgText(px(centre), py(housingTop - 1.2) - (top ? 1 : -1) * (pinFont * 2.2 + font * 0.6) + font * 0.4, port, { 'font-size': num(font * 1.15), 'font-weight': 'bold', fill: SILK });
     return housing + leads + mark;
   }).join('');
   // ピンの名前は口のすぐ上に、下から上へ読む縦書き (上の帯の向き。下の帯でも字は読める向きのまま)。

@@ -106,7 +106,7 @@ export {
   drawConnector, hasPadFeet, lookupConnector, lookupConnectorSymbol,
 } from './parts/connectors.ts';
 export type { Connector, ConnectorFacing, ConnectorShape } from './parts/connectors.ts';
-export { boardBox, boardChip, boardUsbPort, boardPadFont, boardPadNames, boardPads, chipAlongX, dipBox, dipChip, dipSocketBox, segmentFace, sipBox, sipHeader, sipLegendDepth, sipLegends } from './parts/chips.ts';
+export { boardBox, boardChip, boardLegends, boardUsbPort, boardPadFont, boardPadNames, boardPads, chipAlongX, dipBox, dipChip, dipSocketBox, segmentFace, sipBox, sipHeader, sipLegendDepth, sipLegends } from './parts/chips.ts';
 export type {
   BoardChipOptions, BoardPad, ChipBox, ChipInk, ChipPoint, DipOptions, SipLook, SipOptions,
 } from './parts/chips.ts';

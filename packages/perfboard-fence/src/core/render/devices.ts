@@ -279,7 +279,9 @@ function renderLooked(placed: PlacedDevice, look: NonNullable<ReturnType<typeof 
     .join('');
   const pins = device.pins.map((name) => ({ name, text: deviceSilk(device.model ?? null, name) }));
   const scale = theme.metrics.textSize / 9;
-  return drawDeviceLook(look, { rect: box, side: top ? 'top' : 'bottom', label: device.label, scale, pxPerMm: PX_PER_MM, pins }) + legs;
+  return drawDeviceLook(look, {
+    rect: box, side: top ? 'top' : 'bottom', label: device.label, scale, pxPerMm: PX_PER_MM, pins, pinFont: theme.metrics.textSize,
+  }) + legs;
 }
 
 /**

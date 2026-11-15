@@ -1,4 +1,4 @@
-import { boardBox, boardChip, boardPadFont, boardPadNames, boardPads, lookupBoardPart } from 'fence-kit';
+import { boardBox, boardChip, boardLegends, boardPadFont, boardPadNames, boardPads, lookupBoardPart } from 'fence-kit';
 import { HOLE_ROWS } from '../types.ts';
 import type { Layout } from '../model/layout.ts';
 import type { PlacedPart, Point, Rect } from '../types.ts';
@@ -64,17 +64,13 @@ function outward(part: PlacedPart, layout: Layout, pad: Point): number {
 }
 
 /**
- * パッドの名前。**パッドへ降りる線より外に置く** — 並びは「パッド → 降りる線 (3 本) → 名前」。
- * 名前をパッドのすぐ脇に置くと、パッドへ横に入る線が名前の下を通り、縁取りで消しても線の端が
- * 字に触れて読みにくかった。層は配線より上。字の形は fence-kit の `boardPadNames` で、perfboard と同じ。
+ * パッドの名前。**ボードの内側**に置く (fence-kit の `boardPadNames`、perfboard と同じ)。パッドへ入る線は
+ * 外から来るので、名前の下を通らない。ピンの名前の縦書きに触れるときは上下にずらす。層は配線より上。
  */
 export function renderBoardPadNames(part: PlacedPart, layout: Layout, theme: RenderTheme): string {
   const pads = boardPadPoints(part, layout);
   const points = pinPoints(part, layout);
-  const sample = [...pads.values()][0];
-  if (pads.size === 0 || !points || !sample) return '';
-  const outermost = laneX(part, layout, sample, pads.size - 1);
-  const gap = Math.abs(outermost - sample.x) + theme.metrics.wireWidth / 2 + LANE_NAME_CLEAR;
+  if (pads.size === 0 || !points) return '';
   return boardPadNames(
     [...pads].map(([name, point]) => ({ name, point })),
     points,
@@ -82,14 +78,13 @@ export function renderBoardPadNames(part: PlacedPart, layout: Layout, theme: Ren
     boardBodyRect(part, layout),
     boardPadFont(textScale(theme)),
     chipInk(theme),
-    gap,
+    undefined,
+    boardLegends(part.pins.map((pin) => pin.name), points.length),
   );
 }
 
-/** いちばん外の降りる線の縁から、パッドの名前の書き出しまで (px)。字の縁取りが線にかからない量。 */
 /** パッドを実物の位置に描くとき、穴の行から離す量 (ピッチに対する比)。 */
 const PAD_ROW_CLEAR = 0.4;
-const LANE_NAME_CLEAR = 6;
 /** パッドの輪の半径 (fence-kit と同じ) と、降りる線までに空ける量 (px)。 */
 const PAD_RADIUS = 3.5;
 const PAD_LANE_CLEAR = 2;

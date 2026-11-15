@@ -83,7 +83,8 @@ describe('Debug Probe の姿', () => {
 
   test('draws the case, the U and D marks, the pin names and the name, and no logo', () => {
     const pins = [{ name: 'UGND', text: 'GND' }];
-    const svg = drawDeviceLook('rpi-debug-probe', { rect, side: 'top', label: 'Debug Probe', scale: 1, pxPerMm: px, pins });
+    const svg = drawDeviceLook('rpi-debug-probe', { rect, side: 'top', label: 'Debug Probe', scale: 1, pxPerMm: px, pins, pinFont: 8.5 });
+    expect(svg).toContain('font-size="8.5"');
     expect(svg).toContain('>GND<');
     expect(svg).toContain('cf-look-case');
     expect(svg).toContain('>U<');
