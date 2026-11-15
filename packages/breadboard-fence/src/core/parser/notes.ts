@@ -135,7 +135,9 @@ export function parseNoteLine(
     bold: words.value.bold,
     solid: words.value.solid,
     leading: words.value.leading,
-    text: text === null ? null : clampText(text, LIMITS.noteLength),
+    // **`\n` で改行する** (YAML の 1 行の中に複数行の字を書くため)。行の数は `noteLines` まで。
+    text: text === null ? null : clampText(text.replace(/\\n/g, '\n'), LIMITS.noteLength)
+      .split('\n').slice(0, LIMITS.noteLines).join('\n'),
     line,
   });
 }

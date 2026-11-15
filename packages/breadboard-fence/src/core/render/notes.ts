@@ -22,6 +22,11 @@ export type NoteAnchor = {
    * どの穴を指しているのか分からなくなる (レールどうしを結ぶ直線は消える)。
    */
   readonly part: boolean;
+  /**
+   * 字を書き始める所 (指し先と別のとき)。**機器のピンを指した字**は、機器の右の縁の外から書く —
+   * ピンの真上から書くと、ピンへ入る線に字が重なる。書かなければ `center`。
+   */
+  readonly text?: Point;
 };
 
 export type ResolvedNote = { readonly spec: NoteSpec; readonly anchors: readonly NoteAnchor[] };
@@ -113,7 +118,7 @@ export function notesBottom(
     const size = fontSizeOf(spec, theme);
     const lines = linesOf(spec, sourceLines).length;
     const step = size * noteLeading(spec.leading, spec.kind);
-    bottom = Math.max(bottom, anchor.center.y + step * (lines - 1) + size * 0.4);
+    bottom = Math.max(bottom, (anchor.text ?? anchor.center).y + step * (lines - 1) + size * 0.4);
   }
   return bottom;
 }
@@ -297,12 +302,13 @@ function renderText(
   const align: NoteAlign = spec.align ?? 'left';
   const step = size * noteLeading(spec.leading, spec.kind);
   // **基板の外を指した字** (帯の中の機器のピン `PROBE.TX` など) は、基板の幅で切らず画布の端まで使う。
-  const room = isOffBoard(anchor, layout) ? roomOnCanvas(anchor.center.x, align, layout) : roomFor(anchor.center.x, align, layout);
+  const at = anchor.text ?? anchor.center;
+  const room = isOffBoard(anchor, layout) ? roomOnCanvas(at.x, align, layout) : roomFor(at.x, align, layout);
   // **反転は字を裏返さない。** 鏡文字は読めないので、指し先の**反対側**へ移す。
   // 上に何かあって字が重なるときに、下へ逃がすためのもの。
-  const baseline = anchor.center.y + (spec.turn.mirror ? step + size * 0.4 : 0);
+  const baseline = at.y + (spec.turn.mirror ? step + size * 0.4 : 0);
 
-  const drawn = textLines(spec, lines, anchor.center.x, baseline, step, room, theme, true);
+  const drawn = textLines(spec, lines, at.x, baseline, step, room, theme, true);
   // 回すのは**指し先のまわり**。字の真ん中で回すと、指した所から離れていく。
   return spec.turn.rotate === 0
     ? drawn
@@ -406,11 +412,12 @@ export function noteBands(
     const size = fontSizeOf(spec, theme);
     const step = size * noteLeading(spec.leading, spec.kind);
     const align: NoteAlign = spec.align ?? 'left';
-    const top = anchor.center.y + (spec.turn.mirror ? step + size * 0.4 : 0);
+    const at = anchor.text ?? anchor.center;
+    const top = at.y + (spec.turn.mirror ? step + size * 0.4 : 0);
     linesOf(spec, sourceLines).forEach((text, index) => {
       const width = textWidth(text) * size;
-      const x = align === 'left' ? anchor.center.x
-        : align === 'right' ? anchor.center.x - width : anchor.center.x - width / 2;
+      const x = align === 'left' ? at.x
+        : align === 'right' ? at.x - width : at.x - width / 2;
       bands.push({ x, y: top + step * index - size * 0.72, width, height: size * 0.92 });
     });
   }

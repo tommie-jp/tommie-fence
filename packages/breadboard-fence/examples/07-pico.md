@@ -162,8 +162,8 @@ wires:
   - PROBE.RX -- j15
   - PROBE.UGND -- j17
 notes:
-  # 機器のピン (PROBE.TX) を指すと、基板の外 (Probe の口のそば) に字を置ける
-  - text PROBE.TX red bold: UART は TX と RX を入れ違いにつなぐ (Probe の TX → Pico の RX = GP1)。名前は Probe の側から見た名前
+  # 機器のピン (PROBE.TX) を指すと、基板の外 (Probe の右の縁の外) に字を置ける。\n で改行する
+  - text PROBE.TX red bold: UART は TX と RX を入れ違いにつなぐ\n(Probe の TX → Pico の RX = GP1)\n名前は Probe の側から見た名前
 ```
 
 ![図02 Debug Probe を UART につなぐ](out/07-pico-2.svg)

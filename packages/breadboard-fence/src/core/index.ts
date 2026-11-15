@@ -506,6 +506,9 @@ function resolveNotes(
  * 両方に読めるときは、どちらのつもりか分からないので添えて知らせる
  * (部品に `a5` のような名前を付けたときだけ起きる)。
  */
+/** 機器のピンを指した字と、機器の右の縁の間 (px)。 */
+const NOTE_DEVICE_GAP = 8;
+
 function resolveNoteTarget(
   target: string,
   spec: NoteSpec,
@@ -546,7 +549,12 @@ function resolveNoteTarget(
   const pinRef = /^([\w-]+)\.(\S+)$/.exec(target);
   const device = pinRef === null ? undefined : parts.find((candidate) => candidate.id === pinRef[1] && candidate.kind === 'device');
   const pinPoint = device === undefined || pinRef === null ? undefined : placements.get(device.id)?.pins.get(pinRef[2] ?? '');
-  if (pinPoint !== undefined) return { center: pinPoint, rx: NOTE_HOLE_RADIUS, ry: NOTE_HOLE_RADIUS, part: false };
+  if (pinPoint !== undefined) {
+    // 字は機器の右の縁の外から、ピンの足の先の高さに書く (ピンへ入る線に重ねない)。
+    const rect = device === undefined ? undefined : placements.get(device.id)?.rect;
+    const text = rect === undefined ? pinPoint : { x: rect.x + rect.width + NOTE_DEVICE_GAP, y: pinPoint.y };
+    return { center: pinPoint, rx: NOTE_HOLE_RADIUS, ry: NOTE_HOLE_RADIUS, part: false, text };
+  }
 
   errors.push(fenceError(`注釈の指し先 ${safeToken(target)}: そんな部品も穴も機器のピンもありません`, spec.line, target));
   return null;

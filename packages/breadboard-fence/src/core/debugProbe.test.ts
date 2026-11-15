@@ -148,6 +148,20 @@ describe('基板の外の注釈 (機器のピンを指す)', () => {
     expect(svg).not.toMatch(/名前は …</);
   });
 
+  test('starts the text past the right edge of the device, clear of the wires into its pins', () => {
+    const { svg } = renderBreadboard(fence('parts-list: none', 'parts:', '  MCU: pico2 @ h15', ...probe('bottom', '[TX, UGND, RX]'),
+      'wires:', '  - PROBE.TX -- j16', 'notes:', '  - text PROBE.TX red: x1'));
+    const caseRect = /class="cf-look-case" x="([\d.]+)" y="[\d.]+" width="([\d.]+)"/.exec(svg);
+    const textX = Number(/<text x="([\d.]+)"[^>]*>x1</.exec(svg)?.[1]);
+    expect(textX).toBeGreaterThan(Number(caseRect?.[1]) + Number(caseRect?.[2]));
+  });
+
+  test('breaks a text at \\n into lines', () => {
+    const { svg } = renderBreadboard(fence('parts-list: none', 'parts:', '  R1: resistor a5 a10 1k', 'notes:', '  - text e20 red: 1 行目\\n2 行目'));
+    expect(svg).toContain('>1 行目<');
+    expect(svg).toContain('>2 行目<');
+  });
+
   test('refuses a pin the device does not have', () => {
     const { errors } = renderBreadboard(fence('parts:', ...probe('bottom', '[TX]'), 'notes:', '  - text PROBE.SD: x'));
     expect(errors.map((one) => one.message).join('\n')).toContain('機器のピン');
