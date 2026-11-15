@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Debug Probe を**実寸**で描き、`label:` を書かないときの名札と部品表の値を正式名称 `Raspberry Pi Debug Probe` にした
+- USB ケーブルと Pico の USB の口を**実寸**で描く
+
 ## [0.65.0] - 2026-11-15
 
 ### Added

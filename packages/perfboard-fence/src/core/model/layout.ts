@@ -78,6 +78,9 @@ export type LayoutOptions = {
   /** 上の帯の上と下の帯の下に足す余白 (機器の口から帯の外へ出る USB ケーブルのぶん。52 の docs/157)。 */
   readonly marginTop?: number;
   readonly marginBottom?: number;
+  /** 機器の帯の高さ (実寸で描く姿のある機器のため。52 の docs/157)。既定の高さより低くはしない。 */
+  readonly deviceTopHeight?: number;
+  readonly deviceBottomHeight?: number;
 };
 
 /** 基板の外の機器を並べる帯。 */
@@ -117,8 +120,10 @@ export type Layout = {
  */
 export function createLayout(board: Board, options: LayoutOptions = {}): Layout {
   const titleBand = options.title === true ? TITLE_BAND : 0;
-  const topBand = options.deviceTop === true ? DEVICE_BAND + DEVICE_GAP : 0;
-  const bottomBand = options.deviceBottom === true ? DEVICE_BAND + DEVICE_GAP : 0;
+  const topHeight = Math.max(DEVICE_BAND, options.deviceTopHeight ?? 0);
+  const bottomHeight = Math.max(DEVICE_BAND, options.deviceBottomHeight ?? 0);
+  const topBand = options.deviceTop === true ? topHeight + DEVICE_GAP : 0;
+  const bottomBand = options.deviceBottom === true ? bottomHeight + DEVICE_GAP : 0;
   const source = options.source ?? null;
   const list = options.list ?? null;
   const legend = options.legend ?? null;
@@ -181,10 +186,10 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
     titleBaseline: OUTER_MARGIN + titleBand - 6,
     deviceBands: {
       top: options.deviceTop === true
-        ? { x: boardX, y: boardY - partsAbove - topBand, width: boardWidth, height: DEVICE_BAND }
+        ? { x: boardX, y: boardY - partsAbove - topBand, width: boardWidth, height: topHeight }
         : null,
       bottom: options.deviceBottom === true
-        ? { x: boardX, y: boardY + boardHeight + partsBelow + DEVICE_GAP, width: boardWidth, height: DEVICE_BAND }
+        ? { x: boardX, y: boardY + boardHeight + partsBelow + DEVICE_GAP, width: boardWidth, height: bottomHeight }
         : null,
     },
     legendBand: legend === null

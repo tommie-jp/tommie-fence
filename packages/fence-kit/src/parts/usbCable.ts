@@ -15,19 +15,25 @@ export type UsbCableOptions = {
   /** 口から向こうの端の差し込みの先まで (px)。`usbCableMinLength` より短ければ伸ばす。 */
   readonly length: number;
   readonly scale: number;
+  /** 1 mm が何 px か (2.54 mm = 1 ピッチ)。差し込みとケーブルは実寸で描く。 */
+  readonly pxPerMm: number;
 };
 
-/** 差し込みの胴 (樹脂) の長さと太さ (px)。 */
-const BODY_LENGTH = 34;
-const BODY_THICK = 15;
-/** 線の太さ (px)。 */
-const CORD = 6;
-/** 向こうの端の金物の長さと太さ (px)。 */
-const TIP: Readonly<Record<UsbKind, { readonly length: number; readonly thick: number; readonly round: number }>> = {
-  'micro-b': { length: 6, thick: 8, round: 1 },
-  'usb-c': { length: 7, thick: 9, round: 3.5 },
-  'usb-a': { length: 9, thick: 13, round: 0.5 },
+/**
+ * 差し込みの実寸 (mm)。金物 (`tip`) は USB-IF の規格書の値、胴 (オーバーモールド。根元を含む) はメーカー図の値。
+ * - micro-B: 金物 6.85 × 5.4 (Micro-USB 1.01 Fig 4-7・4-8)、胴 10.6 × 25.6 (規格の幅の上限と Molex 68784)
+ * - USB-C: 金物 8.25 × 6.65 (Type-C 1.1 Fig 3-3)、胴 12.2 × 35 (Newnex の図。規格の上限は 12.35 × 35)
+ * - USB-A: 金物 12.0 × 11.75 (USB 2.0 Fig 6-9)、胴 15.7 × 36 (USB 2.0 Fig 6-2 の典型。根元 9 mm を含む)
+ */
+const PLUG: Readonly<Record<UsbKind, {
+  readonly tipWidth: number; readonly tipLength: number; readonly bodyWidth: number; readonly bodyLength: number; readonly round: number;
+}>> = {
+  'micro-b': { tipWidth: 6.85, tipLength: 5.4, bodyWidth: 10.6, bodyLength: 25.6, round: 0.4 },
+  'usb-c': { tipWidth: 8.25, tipLength: 6.65, bodyWidth: 12.2, bodyLength: 35, round: 1.2 },
+  'usb-a': { tipWidth: 12.0, tipLength: 11.75, bodyWidth: 15.7, bodyLength: 36, round: 0.3 },
 };
+/** ケーブルの太さ (mm)。USB 2.0 のケーブルは 3.5〜4.0 mm (Assmann・Qualtek の図)。 */
+const CORD_MM = 3.8;
 const PLUG_FILL = '#2b2f36';
 const PLUG_EDGE = '#14171b';
 const PLUG_INK = '#ffffff';
@@ -37,26 +43,28 @@ const METAL_EDGE = '#8a929c';
 /** 線の部分を少しでも見せる長さ (px)。両端の胴と金物の分に足す。 */
 const MIN_CORD = 24;
 
-/** これより短く引くと線が見えない長さ。 */
-export const usbCableMinLength = (far: UsbKind): number => 2 * BODY_LENGTH + TIP[far].length + MIN_CORD;
+/** これより短く引くと線が見えない長さ (px)。手前の胴 + 向こうの胴と金物 + 見せる線。 */
+export const usbCableMinLength = (near: UsbKind, far: UsbKind, pxPerMm: number): number =>
+  (PLUG[near].bodyLength + PLUG[far].bodyLength + PLUG[far].tipLength) * pxPerMm + MIN_CORD;
 
-/** ケーブルが占める矩形 (画布を広げる量を測るのに使う)。 */
+/** ケーブルが占める矩形 (画布を広げる量を測るのに使う)。太さは太いほうの胴。 */
 export function usbCableBox(options: Omit<UsbCableOptions, 'scale'>): { x: number; y: number; width: number; height: number } {
-  const { port } = options;
-  const length = Math.max(options.length, usbCableMinLength(options.far));
-  const half = BODY_THICK / 2;
+  const { port, pxPerMm } = options;
+  const length = Math.max(options.length, usbCableMinLength(port.kind, options.far, pxPerMm));
+  const half = (Math.max(PLUG[port.kind].bodyWidth, PLUG[options.far].bodyWidth) * pxPerMm) / 2;
   switch (port.dir) {
-    case 'up': return { x: port.x - half, y: port.y - length, width: BODY_THICK, height: length };
-    case 'down': return { x: port.x - half, y: port.y, width: BODY_THICK, height: length };
-    case 'left': return { x: port.x - length, y: port.y - half, width: length, height: BODY_THICK };
-    default: return { x: port.x, y: port.y - half, width: length, height: BODY_THICK };
+    case 'up': return { x: port.x - half, y: port.y - length, width: half * 2, height: length };
+    case 'down': return { x: port.x - half, y: port.y, width: half * 2, height: length };
+    case 'left': return { x: port.x - length, y: port.y - half, width: length, height: half * 2 };
+    default: return { x: port.x, y: port.y - half, width: length, height: half * 2 };
   }
 }
 
-/** ケーブルを描く。線は口から外へまっすぐ。 */
+/** ケーブルを実寸で描く。線は口から外へまっすぐ。手前の差し込みの金物は口の中に入っているので描かない。 */
 export function drawUsbCable(options: UsbCableOptions): string {
-  const { port, far, scale } = options;
-  const length = Math.max(options.length, usbCableMinLength(far));
+  const { port, far, scale, pxPerMm } = options;
+  const mm = (value: number): number => value * pxPerMm;
+  const length = Math.max(options.length, usbCableMinLength(port.kind, far, pxPerMm));
   const vertical = port.dir === 'up' || port.dir === 'down';
   const sign = port.dir === 'up' || port.dir === 'left' ? -1 : 1;
   /** 口から `distance` 進んだ点。 */
@@ -75,22 +83,26 @@ export function drawUsbCable(options: UsbCableOptions): string {
       ...attrs,
     });
   };
-  const tip = TIP[far];
-  const farBody = length - tip.length - BODY_LENGTH;
+  const near = PLUG[port.kind];
+  const farPlug = PLUG[far];
+  const nearBody = mm(near.bodyLength);
+  const farTip = mm(farPlug.tipLength);
+  const farBodyStart = length - farTip - mm(farPlug.bodyLength);
   const cord = (() => {
-    const a = at(BODY_LENGTH);
-    const b = at(farBody);
+    const a = at(nearBody);
+    const b = at(farBodyStart);
     return element('line', {
       x1: num(a.x), y1: num(a.y), x2: num(b.x), y2: num(b.y),
-      stroke: PLUG_FILL, 'stroke-width': CORD, 'stroke-linecap': 'butt',
+      stroke: PLUG_FILL, 'stroke-width': num(mm(CORD_MM)), 'stroke-linecap': 'butt',
     });
   })();
-  const body = (from: number): string => slab(from, from + BODY_LENGTH, BODY_THICK, { rx: 3, fill: PLUG_FILL, stroke: PLUG_EDGE });
-  const metal = slab(length - tip.length, length, tip.thick, { rx: tip.round, fill: METAL_FILL, stroke: METAL_EDGE });
+  const body = (from: number, kind: UsbKind): string =>
+    slab(from, from + mm(PLUG[kind].bodyLength), mm(PLUG[kind].bodyWidth), { rx: num(mm(1.5)), fill: PLUG_FILL, stroke: PLUG_EDGE });
+  const metal = slab(length - farTip, length, mm(farPlug.tipWidth), { rx: num(mm(farPlug.round)), fill: METAL_FILL, stroke: METAL_EDGE });
   // 胴の字は胴に沿って書く (縦のケーブルなら字も縦)。
   const stamp = (from: number, kind: UsbKind): string => {
-    const centre = at(from + BODY_LENGTH / 2);
-    const size = 7 * scale;
+    const centre = at(from + mm(PLUG[kind].bodyLength) / 2);
+    const size = Math.min(9 * scale, mm(PLUG[kind].bodyWidth) * 0.6);
     const text = svgText(0, size * 0.35, USB_STAMP[kind], { 'font-size': num(size), fill: PLUG_INK });
     return element('g', {
       class: 'cf-usb-stamp',
@@ -98,7 +110,7 @@ export function drawUsbCable(options: UsbCableOptions): string {
     }, text);
   };
   return element('g', { class: 'cf-usb-cable' },
-    `${cord}${body(0)}${stamp(0, port.kind)}${body(farBody)}${stamp(farBody, far)}${metal}`);
+    `${cord}${body(0, port.kind)}${stamp(0, port.kind)}${body(farBodyStart, far)}${stamp(farBodyStart, far)}${metal}`);
 }
 
 /** 部品の種類の綴り (`type: usb-cable`)。 */

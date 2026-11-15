@@ -1,4 +1,4 @@
-import { PARTS_SYMBOL_HEADING_BY_LANG, bandColor, partKind, partsMark, valueWithRole, withRatings } from 'fence-kit';
+import { PARTS_SYMBOL_HEADING_BY_LANG, bandColor, deviceProductName, partKind, partsMark, valueWithRole, withRatings } from 'fence-kit';
 import type { Lang, PartsMark } from 'fence-kit';
 import type { Layout } from '../model/layout.ts';
 import { formatAddress } from '../model/address.ts';
@@ -103,7 +103,7 @@ const headingRow = (lang: Lang): Row => {
  * 並んでいるので、値の列は空にする。
  */
 const valueOf = (part: PlacedPart): string =>
-  (part.kind === 'device' ? part.label : part.value ?? part.label) ?? '';
+  (part.kind === 'device' ? deviceProductName(part.model ?? null) ?? part.label : part.value ?? part.label) ?? '';
 
 /**
  * 種類の列には姿も添える (`capacitor/ceramic`)。同じ `0.1u` でもセラミックか

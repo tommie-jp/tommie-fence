@@ -1,8 +1,9 @@
 import {
-  boardUsbPort, deviceLookOf, drawUsbCable, lookUsbPort, lookupBoardPart, usbCableBox, usbCableListValue, usbCableMinLength,
+  boardUsbPort, deviceLookOf, pxPerMmOf, drawUsbCable, lookUsbPort, lookupBoardPart, usbCableBox, usbCableListValue, usbCableMinLength,
 } from 'fence-kit';
 import type { UsbKind, UsbPort } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
+import { PITCH } from '../model/layout.ts';
 import type { Layout } from '../model/layout.ts';
 import type { CableSpec, DeviceSpec, FenceError, PlacedPart } from '../types.ts';
 import type { PlacedDevice } from './devices.ts';
@@ -12,11 +13,12 @@ import type { PlacedDevice } from './devices.ts';
  *
  * - **マイコンボードの口**は基板の縁の外 (`BOARD_CLEAR`) まで引く
  * - **機器の口** (Debug Probe を帯に並べた物) は基板と反対の辺にあるので、帯の外へ決まった長さ
- *   (`DEVICE_LENGTH`) だけ引く。そのぶん画布の上か下を空ける (`cableMargins`)
+ *   だけ引く (両端の差し込みは実寸)。そのぶん画布の上か下を空ける (`cableMargins`)
  */
 // 行と列の名前の欄 (基板の縁の外) を越えて、名前に差し込みを重ねない。
 const BOARD_CLEAR = 72;
-const DEVICE_LENGTH = 120;
+/** 機器の口から帯の外へ引く長さ (px)。両端の胴と金物 (実寸) に、見せる線の分を足した最短。 */
+const deviceLength = (far: UsbKind, pxPerMm: number): number => usbCableMinLength('micro-b', far, pxPerMm);
 const EDGE_GAP = 6;
 const NO_PORT = 'USB の口がありません (USB の口を持つのは マイコンボードと、帯に並べた model: RPI-DEBUG-PROBE)';
 
@@ -44,7 +46,7 @@ function portOf(
   if (look === null) return { error: `${safeToken(device.id)} に ${NO_PORT}` };
   // 帯の位置は機器を並べたあとで決まる。決まる前 (画布を測る段) は null を返して飛ばす。
   const box = placed?.find((one) => one.device.id === device.id)?.box;
-  return box === undefined ? null : { port: lookUsbPort(look, box, device.at) };
+  return box === undefined ? null : { port: lookUsbPort(look, box, device.at, pxPerMmOf(layout.pitch)) };
 }
 
 function boardReach(port: UsbPort, layout: Layout): number {
@@ -70,8 +72,8 @@ export function planCables(
       return [];
     }
     const onDevice = !parts.some((one) => one.id === spec.partId);
-    const reach = onDevice ? DEVICE_LENGTH : boardReach(found.port, layout);
-    return [{ spec, port: found.port, length: Math.max(reach, usbCableMinLength(spec.far)), onDevice }];
+    const reach = onDevice ? deviceLength(spec.far, pxPerMmOf(layout.pitch)) : boardReach(found.port, layout);
+    return [{ spec, port: found.port, length: Math.max(reach, usbCableMinLength(found.port.kind, spec.far, pxPerMmOf(layout.pitch))), onDevice }];
   });
 }
 
@@ -79,10 +81,13 @@ export function planCables(
 export function cableMargins(specs: readonly CableSpec[], devices: readonly DeviceSpec[]): { top: number; bottom: number } {
   const sides = specs.flatMap((spec) => {
     const device = devices.find((one) => one.id === spec.partId);
-    return lookedDevice(device) ? [device?.at ?? 'top'] : [];
+    return lookedDevice(device) ? [{ side: device?.at ?? 'top', far: spec.far }] : [];
   });
-  const room = DEVICE_LENGTH + EDGE_GAP;
-  return { top: sides.includes('top') ? room : 0, bottom: sides.includes('bottom') ? room : 0 };
+  const px = pxPerMmOf(PITCH);
+  const room = (side: 'top' | 'bottom'): number => Math.max(0, ...sides
+    .filter((one) => one.side === side)
+    .map((one) => deviceLength(one.far, px) + EDGE_GAP));
+  return { top: room('top'), bottom: room('bottom') };
 }
 
 /** マイコンボードの口から出るケーブルが、基板の縁からはみ出す量 (`moduleOverhang` と同じ測り方)。 */
@@ -90,7 +95,7 @@ export function cableOverhang(planned: readonly PlannedCable[], layout: Layout):
   const { x, y, width, height } = layout.board;
   return planned
     .filter((cable) => !cable.onDevice)
-    .map((cable) => usbCableBox({ port: cable.port, far: cable.spec.far, length: cable.length }))
+    .map((cable) => usbCableBox({ port: cable.port, far: cable.spec.far, length: cable.length, pxPerMm: pxPerMmOf(layout.pitch) }))
     .reduce((most, box) => ({
       above: Math.max(most.above, y - box.y),
       below: Math.max(most.below, box.y + box.height - (y + height)),
@@ -100,7 +105,7 @@ export function cableOverhang(planned: readonly PlannedCable[], layout: Layout):
 }
 
 export const renderCables = (planned: readonly PlannedCable[], scale: number): string =>
-  planned.map((cable) => drawUsbCable({ port: cable.port, far: cable.spec.far, length: cable.length, scale })).join('');
+  planned.map((cable) => drawUsbCable({ port: cable.port, far: cable.spec.far, length: cable.length, scale, pxPerMm: pxPerMmOf(PITCH) })).join('');
 
 /** 手前の口の種類 (画布を組む前に、部品表の行を作るのに使う)。分からなければ null。 */
 function nearKind(spec: CableSpec, parts: readonly { readonly id: string; readonly type: string }[], devices: readonly DeviceSpec[]): UsbKind | null {

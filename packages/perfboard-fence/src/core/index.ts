@@ -21,7 +21,7 @@ import { legendColors, legendSize, paintedColors, renderLegend } from './render/
 import { boardRow, partsIcons, partsListSize, partsListing, renderPartsList } from './render/partsList.ts';
 import { renderSourceListing, sourceBandSize, sourceListing } from './render/sourceListing.ts';
 import { backSideLayout, renderBackSide } from './render/backSide.ts';
-import { deviceOverhang, layoutDevices, renderDevices } from './render/devices.ts';
+import { deviceBandHeight, deviceOverhang, layoutDevices, renderDevices } from './render/devices.ts';
 import { netlistOf, resolveWires } from './wiring/wiring.ts';
 import { cableMargins, cableOverhang, cableRows, planCables, renderCables } from './render/usbCable.ts';
 import { unnamedDipNotices } from './parts/pinout.ts';
@@ -290,6 +290,9 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
     partsRight: modulesJut.right,
     marginTop: cableRoom.top,
     marginBottom: cableRoom.bottom,
+    // 姿のある機器 (Debug Probe) は実寸なので、帯をその高さまで伸ばす。
+    deviceTopHeight: deviceBandHeight(devices, 'top'),
+    deviceBottomHeight: deviceBandHeight(devices, 'bottom'),
   });
   const placedDevices = layoutDevices(devices, layout, board);
   const cableErrors: FenceError[] = [];

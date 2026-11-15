@@ -1,4 +1,4 @@
-import { resolveDeviceModel } from 'fence-kit';
+import { deviceProductName, resolveDeviceModel } from 'fence-kit';
 import { fenceError, safeToken } from '../errors.ts';
 import { LIMITS, clampText, isPinName, isReferenceable } from '../limits.ts';
 import { isAddressSpelling } from '../model/address.ts';
@@ -59,7 +59,8 @@ export function parseDevice(id: string, entries: Record<string, unknown>): Parse
   if (model !== null && (typeof model !== 'string' || model.trim() === '')) {
     return fail(`${safeToken(id)} の model は型番の字で書きます`);
   }
-  const label = entries.label === undefined ? (model ?? id) : entries.label;
+  // `label:` を書かなければ名札は製品の正式名称 (表に無ければ書いた型番)。
+  const label = entries.label === undefined ? ((typeof model === 'string' ? deviceProductName(model) : null) ?? model ?? id) : entries.label;
   if (typeof label !== 'string') return fail(`${safeToken(id)} の label は文字で書きます`);
 
   // **`pins: + -` と書ける。** YAML の並びに書くと `-` が箱の始まりに読まれて

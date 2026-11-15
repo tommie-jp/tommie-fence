@@ -5,6 +5,16 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Debug Probe の姿を**実寸**にした (ケース 31 × 37 mm、基板 22 × 32 mm、口は寸法図の位置、口の中のピンは 1 mm 間隔)。ピンの名前は姿が口の上に縦に刷る (`drawDeviceLook` に `pxPerMm` と `pins` を渡す)。大きさは `lookSize`
+- USB ケーブルの差し込みとケーブルを**実寸**にした (金物は USB-IF の規格書、胴はメーカー図の値。ケーブルの太さ 3.8 mm)。`drawUsbCable` `usbCableBox` に `pxPerMm` を渡し、`usbCableMinLength` は両端の種類で決まる
+- マイコンボードの USB の口 (Pico の micro-B) を実寸にした (幅 7.5 mm、基板の縁から 1.3 mm)
+
+### Added
+
+- 表に製品の正式名称 (`name`) を持てるようにし、Debug Probe に `Raspberry Pi Debug Probe` を入れた (`deviceProductName`)
+
 ## [0.43.0] - 2026-11-15
 
 ### Added

@@ -20,7 +20,7 @@ import type { WireEnd } from './placement/relocate.ts';
 import { routeWire, routeWires } from './router/route.ts';
 import { renderDocument } from './render/document.ts';
 import type { RenderedWire } from './render/document.ts';
-import { layoutDevices } from './render/devices.ts';
+import { deviceBandHeight, layoutDevices } from './render/devices.ts';
 import type { DevicePlacement } from './render/devices.ts';
 import type { NoteAnchor, ResolvedNote } from './render/notes.ts';
 import { captionDrops } from './render/captions.ts';
@@ -237,6 +237,9 @@ function renderOneSheet(input: string, options: OneSheetOptions): RenderResult &
     deviceBottom: devices.some((device) => device.at === 'bottom'),
     marginTop: margins.top,
     marginBottom: margins.bottom,
+    // 姿のある機器 (Debug Probe) は実寸なので、帯をその高さまで伸ばす。
+    deviceTopHeight: deviceBandHeight(devices, 'top'),
+    deviceBottomHeight: deviceBandHeight(devices, 'bottom'),
   };
   // **基板の縁から張り出す USB コネクタのぶん、画布を伸ばす。** 一度組んで測り、
   // はみ出すときだけ組み直す (はみ出さない図は 1 バイトも変わらない)。

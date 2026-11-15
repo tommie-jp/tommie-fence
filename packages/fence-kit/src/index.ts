@@ -69,9 +69,11 @@ export { boardPartNames, lookupBoardPart } from './parts/boards.ts';
 export { drawNamedChip, lookupNamedChip, namedChipBox, namedChipLooks, namedChipTypes } from './parts/namedChips.ts';
 export { lookupGateUnits, lookupPinout, lookupPinoutNames, lookupRole, pinoutModels, pinoutTable } from './parts/pinouts.ts';
 export {
-  deviceLookOf, deviceRole, deviceSilk, deviceWireColor, lookupModule, moduleModels, moduleTable, resolveDeviceModel,
+  deviceLookOf, deviceProductName, deviceRole, deviceSilk, deviceWireColor, lookupModule, moduleModels, moduleTable, resolveDeviceModel,
 } from './parts/modules.ts';
-export { USB_STAMP, drawDeviceLook, lookNameInk, lookNameInset, lookPinX, lookUsbPort, lookWidth, lookupUsbKind, usbKinds } from './parts/deviceLooks.ts';
+export {
+  USB_STAMP, drawDeviceLook, lookPinX, lookSize, lookUsbPort, lookupUsbKind, pxPerMmOf, usbKinds,
+} from './parts/deviceLooks.ts';
 export type { DeviceLookName, LookOptions, LookRect, UsbKind, UsbPort } from './parts/deviceLooks.ts';
 export {
   USB_CABLE_TYPE, drawUsbCable, readUsbCable, usbCableBox, usbCableListValue, usbCableMinLength,

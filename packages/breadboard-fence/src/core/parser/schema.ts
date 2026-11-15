@@ -1,4 +1,4 @@
-import { resolveDeviceModel } from 'fence-kit';
+import { deviceProductName, resolveDeviceModel } from 'fence-kit';
 import { safeToken } from '../errors.ts';
 import { LIMITS, clampText, isPinName } from '../limits.ts';
 import { NO_TURN, TURN_WORD, refusalFor } from '../parts/orient.ts';
@@ -97,7 +97,8 @@ export function validateExpandedPart(raw: unknown): Validation {
   const resolved = model === null ? null : resolveDeviceModel(model, pins);
   if (resolved !== null && !resolved.ok) return invalid(resolved.message);
   const devicePins = resolved === null ? pins : resolved.names;
-  const deviceLabel = label ?? (resolved === null ? null : resolved.model);
+  // `label:` を書かなければ名札は製品の正式名称 (表に無ければ型番)。
+  const deviceLabel = label ?? (resolved === null ? null : deviceProductName(resolved.model) ?? resolved.model);
 
   const holes = raw.holes === undefined ? [] : asTextList(raw.holes);
   if (holes === null) return invalid('holes は穴番地の配列です');

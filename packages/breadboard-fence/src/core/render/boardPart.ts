@@ -39,8 +39,14 @@ export function boardPadPoints(part: PlacedPart, layout: Layout): ReadonlyMap<st
   const pads = boardPads(points, pinOneOf(part), lookupBoardPart(part.type), layout.pitch);
   if (pads.length === 0) return new Map();
 
-  // 行と行の間の高さ (溝も 1 つの間)。真ん中のパッドにいちばん近い間を真ん中にして、上下に並べる。
   const rows = HOLE_ROWS.map((row) => layout.rowY(row)).sort((a, b) => a - b);
+  // **実物の位置 (0.1 インチ間隔) が穴の行に重ならなければ、そのまま描く。** 溝は 3 ピッチあるので、
+  // Pico を溝の真ん中に置けば 3 つとも溝の中に入る (52 の docs/157)。
+  const clear = layout.pitch * PAD_ROW_CLEAR;
+  if (pads.every((pad) => rows.every((y) => Math.abs(y - pad.point.y) >= clear))) {
+    return new Map(pads.map((pad) => [pad.name, pad.point]));
+  }
+  // 重なるときは行と行の間の高さ (溝も 1 つの間) に寄せる。真ん中のパッドにいちばん近い間を真ん中にして、上下に並べる。
   const gaps = rows.slice(1).map((y, index) => (y + (rows[index] ?? y)) / 2);
   const sorted = [...pads].sort((a, b) => a.point.y - b.point.y);
   const middle = sorted[Math.floor(sorted.length / 2)]?.point.y ?? 0;
@@ -81,6 +87,8 @@ export function renderBoardPadNames(part: PlacedPart, layout: Layout, theme: Ren
 }
 
 /** いちばん外の降りる線の縁から、パッドの名前の書き出しまで (px)。字の縁取りが線にかからない量。 */
+/** パッドを実物の位置に描くとき、穴の行から離す量 (ピッチに対する比)。 */
+const PAD_ROW_CLEAR = 0.4;
 const LANE_NAME_CLEAR = 6;
 /** パッドの輪の半径 (fence-kit と同じ) と、降りる線までに空ける量 (px)。 */
 const PAD_RADIUS = 3.5;

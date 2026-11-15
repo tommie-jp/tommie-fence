@@ -1,4 +1,4 @@
-import { PARTS_SYMBOL_HEADING_BY_LANG, bandColor, lookupNamedChip, partKind, partsMark, valueWithRole, withRatings } from 'fence-kit';
+import { PARTS_SYMBOL_HEADING_BY_LANG, bandColor, deviceProductName, lookupNamedChip, partKind, partsMark, valueWithRole, withRatings } from 'fence-kit';
 import type { Lang, PartRatings, PartsMark } from 'fence-kit';
 import { colorValue } from '../color.ts';
 import { SOCKET_LOOK } from '../parts/types.ts';
@@ -93,7 +93,8 @@ export function partsListing(
       return part.holes === undefined ? row : [...row, positionOf(part.holes)];
     }),
     // 機器は種類が 1 つしかないので、名札を値の欄に出す (`電池 3V`)。
-    ...devices.map((device): PartsRow => [device.id, 'device', device.label, '']),
+    // 表に正式名称のある機器 (Debug Probe) は、名札ではなく正式名称を出す (買う物の名前)。
+    ...devices.map((device): PartsRow => [device.id, 'device', deviceProductName(device.model ?? null) ?? device.label, '']),
     // USB ケーブルなど、基板にも帯にも置かない物 (呼ぶ側が行を作る)。
     ...extra,
   ];

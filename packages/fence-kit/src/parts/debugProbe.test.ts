@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { lookupBoardPart } from './boards.ts';
 import { boardChip, boardUsbPort } from './chips.ts';
-import { drawDeviceLook, lookPinX, lookUsbPort, lookupUsbKind } from './deviceLooks.ts';
-import { deviceLookOf, deviceSilk, deviceWireColor, lookupModule, resolveDeviceModel } from './modules.ts';
+import { drawDeviceLook, lookPinX, lookSize, lookUsbPort, lookupUsbKind, pxPerMmOf } from './deviceLooks.ts';
+import { deviceLookOf, deviceProductName, deviceSilk, deviceWireColor, lookupModule, resolveDeviceModel } from './modules.ts';
 import { drawUsbCable, usbCableBox, usbCableMinLength } from './usbCable.ts';
 
 /** Raspberry Pi Debug Probe と USB ケーブル (52 の docs/157)。 */
@@ -33,6 +33,11 @@ describe('Debug Probe の表', () => {
     expect(deviceWireColor('RPI-DEBUG-PROBE', 'constructor')).toBeNull();
   });
 
+  test('knows the full product name', () => {
+    expect(deviceProductName('rpi-debug-probe')).toBe('Raspberry Pi Debug Probe');
+    expect(deviceProductName('NRF24L01+')).toBeNull();
+  });
+
   test('has a look, other modules do not', () => {
     expect(deviceLookOf('RPI-DEBUG-PROBE')).toBe('rpi-debug-probe');
     expect(deviceLookOf('NRF24L01+')).toBeNull();
@@ -41,30 +46,45 @@ describe('Debug Probe の表', () => {
 });
 
 describe('Debug Probe の姿', () => {
-  const rect = { x: 100, y: 10, width: 200, height: 62 };
+  const px = pxPerMmOf(20);
+  const size = lookSize('rpi-debug-probe', px);
+  const rect = { x: 100, y: 10, ...size };
+
+  test('is drawn to scale: the case is 31 × 37 mm', () => {
+    expect(size.width / px).toBeCloseTo(31);
+    expect(size.height / px).toBeCloseTo(37);
+  });
+
+  test('puts the pins 1 mm apart and the ports 7.6 mm apart, as in the drawings', () => {
+    const x = (pin: string): number => lookPinX('rpi-debug-probe', pin, rect, 'top', px) ?? Number.NaN;
+    expect((x('UGND') - x('TX')) / px).toBeCloseTo(1);
+    expect((x('DGND') - x('UGND')) / px).toBeCloseTo(7.6);
+  });
 
   test('puts U on the left and D on the right, each orange-black-yellow from the left, when on top', () => {
-    const xs = ['TX', 'UGND', 'RX', 'SC', 'DGND', 'SD'].map((pin) => lookPinX('rpi-debug-probe', pin, rect, 'top') ?? Number.NaN);
+    const xs = ['TX', 'UGND', 'RX', 'SC', 'DGND', 'SD'].map((pin) => lookPinX('rpi-debug-probe', pin, rect, 'top', px) ?? Number.NaN);
     expect(xs).toEqual([...xs].sort((a, b) => a - b));
-    expect(xs[2] ?? 0).toBeLessThan(200);
-    expect(xs[3] ?? 0).toBeGreaterThan(200);
+    expect(xs[2] ?? 0).toBeLessThan(rect.x + rect.width / 2);
+    expect(xs[3] ?? 0).toBeGreaterThan(rect.x + rect.width / 2);
   });
 
   test('turns the whole probe round when it sits below the board', () => {
-    const top = lookPinX('rpi-debug-probe', 'TX', rect, 'top') ?? 0;
-    const bottom = lookPinX('rpi-debug-probe', 'TX', rect, 'bottom') ?? 0;
+    const top = lookPinX('rpi-debug-probe', 'TX', rect, 'top', px) ?? 0;
+    const bottom = lookPinX('rpi-debug-probe', 'TX', rect, 'bottom', px) ?? 0;
     expect(top - rect.x).toBeCloseTo(rect.x + rect.width - bottom);
-    expect(lookPinX('rpi-debug-probe', 'VCC', rect, 'top')).toBeNull();
+    expect(lookPinX('rpi-debug-probe', 'VCC', rect, 'top', px)).toBeNull();
   });
 
   test('puts the micro-B port on the edge away from the board', () => {
-    expect(lookUsbPort('rpi-debug-probe', rect, 'top')).toMatchObject({ dir: 'up', kind: 'micro-b' });
-    expect(lookUsbPort('rpi-debug-probe', rect, 'top').y).toBeLessThan(rect.y);
-    expect(lookUsbPort('rpi-debug-probe', rect, 'bottom')).toMatchObject({ dir: 'down', kind: 'micro-b' });
+    expect(lookUsbPort('rpi-debug-probe', rect, 'top', px)).toMatchObject({ dir: 'up', kind: 'micro-b' });
+    expect(lookUsbPort('rpi-debug-probe', rect, 'top', px).y).toBeLessThan(rect.y + 2 * px);
+    expect(lookUsbPort('rpi-debug-probe', rect, 'bottom', px)).toMatchObject({ dir: 'down', kind: 'micro-b' });
   });
 
-  test('draws the case, the U and D marks and the name, and no logo', () => {
-    const svg = drawDeviceLook('rpi-debug-probe', { rect, side: 'top', label: 'Debug Probe', scale: 1 });
+  test('draws the case, the U and D marks, the pin names and the name, and no logo', () => {
+    const pins = [{ name: 'UGND', text: 'GND' }];
+    const svg = drawDeviceLook('rpi-debug-probe', { rect, side: 'top', label: 'Debug Probe', scale: 1, pxPerMm: px, pins });
+    expect(svg).toContain('>GND<');
     expect(svg).toContain('cf-look-case');
     expect(svg).toContain('>U<');
     expect(svg).toContain('>D<');
@@ -110,16 +130,24 @@ describe('USB の種類', () => {
 
 describe('USB ケーブル', () => {
   const port = { x: 0, y: 0, dir: 'left', kind: 'micro-b' } as const;
+  const pxPerMm = pxPerMmOf(20);
 
   test('prints the kind on both plugs', () => {
-    const svg = drawUsbCable({ port, far: 'usb-c', length: 200, scale: 1 });
+    const svg = drawUsbCable({ port, far: 'usb-c', length: 200, scale: 1, pxPerMm });
     expect(svg).toContain('>micro-B<');
     expect(svg).toContain('>USB-C<');
   });
 
-  test('never draws a cable too short to see', () => {
-    expect(usbCableBox({ port, far: 'usb-c', length: 5 }).width).toBe(usbCableMinLength('usb-c'));
-    expect(usbCableBox({ port, far: 'usb-c', length: 200 })).toMatchObject({ x: -200, width: 200 });
-    expect(usbCableBox({ port: { ...port, dir: 'up' }, far: 'usb-a', length: 150 })).toMatchObject({ y: -150, height: 150 });
+  test('never draws a cable too short to see: both plug bodies, the far tip and a bit of cord', () => {
+    const shortest = usbCableMinLength('micro-b', 'usb-c', pxPerMm);
+    expect(shortest).toBeCloseTo((25.6 + 35 + 6.65) * pxPerMm + 24);
+    expect(usbCableBox({ port, far: 'usb-c', length: 5, pxPerMm }).width).toBeCloseTo(shortest);
+    expect(usbCableBox({ port, far: 'usb-c', length: 1000, pxPerMm })).toMatchObject({ x: -1000, width: 1000 });
+    expect(usbCableBox({ port: { ...port, dir: 'up' }, far: 'usb-a', length: 1000, pxPerMm })).toMatchObject({ y: -1000, height: 1000 });
+  });
+
+  test('draws the plugs to scale: a USB-A body is 15.7 mm wide', () => {
+    const box = usbCableBox({ port: { ...port, dir: 'up' }, far: 'usb-a', length: 1000, pxPerMm });
+    expect(box.width / pxPerMm).toBeCloseTo(15.7);
   });
 });

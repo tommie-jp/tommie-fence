@@ -18,7 +18,8 @@ const RAVINE = 2 * PITCH;
 const BLOCK_TO_RAIL = RAIL_TO_BLOCK;
 // レールの無い基板でも、列番号と配線レーンの居場所は要る。基板の縁からブロックまでを同じだけ空ける。
 const EDGE_TO_BLOCK = RAIL_TO_BLOCK;
-const DEVICE_HEIGHT = 62;
+/** 機器の帯の既定の高さ (箱の機器の高さ)。 */
+export const DEVICE_HEIGHT = 62;
 const DEVICE_GAP = 54;
 
 /** 配線が通れる横レーン。halfHeight は重なりを避けるためにずらせる幅。 */
@@ -40,6 +41,9 @@ export type LayoutOptions = {
   /** 画布の上端と下端に足す余白 (機器の口から帯の外へ出る USB ケーブルのぶん。52 の docs/157)。 */
   readonly marginTop?: number;
   readonly marginBottom?: number;
+  /** 機器の帯の高さ (実寸で描く姿のある機器のため。52 の docs/157)。既定の高さより低くはしない。 */
+  readonly deviceTopHeight?: number;
+  readonly deviceBottomHeight?: number;
 };
 
 export type Layout = {
@@ -75,12 +79,14 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
   const [top, bottom, left, right] = [
     options.overhangTop, options.overhangBottom, options.overhangLeft, options.overhangRight,
   ].map((value) => Math.max(0, value ?? 0)) as [number, number, number, number];
+  const topHeight = Math.max(DEVICE_HEIGHT, options.deviceTopHeight ?? 0);
+  const bottomHeight = Math.max(DEVICE_HEIGHT, options.deviceBottomHeight ?? 0);
   let y = OUTER_MARGIN + Math.max(0, options.marginTop ?? 0);
   const topBand: Rect | null = options.deviceTop
-    ? { x: OUTER_MARGIN, y, width: 0, height: DEVICE_HEIGHT }
+    ? { x: OUTER_MARGIN, y, width: 0, height: topHeight }
     : null;
   if (topBand) {
-    y += DEVICE_HEIGHT;
+    y += topHeight;
     lanes.push({ y: y + DEVICE_GAP / 2, halfHeight: DEVICE_GAP / 2 - 8 });
     y += DEVICE_GAP;
   }
@@ -130,11 +136,11 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
   y += bottom;
 
   const bottomBand: Rect | null = options.deviceBottom
-    ? { x: OUTER_MARGIN, y: y + DEVICE_GAP, width: 0, height: DEVICE_HEIGHT }
+    ? { x: OUTER_MARGIN, y: y + DEVICE_GAP, width: 0, height: bottomHeight }
     : null;
   if (bottomBand) {
     lanes.push({ y: y + DEVICE_GAP / 2, halfHeight: DEVICE_GAP / 2 - 8 });
-    y += DEVICE_GAP + DEVICE_HEIGHT;
+    y += DEVICE_GAP + bottomHeight;
   }
 
   const boardX = OUTER_MARGIN + left;

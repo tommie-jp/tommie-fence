@@ -38,6 +38,11 @@ export type ModuleRow = {
   readonly wireColors?: Readonly<Record<string, string>>;
   /** 箱の代わりに描く姿 (`deviceLooks.ts`)。無ければ箱。 */
   readonly look?: DeviceLookName;
+  /**
+   * 製品の正式名称 (作り手の表記のまま)。**部品表の値の欄と、`label:` を書かないときの名札**に出す。
+   * 型番 (`RPI-DEBUG-PROBE`) は書くための綴りで、買う物の名前ではないため。
+   */
+  readonly name?: string;
 };
 
 const ROWS: readonly ModuleRow[] = [
@@ -120,6 +125,7 @@ const ROWS: readonly ModuleRow[] = [
     silk: { UGND: 'GND', DGND: 'GND' },
     wireColors: { TX: 'orange', UGND: 'black', RX: 'yellow', SC: 'orange', DGND: 'black', SD: 'yellow' },
     look: 'rpi-debug-probe',
+    name: 'Raspberry Pi Debug Probe',
   },
 ];
 
@@ -155,6 +161,11 @@ export function deviceSilk(model: string | null, pin: string): string {
 export function deviceWireColor(model: string | null, pin: string): string | null {
   const colors = model === null ? undefined : lookupModule(model)?.wireColors;
   return colors !== undefined && Object.hasOwn(colors, pin) ? colors[pin] ?? null : null;
+}
+
+/** 製品の正式名称 (`Raspberry Pi Debug Probe`)。表に無ければ null。 */
+export function deviceProductName(model: string | null): string | null {
+  return model === null ? null : lookupModule(model)?.name ?? null;
 }
 
 /** 箱の代わりに描く姿。無ければ null (箱で描く)。 */

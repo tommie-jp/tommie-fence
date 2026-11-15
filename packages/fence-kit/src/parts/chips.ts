@@ -679,10 +679,13 @@ export function sipHeader(options: SipOptions): string {
 const EDGE_ALONG = 0.55;
 const EDGE_ACROSS = 0.63;
 
-// USB micro-B は幅 7.5mm ほど。基板の端から少しだけ出る。
-const USB_OVERHANG = 8;
-const USB_WIDTH = 20;
-const USB_HEIGHT = 2.6;
+/**
+ * Pico の USB の口 (micro-B) の実寸 (mm)。Pico 2 データシート Figure 3: 基板の縁から 1.3 mm 出る (寸法の書き込み)。
+ * 幅 7.5 mm・全長 6.0 mm は図の縮尺から読んだ値 (誤差 ±0.3 mm ほど)。
+ */
+const USB_MM = { jut: 1.3, onBoard: 4.7, width: 7.5 } as const;
+const MM_PER_PITCH = 2.54;
+const usbMm = (value: number, pitch: number): number => (value / MM_PER_PITCH) * pitch;
 const PIN_FONT = 6.8;
 const PIN_NAME_GAP = 8;
 const CHIP_SIDE = 2.2;
@@ -738,10 +741,12 @@ export function boardChip(options: BoardChipOptions): string {
   const nearStart = alongX ? first.x < centre.x : first.y < centre.y;
 
   // USB は基板の下から出ているので、本体より先に描いて縁を隠す。
-  const usbLong = USB_OVERHANG + USB_WIDTH;
-  const usbThick = USB_HEIGHT * pitch;
+  const usbJut = usbMm(USB_MM.jut, pitch);
+  const usbOnBoard = usbMm(USB_MM.onBoard, pitch);
+  const usbLong = usbJut + usbOnBoard;
+  const usbThick = usbMm(USB_MM.width, pitch);
   const usbStart = (start: number, size: number): number =>
-    (nearStart ? start - USB_OVERHANG : start + size - USB_WIDTH);
+    (nearStart ? start - usbJut : start + size - usbOnBoard);
   const usb = element('rect', {
     x: num(alongX ? usbStart(box.x, box.width) : centre.x - usbThick / 2),
     y: num(alongX ? centre.y - usbThick / 2 : usbStart(box.y, box.height)),
@@ -847,12 +852,12 @@ export function boardUsbPort(
   const nearStart = alongX ? first.x < centre.x : first.y < centre.y;
   if (alongX) {
     return nearStart
-      ? { x: box.x - USB_OVERHANG, y: centre.y, dir: 'left', kind: definition.usb }
-      : { x: box.x + box.width + USB_OVERHANG, y: centre.y, dir: 'right', kind: definition.usb };
+      ? { x: box.x - usbMm(USB_MM.jut, pitch), y: centre.y, dir: 'left', kind: definition.usb }
+      : { x: box.x + box.width + usbMm(USB_MM.jut, pitch), y: centre.y, dir: 'right', kind: definition.usb };
   }
   return nearStart
-    ? { x: centre.x, y: box.y - USB_OVERHANG, dir: 'up', kind: definition.usb }
-    : { x: centre.x, y: box.y + box.height + USB_OVERHANG, dir: 'down', kind: definition.usb };
+    ? { x: centre.x, y: box.y - usbMm(USB_MM.jut, pitch), dir: 'up', kind: definition.usb }
+    : { x: centre.x, y: box.y + box.height + usbMm(USB_MM.jut, pitch), dir: 'down', kind: definition.usb };
 }
 
 /** デバッグ用のパッド 1 つ (名前と、画布の上の中心)。 */

@@ -1,11 +1,15 @@
 import {
-  PIN_NAME_GAP, deviceLookOf, deviceSilk, drawDeviceLook, element, fit, lookNameInk, lookNameInset, lookPinX, lookWidth, num,
-  pinNameInner, pinNameRow, pinNameWidth, svgText,
+  PIN_NAME_GAP, deviceLookOf, deviceSilk, drawDeviceLook, element, fit, lookPinX, lookSize, num,
+  pinNameInner, pinNameRow, pinNameWidth, pxPerMmOf, svgText,
 } from 'fence-kit';
+import { PITCH } from '../model/layout.ts';
+
+/** 姿のある機器は実寸で描く (2.54 mm = 1 ピッチ)。 */
+const PX_PER_MM = pxPerMmOf(PITCH);
 import { notice, safeToken } from '../errors.ts';
 import { formatAddress, parseAddress } from '../model/address.ts';
 import type { Band, Layout } from '../model/layout.ts';
-import type { DeviceSpec, FenceError, Point, Spelling } from '../types.ts';
+import type { DeviceSide, DeviceSpec, FenceError, Point, Spelling } from '../types.ts';
 import type { Theme } from './theme.ts';
 
 /**
@@ -61,7 +65,7 @@ const CRAMPED = PIN_GAP / 2;
 const boxWidth = (device: DeviceSpec, inBand = false): number => {
   // 姿のある機器 (Debug Probe) は姿の幅。帯に並べたときだけ姿で描く (番地で置けばピンは穴の格子に載る箱)。
   const look = inBand ? deviceLookOf(device.model ?? null) : null;
-  if (look !== null) return lookWidth(look, 1);
+  if (look !== null) return lookSize(look, PX_PER_MM).width;
   const widest = device.pins.reduce((most, name) => Math.max(most, pinNameWidth(name)), 0);
   const pitch = Math.max(PIN_GAP, widest * PIN_NAME_SIZE + PIN_NAME_GAP);
   // 帯に並べたピンは箱の幅を (本数 + 1) で割った所に来るので、その間で名前が入るように。
@@ -97,6 +101,16 @@ function coverOf(box: Band, layout: Layout, above: boolean): number {
  * 帯の中に機器を横へ並べる。**幅はピンの数で決まる** — ピンを等間隔に置ける
  * 幅が要るので、ピンの多い機器ほど広くなる。
  */
+/** 帯の高さ。姿のある機器があれば、実寸の背とピンの足と名前の段の分まで伸ばす。 */
+export function deviceBandHeight(devices: readonly DeviceSpec[], side: DeviceSide): number {
+  return devices
+    .filter((device) => device.where === null && device.at === side)
+    .reduce((most, device) => {
+      const look = deviceLookOf(device.model ?? null);
+      return look === null ? most : Math.max(most, lookSize(look, PX_PER_MM).height + LEG + PIN_LABEL);
+    }, 0);
+}
+
 export function layoutDevices(devices: readonly DeviceSpec[], layout: Layout, spelling: Spelling): DeviceLayout {
   const placed: PlacedDevice[] = [];
   const notices: FenceError[] = [];
@@ -174,15 +188,16 @@ export function layoutDevices(devices: readonly DeviceSpec[], layout: Layout, sp
       const width = widths[index] as number;
       // 姿のある機器は帯の高さを全部使う (ピンの名前は姿の中に刷るので、名前の段が要らない)。
       const look = deviceLookOf(device.model ?? null);
-      const tall = look === null ? height : band.height - LEG;
-      // ピンは基板の側へ出す (上の帯なら下、下の帯なら上)。
+      // 姿は実寸。ピンの先 (基板の側) は箱の機器とそろえ、背は帯の外の側へ伸ばす (帯はそのぶん高い)。
+      const tall = look === null ? height : lookSize(look, PX_PER_MM).height;
+      const tipLine = side === 'top' ? band.y + band.height - PIN_LABEL : band.y + PIN_LABEL;
       const box: Band = {
-        x, y: side === 'top' ? band.y : band.y + band.height - tall, width, height: tall,
+        x, y: side === 'top' ? tipLine - LEG - tall : tipLine + LEG, width, height: tall,
       };
       const tip = side === 'top' ? box.y + box.height + LEG : box.y - LEG;
       const step = width / (device.pins.length + 1);
       const pinX = (name: string, pin: number): number =>
-        (look === null ? null : lookPinX(look, name, box, side)) ?? box.x + step * (pin + 1);
+        (look === null ? null : lookPinX(look, name, box, side, PX_PER_MM)) ?? box.x + step * (pin + 1);
       const pins = new Map<string, Point>(
         device.pins.map((name, pin) => [name, { x: pinX(name, pin), y: tip }]),
       );
@@ -251,32 +266,20 @@ function renderDevice(placed: PlacedDevice, theme: Theme): string {
   return `${body}${legs}${caption}`;
 }
 
-/** 姿のある機器 (Debug Probe)。名前は 3 ピンの口の内側に、表の刷る字 (`UGND` は GND) で書く。 */
+/** 姿のある機器 (Debug Probe)。実寸で描き、ピンの名前は姿が刷る (`UGND` は GND)。足だけここで描く。 */
 function renderLooked(placed: PlacedDevice, look: NonNullable<ReturnType<typeof deviceLookOf>>, theme: Theme): string {
   const { box, device } = placed;
   const top = device.at === 'top';
   const edge = top ? box.y + box.height : box.y;
-  const size = theme.metrics.textSize;
-  const entries = [...placed.pins.entries()];
-  const xs = entries.map(([, point]) => point.x);
-  const names = entries.map(([name]) => deviceSilk(device.model ?? null, name));
-  const nameRow = pinNameRow(xs, names, {
-    largest: size, smallest: Math.min(size, MIN_PIN_NAME), within: { left: box.x + NAME_INSET, right: box.x + box.width - NAME_INSET },
-  });
-  const inset = lookNameInset(look);
-  const nameY = top ? edge - inset - 4 : edge + inset + nameRow.size;
-  const inward = (top ? -1 : 1) * nameRow.size * STAGGER_LINE;
-  const legs = entries
-    .map(([, point], index) => element('line', {
+  const legs = [...placed.pins.values()]
+    .map((point) => element('line', {
       x1: num(point.x), y1: num(edge), x2: num(point.x), y2: num(point.y),
       stroke: theme.palette.lead, 'stroke-width': 2, 'stroke-linecap': 'round',
-    }) + svgText(point.x, nameY + (nameRow.staggered && pinNameInner(xs, index) ? inward : 0), names[index] ?? '', {
-      fill: lookNameInk(look),
-      'font-size': num(nameRow.size),
     }))
     .join('');
-  const scale = size / 9;
-  return drawDeviceLook(look, { rect: box, side: top ? 'top' : 'bottom', label: device.label, scale }) + legs;
+  const pins = device.pins.map((name) => ({ name, text: deviceSilk(device.model ?? null, name) }));
+  const scale = theme.metrics.textSize / 9;
+  return drawDeviceLook(look, { rect: box, side: top ? 'top' : 'bottom', label: device.label, scale, pxPerMm: PX_PER_MM, pins }) + legs;
 }
 
 /**

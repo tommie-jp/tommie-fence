@@ -5,6 +5,14 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Debug Probe を**実寸**で描く。帯はその背の高さまで伸び、帯が足りないときは箱の機器だけを縮める
+- `label:` を書かない Debug Probe の名札と、部品表の値の欄を、正式名称 `Raspberry Pi Debug Probe` にした
+- USB ケーブルと Pico の USB の口を**実寸**で描く
+- Pico の SWD のパッドを、穴の行に重ならなければ実物どおり 0.1 インチ間隔に描く (Pico を a〜j の真ん中に置くと溝の中に来る)
+- 例: `examples/07-pico.md` の Debug Probe の図を UART (図02)・SWD (図03)・USB ケーブル (図04) の 3 枚に分け、Pico を a〜j の真ん中 (`@ h15`) に置いた
+
 ## [0.68.0] - 2026-11-15
 
 ### Changed
