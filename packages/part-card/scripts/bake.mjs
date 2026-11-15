@@ -5,7 +5,7 @@
 //
 // **焼くのは、ブラウザ (プレビューの web 版・playground・フェンスを束ねて使うほかのアプリ) では実行時にファイルを読めないから。**
 // 焼いた物はコミットする。カードと食い違っていないことは part-card の試験も見張る。
-import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 
@@ -23,7 +23,13 @@ await build({
 });
 const { readCardText } = await import(bundled.href);
 
-const names = readdirSync(partsDir).filter((name) => name.endsWith('.part.yaml')).sort();
+/** 置き場の下まで降りて、カードを集める。並びはディレクトリ・名前の順 (chips/ discretes/ modules/ boards/ …)。 */
+const walk = (dir, prefix = '') => readdirSync(dir).sort().flatMap((name) => {
+  const url = new URL(name, dir);
+  if (statSync(url).isDirectory()) return walk(new URL(`${name}/`, dir), `${prefix}${name}/`);
+  return name.endsWith('.part.yaml') ? [`${prefix}${name}`] : [];
+});
+const names = walk(partsDir);
 const cards = [];
 let failed = 0;
 for (const name of names) {
@@ -41,10 +47,11 @@ if (failed > 0) {
 
 const text = [
   '// 自動で書き出したファイル。手で直さない。',
-  '// 元は packages/fence-kit/parts/*.part.yaml、書き出すのは `npm run cards` (52 の docs/158)。',
+  '// 元は packages/fence-kit/parts/**/*.part.yaml、書き出すのは `npm run cards` (52 の docs/158)。',
   "import type { PartCard } from './types.ts';",
   '',
-  `export const BUNDLED_CARDS: readonly PartCard[] = ${JSON.stringify(cards, null, 2)};`,
+  // 1 枚 1 行 (150 枚を字下げつきで書くと 5,000 行を越え、差分が読めない)。
+  `export const BUNDLED_CARDS: readonly PartCard[] = [\n${cards.map((card) => `  ${JSON.stringify(card)},`).join('\n')}\n];`,
   '',
 ].join('\n');
 

@@ -124,7 +124,10 @@ const TS_ROWS: readonly ModuleRow[] = [
     view: 'USB を上、3 ピンの口を下にして上から見て: 左の口 U (左から TX・GND・RX)、右の口 D (左から SC・GND・SD)',
     note: '名前は **Probe の側から見た名前** (`TX` は Probe から出る) なので、U の `TX` を相手の RX (Pico の GP1) へ、`RX` を相手の TX (GP0) へ。'
       + 'D の `SC` `GND` `SD` は Pico の SWCLK・GND・SWDIO へ。GND は 2 つあるので `UGND` `DGND` と呼び、図には GND と刷る。'
-      + '**線の色を書かなければ付属のケーブルの色** (橙 = TX・SC、黒 = GND、黄 = RX・SD)。I/O は 3.3 V',
+      + '**線の色を書かなければ付属のケーブルの色** (橙 = TX・SC、黒 = GND、黄 = RX・SD)。I/O は 3.3 V。'
+      // 文書の表はこの注から書き出す (52 の docs/160)。3 つのフェンスで同じ字にするので、実体配線図と回路図の違いも書く。
+      + '実体配線図 (bread・perf) は**帯に並べると箱ではなく実物の姿で描く** (`size:` で large = 実寸・medium (既定)・small。ロゴは描かない)。'
+      + '名札と部品表には正式名称 Raspberry Pi Debug Probe が出る。回路図では箱で描き、ピンの名前は配線の名前 (`UGND` `DGND`) のまま',
     source: 'Raspberry Pi の Debug Probe の文書 (https://www.raspberrypi.com/documentation/microcontrollers/debug-probe.html) のケーブルの色 (orange TX/SC・black GND・yellow RX/SD)、'
       + '3 ピンのデバッグコネクタの仕様 RP-003139-SP (1 番 SC/TX・2 番 GND・3 番 SD/RX。JST SH 1.0 mm)、寸法図 RP-008192-DS (32 × 22 mm、USB と 3 ピンの口は反対の短辺)。2026-11-15',
     silk: { UGND: 'GND', DGND: 'GND' },

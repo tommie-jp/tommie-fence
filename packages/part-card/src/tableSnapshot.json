@@ -1487,7 +1487,7 @@
    "DGND",
    "SD"
   ],
-  "note": "名前は **Probe の側から見た名前** (`TX` は Probe から出る) なので、U の `TX` を相手の RX (Pico の GP1) へ、`RX` を相手の TX (GP0) へ。D の `SC` `GND` `SD` は Pico の SWCLK・GND・SWDIO へ。GND は 2 つあるので `UGND` `DGND` と呼び、図には GND と刷る。**線の色を書かなければ付属のケーブルの色** (橙 = TX・SC、黒 = GND、黄 = RX・SD)。I/O は 3.3 V",
+  "note": "名前は **Probe の側から見た名前** (`TX` は Probe から出る) なので、U の `TX` を相手の RX (Pico の GP1) へ、`RX` を相手の TX (GP0) へ。D の `SC` `GND` `SD` は Pico の SWCLK・GND・SWDIO へ。GND は 2 つあるので `UGND` `DGND` と呼び、図には GND と刷る。**線の色を書かなければ付属のケーブルの色** (橙 = TX・SC、黒 = GND、黄 = RX・SD)。I/O は 3.3 V。実体配線図 (bread・perf) は**帯に並べると箱ではなく実物の姿で描く** (`size:` で large = 実寸・medium (既定)・small。ロゴは描かない)。名札と部品表には正式名称 Raspberry Pi Debug Probe が出る。回路図では箱で描き、ピンの名前は配線の名前 (`UGND` `DGND`) のまま",
   "product": "Raspberry Pi Debug Probe (ケースと 3 種のケーブルつき。USB の口は micro-B)",
   "role": "デバッグプローブ (Raspberry Pi、SWD と UART)",
   "roleEn": "debug probe (Raspberry Pi, SWD and UART)",

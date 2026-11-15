@@ -1,17 +1,22 @@
 import { describe, expect, test } from 'vitest';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import {
   BUNDLED_CARDS, boardRows, chipRows, discreteRows, discreteTable, lookupBoardPart, moduleRows, moduleTable, pinoutTable,
 } from 'fence-kit';
 import type { PartCard } from 'fence-kit';
-import { CARD_ROW_DOCS, cardRowsBlock } from './docRows.ts';
+import { CARD_ROW_DOCS, ROW_BLOCKS, cardRowsBlock, rowBlockText } from './docRows.ts';
 import { readCardText } from './text.ts';
 
 /** 同梱の部品カード (52 の docs/158 の 4-1〜4-4)。 */
 
 const root = new URL('../../../', import.meta.url);
-const cardsIn = (dir: URL): readonly [string, PartCard][] => readdirSync(dir)
-  .filter((name) => name.endsWith('.part.yaml')).sort()
+/** 置き場の下まで降りてカードを集める (並びは焼く道具と同じ、ディレクトリ・名前の順)。 */
+const namesIn = (dir: URL, prefix = ''): readonly string[] => readdirSync(dir).sort().flatMap((name) =>
+  (statSync(new URL(name, dir)).isDirectory()
+    ? namesIn(new URL(`${name}/`, dir), `${prefix}${name}/`)
+    : (name.endsWith('.part.yaml') ? [`${prefix}${name}`] : [])));
+
+const cardsIn = (dir: URL): readonly [string, PartCard][] => namesIn(dir)
   .map((name) => {
     const { card, issues } = readCardText(readFileSync(new URL(name, dir), 'utf8'));
     expect(issues, name).toEqual([]);
@@ -33,6 +38,12 @@ describe('同梱の部品カード', () => {
   test.each(CARD_ROW_DOCS)('%s lists the bundled cards between its markers (npm run rows)', (doc) => {
     expect(readFileSync(new URL(doc, root), 'utf8')).toContain(cardRowsBlock(BUNDLED_CARDS));
   });
+
+  test.each(ROW_BLOCKS.flatMap((block) => block.docs.map((doc) => [block.name, doc, block] as const)))(
+    'the %s table in %s is written out from the table (npm run rows)', (_name, doc, block) => {
+      expect(readFileSync(new URL(doc, root), 'utf8')).toContain(rowBlockText(block));
+    },
+  );
 });
 
 /**
