@@ -41,24 +41,24 @@ board:
 style:
   check: off
 parts:
-  U1: dip8 b2 NE555
-  U2: dip8 b8 TLC555
+  U1: dip8 b2 AE-SI5351A-B
+  U2: dip8 b8 ATtiny85
   U3: dip8 b14 LM358
-  U4: dip8 b20 TL071
-  U5: dip8 b26 TL072
-  U6: dip8 b32 LM393
-  U7: dip8 b38 SA612
+  U4: dip8 b20 LM386
+  U5: dip8 b26 LM393
+  U6: dip8 b32 LM741
+  U7: dip8 b38 LM75
   U8: dip8 g2 MCP6002
-  U9: dip8 g8 LM386
+  U9: dip8 g8 MCP9808
   U10: dip8 g14 NE5532
-  U11: dip8 g20 NJM4556A
-  U12: dip8 g26 LM741
-  U13: dip8 g32 ATtiny85
+  U11: dip8 g20 NE555
+  U12: dip8 g26 NJM4556A
+  U13: dip8 g32 PIC12F1822
   U14: dip8 g38 PIC12F683
-  U15: dip8 l2 PIC12F1822
-  U16: dip8 l8 AE-SI5351A-B
-  U17: dip8 l14 LM75
-  U18: dip8 l20 MCP9808
+  U15: dip8 l2 SA612
+  U16: dip8 l8 TL071
+  U17: dip8 l14 TL072
+  U18: dip8 l20 TLC555
 ```
 
 ![図02 DIP8 の型番](out/14-gallery-chips-2.svg)
@@ -78,26 +78,26 @@ board:
 style:
   check: off
 parts:
-  U1: dip14 b2 CD4069UB
-  U2: dip14 b11 CD4071B
-  U3: dip14 b20 CD4081B
-  U4: dip14 b29 CD4011B
-  U5: dip14 b38 CD4001B
-  U6: dip14 g2 CD4013B
-  U7: dip14 g11 CD4070B
-  U8: dip14 g20 CD40106B
-  U9: dip14 g29 74HC04
-  U10: dip14 g38 74HC08
-  U11: dip14 l2 74HC32
-  U12: dip14 l11 74HC86
-  U13: dip14 l20 74HC02
-  U14: dip14 l29 74HC74
-  U15: dip14 l38 74HC14
-  U16: dip14 q2 74HC00
-  U17: dip14 q11 74HC10
-  U18: dip14 q20 74HC11
-  U19: dip14 q29 74HC27
-  U20: dip14 q38 74HC20
+  U1: dip14 b2 74HC00
+  U2: dip14 b11 74HC02
+  U3: dip14 b20 74HC04
+  U4: dip14 b29 74HC08
+  U5: dip14 b38 74HC10
+  U6: dip14 g2 74HC11
+  U7: dip14 g11 74HC125
+  U8: dip14 g20 74HC126
+  U9: dip14 g29 74HC132
+  U10: dip14 g38 74HC14
+  U11: dip14 l2 74HC164
+  U12: dip14 l11 74HC20
+  U13: dip14 l20 74HC27
+  U14: dip14 l29 74HC30
+  U15: dip14 l38 74HC32
+  U16: dip14 q2 74HC393
+  U17: dip14 q11 74HC4066
+  U18: dip14 q20 74HC74
+  U19: dip14 q29 74HC86
+  U20: dip14 q38 74LS00
 ```
 
 ![図03 DIP14 の型番 (1/2)](out/14-gallery-chips-3.svg)
@@ -113,15 +113,15 @@ board:
 style:
   check: off
 parts:
-  U1: dip14 b2 74HC30
-  U2: dip14 b11 74HC132
-  U3: dip14 b20 74HC125
-  U4: dip14 b29 74HC126
-  U5: dip14 b38 74HC393
-  U6: dip14 g2 74HC164
-  U7: dip14 g11 74HC4066
-  U8: dip14 g20 LM324
-  U9: dip14 g29 74LS00
+  U1: dip14 b2 CD4001B
+  U2: dip14 b11 CD40106B
+  U3: dip14 b20 CD4011B
+  U4: dip14 b29 CD4013B
+  U5: dip14 b38 CD4069UB
+  U6: dip14 g2 CD4070B
+  U7: dip14 g11 CD4071B
+  U8: dip14 g20 CD4081B
+  U9: dip14 g29 LM324
 ```
 
 ![図04 DIP14 の型番 (2/2)](out/14-gallery-chips-4.svg)
@@ -141,22 +141,22 @@ board:
 style:
   check: off
 parts:
-  U1: dip16 b2 CD4017B
-  U2: dip16 b12 CD4040B
-  U3: dip16 b22 L293D
-  U4: dip16 b32 MCP3008
-  U5: dip16 g2 74HC595
-  U6: dip16 g12 CD4511B
-  U7: dip16 g22 CD74HC283
-  U8: dip16 g32 74HC163
-  U9: dip16 l2 74HC161
-  U10: dip16 l12 74HC194
-  U11: dip16 l22 74HC138
-  U12: dip16 l32 74HC139
-  U13: dip16 q2 74HC157
-  U14: dip16 q12 74HC153
-  U15: dip16 q22 74HC151
-  U16: dip16 q32 74HC175
+  U1: dip16 b2 74HC112
+  U2: dip16 b12 74HC123
+  U3: dip16 b22 74HC138
+  U4: dip16 b32 74HC139
+  U5: dip16 g2 74HC151
+  U6: dip16 g12 74HC153
+  U7: dip16 g22 74HC157
+  U8: dip16 g32 74HC161
+  U9: dip16 l2 74HC163
+  U10: dip16 l12 74HC165
+  U11: dip16 l22 74HC174
+  U12: dip16 l32 74HC175
+  U13: dip16 q2 74HC193
+  U14: dip16 q12 74HC194
+  U15: dip16 q22 74HC390
+  U16: dip16 q32 74HC4040
 ```
 
 ![図05 DIP16 の型番 (1/2)](out/14-gallery-chips-5.svg)
@@ -172,18 +172,18 @@ board:
 style:
   check: off
 parts:
-  U1: dip16 b2 74HC174
-  U2: dip16 b12 74HC112
-  U3: dip16 b22 74HC390
-  U4: dip16 b32 74HC4040
-  U5: dip16 g2 74HC4060
-  U6: dip16 g12 74HC193
-  U7: dip16 g22 74HC165
-  U8: dip16 g32 74HC85
-  U9: dip16 l2 74HC123
-  U10: dip16 l12 74HC4051
-  U11: dip16 l22 74HC4052
-  U12: dip16 l32 74HC4053
+  U1: dip16 b2 74HC4051
+  U2: dip16 b12 74HC4052
+  U3: dip16 b22 74HC4053
+  U4: dip16 b32 74HC4060
+  U5: dip16 g2 74HC595
+  U6: dip16 g12 74HC85
+  U7: dip16 g22 CD4017B
+  U8: dip16 g32 CD4040B
+  U9: dip16 l2 CD4511B
+  U10: dip16 l12 CD74HC283
+  U11: dip16 l22 L293D
+  U12: dip16 l32 MCP3008
   U13: dip16 q2 ULN2003A
 ```
 
@@ -204,8 +204,8 @@ board:
 style:
   check: off
 parts:
-  U1: dip18 b2 PIC16F84A
-  U2: dip18 b13 PIC16F628A
+  U1: dip18 b2 PIC16F628A
+  U2: dip18 b13 PIC16F84A
 ```
 
 ![図07 DIP18 の型番](out/14-gallery-chips-7.svg)
@@ -225,11 +225,11 @@ board:
 style:
   check: off
 parts:
-  U1: dip20 b2 74HC245
-  U2: dip20 b14 74HC273
-  U3: dip20 b26 74HC244
-  U4: dip20 g2 74HC541
-  U5: dip20 g14 74HC240
+  U1: dip20 b2 74HC240
+  U2: dip20 b14 74HC244
+  U3: dip20 b26 74HC245
+  U4: dip20 g2 74HC273
+  U5: dip20 g14 74HC541
   U6: dip20 g26 74HC573
   U7: dip20 l2 74HC574
 ```
@@ -251,8 +251,8 @@ board:
 style:
   check: off
 parts:
-  U1: dip24 b2 74HC154
-  U2: dip24 b16 6116
+  U1: dip24 b2 6116
+  U2: dip24 b16 74HC154
 ```
 
 ![図09 DIP24 の型番](out/14-gallery-chips-9.svg)
@@ -274,8 +274,8 @@ style:
 parts:
   U1: dip28 b2 62256
   U2: dip28 b18 ATmega328P
-  U3: dip28 g2 PIC16F886
-  U4: dip28 g18 PIC16F57
+  U3: dip28 g2 PIC16F57
+  U4: dip28 g18 PIC16F886
 ```
 
 ![図10 DIP28 の型番](out/14-gallery-chips-10.svg)
@@ -295,23 +295,23 @@ board:
 style:
   check: off
 parts:
-  U1: sip3 c2 SFU455B
-  U2: sip5 c8 KY-040
-  U3: sip4 c15 HC-SR04
-  U4: sip3 c21 SG90
-  U5: sip4 c26 DHT11
-  U6: sip3 c32 HC-SR501
-  U7: sip7 c38 GY-9833
-  U8: sip8 g2 ADAFRUIT-1782
-  U9: sip7 g12 ADAFRUIT-2045
-  U10: sip3 g21 TA7642
-  U11: sip3 g26 A3144
-  U12: sip3 g31 A1324
-  U13: sip3 g36 LM35
-  U14: sip3 g41 SFELF10M7
-  U15: sip3 k2 CFULA455
-  U16: sip4 k8 OSTA5131A
-  U17: sip4 k14 OSTAMA5B31A
+  U1: sip3 c2 A1324
+  U2: sip3 c7 A3144
+  U3: sip8 c12 ADAFRUIT-1782
+  U4: sip7 c22 ADAFRUIT-2045
+  U5: sip3 c31 CFULA455
+  U6: sip4 c37 DHT11
+  U7: sip7 g2 GY-9833
+  U8: sip4 g11 HC-SR04
+  U9: sip3 g17 HC-SR501
+  U10: sip5 g23 KY-040
+  U11: sip3 g30 LM35
+  U12: sip4 g35 OSTA5131A
+  U13: sip4 g41 OSTAMA5B31A
+  U14: sip3 k2 SFELF10M7
+  U15: sip3 k8 SFU455B
+  U16: sip3 k14 SG90
+  U17: sip3 k19 TA7642
 ```
 
 ![図11 1 列の型番](out/14-gallery-chips-11.svg)
@@ -331,9 +331,9 @@ board:
 style:
   check: off
 parts:
-  U1: sip8 f2 AE-RJ-45-LAN-DIP-A
-  U2: sip4 f13 AE-DC-POWER-JACK-DIP
-  U3: sip4 f24 AE-PHONE-JACK-DIP
+  U1: sip4 f2 AE-DC-POWER-JACK-DIP
+  U2: sip4 f13 AE-PHONE-JACK-DIP
+  U3: sip8 f23 AE-RJ-45-LAN-DIP-A
 ```
 
 ![図12 DIP 化キット](out/14-gallery-chips-12.svg)

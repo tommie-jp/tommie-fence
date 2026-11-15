@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [74HC4051, CD74HC4051, CD74HC4051E]
+package: dip16
+role: 8 チャネル アナログ マルチプレクサ
+role-en: 8-channel analog multiplexer
+pins: [A4, A6, A, A7, A5, E, VEE, GND, S2, S1, S0, A3, A0, A1, A2, VCC]
+note: "`A` が共通、`A0`〜`A7` がチャネル、`S0`〜`S2` が選択。`E` は上に線。電源は `VCC` `VEE` `GND`"
+source: CD74HC4051 (SCHS122O) の Figure 4-1〜4-3。共通の入出力・選択の印字は `A`・`AN`・`S0`〜

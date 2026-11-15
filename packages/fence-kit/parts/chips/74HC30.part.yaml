@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [74HC30, CD74HC30, CD74HC30E]
+package: dip14
+role: 8 入力 NAND
+role-en: 8-input NAND
+pins: [A, B, C, D, E, F, GND, Y, NC, NC, G, H, NC, VCC]
+note: "`NC` は 9・10・13 番。番号で呼ぶ"
+source: TI の CD74HC30 / CD74HC4066 / CD74HC194 / CD74HC390 / CD74HC85 / CD74HC123 / CD74HC573 (SN74HC は無い)。4066 は D・PW の端子図 (14 ピンで PDIP と同じ番号)

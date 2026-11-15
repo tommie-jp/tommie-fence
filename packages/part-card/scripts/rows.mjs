@@ -16,12 +16,11 @@ await build({
   outfile: fileURLToPath(bundled),
   bundle: true, format: 'esm', platform: 'node', logLevel: 'error', external: ['yaml'],
 });
-const { BUNDLED_CARDS, CARD_ROW_DOCS, ROW_BLOCKS, replaceCardRows, replaceRowBlock } = await import(bundled.href);
+const { BUNDLED_CARDS, ROW_BLOCKS, replaceRowBlock } = await import(bundled.href);
 
 /** 文書ごとに、掛ける書き換え (印の名前と、書き換える関数) を並べる。 */
 const jobs = new Map();
 const add = (doc, label, run) => jobs.set(doc, [...(jobs.get(doc) ?? []), [label, run]]);
-for (const doc of CARD_ROW_DOCS) add(doc, 'part-cards', (text) => replaceCardRows(text, BUNDLED_CARDS));
 for (const block of ROW_BLOCKS) for (const doc of block.docs) add(doc, `part-rows:${block.name}`, (text) => replaceRowBlock(text, block));
 
 const check = process.argv.includes('--check');

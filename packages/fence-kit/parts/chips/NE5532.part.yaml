@@ -1,0 +1,7 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [NE5532, NE5532P, NE5532AP, SA5532, SA5532P]
+package: dip8
+role: オペアンプ ×2 (低雑音・オーディオ)
+role-en: op-amp ×2 (low noise, audio)
+pins: [1OUT, 1IN-, 1IN+, VCC-, 2IN+, 2IN-, 2OUT, VCC+]
+source: TI SLOS075K (2025-12)、Figure 4-1 (P の 8 ピン PDIP)

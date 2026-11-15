@@ -1,0 +1,7 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [TL072, TL072CP, TL072ACP, TL072BCP, TL072H, TL082, TL082CP, TL082ACP, TL082BCP]
+package: dip8
+role: オペアンプ ×2
+role-en: op-amp ×2
+pins: [1OUT, 1IN-, 1IN+, VCC-, 2IN+, 2IN-, 2OUT, VCC+]
+source: SLOS080W、Table 4-1 (TL071x の D・P) / 4-3 (TL072x)

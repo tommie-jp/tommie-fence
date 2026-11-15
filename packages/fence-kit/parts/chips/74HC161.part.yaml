@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [74HC161, SN74HC161, SN74HC161N]
+package: dip16
+role: 4 ビット同期カウンタ (非同期クリア)
+role-en: 4-bit synchronous counter (async clear)
+pins: [CLR, CLK, A, B, C, D, ENP, GND, LOAD, ENT, QD, QC, QB, QA, RCO, VCC]
+note: "`CLR` `LOAD` は上に線。クリアは非同期。並びは 74HC163 と同じ"
+source: TI の SN74HC161 などの Pin Functions と端子図 (N)。74HC85 の 13・14 番は端子図で A2・B2 (調査の読み取りは逆だったので直した)

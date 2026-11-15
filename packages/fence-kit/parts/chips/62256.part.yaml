@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# CE・OE・WE は上に線 (`#` 付きの印字)。データのピンの名前は DQ。
+models: ["62256", AS6C62256, AS6C62256-55PCN, AS6C62256-55PIN, HM62256, HM62256B, CY62256, CY62256N]
+package: dip28/wide
+role: SRAM 32K×8
+pins: [A14, A12, A7, A6, A5, A4, A3, A2, A1, A0, DQ0, DQ1, DQ2, VSS, DQ3, DQ4, DQ5, DQ6, DQ7, CE, A10, OE, A11, A9, A8, A13, WE, VCC]
+note: "`CE` `OE` `WE` は上に線"
+source: Alliance AS6C62256 (rev 1.2、2016-03)、PIN CONFIGURATION (PDIP)

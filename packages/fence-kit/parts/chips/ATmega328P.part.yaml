@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [ATmega328P, ATmega328P-PU, ATmega328, ATmega168, ATmega88]
+package: dip28
+role: AVR マイコン (28 ピン)
+role-en: AVR microcontroller (28-pin)
+pins: [PC6, PD0, PD1, PD2, PD3, PD4, VCC, GND, PB6, PB7, PD5, PD6, PD7, PB0, PB1, PB2, PB3, PB4, PB5, AVCC, AREF, GND, PC0, PC1, PC2, PC3, PC4, PC5]
+note: 1 番 `PC6` は RESET 兼用。8 番と 22 番は GND (番号で指す)。PB6・PB7 は水晶 (XTAL1・XTAL2)
+source: Microchip DS40002061B、Figure 1-1 (28 PDIP)。名前は IO ポートの印字だけ

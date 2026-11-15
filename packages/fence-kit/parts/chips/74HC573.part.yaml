@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [74HC573, CD74HC573, CD74HC573E]
+package: dip20
+role: 8 ビット D ラッチ (3 ステート)
+role-en: 8-bit D latch (3-state)
+pins: [OE, 1D, 2D, 3D, 4D, 5D, 6D, 7D, 8D, GND, LE, 8Q, 7Q, 6Q, 5Q, 4Q, 3Q, 2Q, 1Q, VCC]
+note: "`OE` は上に線。`LE` が H の間つながる"
+source: TI の CD74HC30 / CD74HC4066 / CD74HC194 / CD74HC390 / CD74HC85 / CD74HC123 / CD74HC573 (SN74HC は無い)。4066 は D・PW の端子図 (14 ピンで PDIP と同じ番号)

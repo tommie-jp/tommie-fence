@@ -555,122 +555,124 @@ IC を IC ソケットに挿した姿 (`U1: dip8/socket e8 NE555`)。**中身の
 (書き方は [part-card](../../part-card/README.ja.md))。図 1 枚だけなら、カードを書かずに機器 (`type: device`) の `pins:` で名前を書ける。
 表は回路図 (circuit フェンス)・ブレッドボードと同じ。図は下の図05。
 
+<!-- part-rows:chips begin `npm run rows` が書き出す。手で直さない (52 の docs/160) -->
+
 | 型番 (別名) | 種類 | ピンの名前 (1 番から) |
 | --- | --- | --- |
-| `NE555` (`NE555P` `SA555` `SE555` …) | `dip8` | `GND` `TRIG` `OUT` `RESET` `CONT` `THRES` `DISCH` `VCC` |
-| `TLC555` (`TLC555CP` `TLC555IP`) | `dip8` | `GND` `TRIG` `OUT` `RESET` `CONT` `THRES` `DISCH` `VDD` |
-| `LM358` (`LM358P` `LM358N` `LM2904` `LM258` …) | `dip8` | `OUT1` `IN1-` `IN1+` `V-` `IN2+` `IN2-` `OUT2` `V+` |
-| `TL071` (`TL071CP` …) | `dip8` | `NC` `IN-` `IN+` `VCC-` `NC` `OUT` `VCC+` `NC` |
-| `TL072` (`TL072CP` `TL082` …) | `dip8` | `1OUT` `1IN-` `1IN+` `VCC-` `2IN+` `2IN-` `2OUT` `VCC+` |
-| `LM393` (`LM393P` `LM393N` `LM393A` `LM2903` `LM293` …) | `dip8` | `1OUT` `1IN-` `1IN+` `GND` `2IN+` `2IN-` `2OUT` `VCC` |
-| `NE5532` (`NE5532P` `NE5532AP` `SA5532` …) | `dip8` | `1OUT` `1IN-` `1IN+` `VCC-` `2IN+` `2IN-` `2OUT` `VCC+` |
-| `NJM4556A` (`NJM4556AD`) | `dip8` | `AOUT` `AIN-` `AIN+` `V-` `BIN+` `BIN-` `BOUT` `V+` |
-| `LM324` (`LM324N` `LM324AN` `LM2902` …) | `dip14` | `1OUT` `1IN-` `1IN+` `VCC+` `2IN+` `2IN-` `2OUT` `3OUT` `3IN-` `3IN+` `VCC-` `4IN+` `4IN-` `4OUT` |
-| `LM741` (`LM741CN` `LM741N` `UA741` …) | `dip8` | `OFFSET1` `IN-` `IN+` `V-` `OFFSET2` `OUT` `V+` `NC` (1・5 番はオフセット調整。8 番は NC) |
-| `ATtiny85` (`ATtiny85-20PU` `ATtiny45` `ATtiny25`) | `dip8` | `PB5` `PB3` `PB4` `GND` `PB0` `PB1` `PB2` `VCC` (1 番 `PB5` は RESET 兼用。PB0=MOSI/SDA、PB1=MISO、PB2=SCK/SCL、PB3=XTAL1、PB4=XTAL2) |
-| `ATmega328P` (`ATmega328P-PU` `ATmega328` `ATmega168` …) | `dip28` | `PC6` `PD0` `PD1` `PD2` `PD3` `PD4` `VCC` `GND` `PB6` `PB7` `PD5` `PD6` `PD7` `PB0` `PB1` `PB2` `PB3` `PB4` `PB5` `AVCC` `AREF` `GND` `PC0` `PC1` `PC2` `PC3` `PC4` `PC5` (1 番 `PC6` は RESET 兼用。8 番と 22 番は GND (番号で指す)。PB6・PB7 は水晶 (XTAL1・XTAL2)) |
-| `PIC12F683` (`PIC12F675` `PIC12F629` `PIC12F683-I/P` …) | `dip8` | `VDD` `GP5` `GP4` `GP3` `GP2` `GP1` `GP0` `VSS` (PIC マイコン。4 番 `GP3` は MCLR 兼用の入力専用。GP5=OSC1、GP4=OSC2、GP0=ICSPDAT、GP1=ICSPCLK) |
-| `PIC12F1822` (`PIC12F1822-I/P` `PIC12LF1822`) | `dip8` | `VDD` `RA5` `RA4` `RA3` `RA2` `RA1` `RA0` `VSS` (PIC マイコン。4 番 `RA3` は MCLR 兼用の入力専用。RA5=OSC1、RA4=OSC2、RA0=ICSPDAT、RA1=ICSPCLK) |
-| `PIC16F84A` (`PIC16F84A-04/P` `PIC16F84A-20/P`) | `dip18` | `RA2` `RA3` `RA4` `MCLR` `VSS` `RB0` `RB1` `RB2` `RB3` `RB4` `RB5` `RB6` `RB7` `VDD` `OSC2` `OSC1` `RA0` `RA1` (PIC マイコン。4 番 `MCLR`、15 番 `OSC2`・16 番 `OSC1` は専用ピン。`RA4` はオープンドレイン) |
-| `PIC16F628A` (`PIC16F627A` `PIC16F648A` `PIC16F88` `PIC16F87` `PIC16F1827` `PIC16F1826` …) | `dip18` | `RA2` `RA3` `RA4` `RA5` `VSS` `RB0` `RB1` `RB2` `RB3` `RB4` `RB5` `RB6` `RB7` `VDD` `RA6` `RA7` `RA0` `RA1` (PIC マイコン。628A・88・1827 は同じ並び。4 番 `RA5` は MCLR 兼用。RA7=OSC1、RA6=OSC2、RB6=ICSPCLK、RB7=ICSPDAT) |
-| `PIC16F886` (`PIC16F883` `PIC16F882` `PIC16F1938` `PIC16F18857` `PIC16F18856` …) | `dip28` | `RE3` `RA0` `RA1` `RA2` `RA3` `RA4` `RA5` `VSS` `RA7` `RA6` `RC0`〜`RC7` `VSS` `VDD` `RB0`〜`RB7` (PIC マイコン。886・1938・18857 は同じ並び。1 番 `RE3` は MCLR 兼用の入力専用。8 番と 19 番は `VSS` (番号で指す)。RA7=OSC1、RA6=OSC2、RB6=ICSPCLK、RB7=ICSPDAT) |
-| `PIC16F57` (`PIC16F57-I/P` `PIC16F57-I/SP`) | `dip28` | `T0CKI` `VDD` `NC` `VSS` `NC` `RA0`〜`RA3` `RB0`〜`RB7` `RC0`〜`RC7` `OSC2` `OSC1` `MCLR` (PIC マイコン。**電源は 2 番 `VDD`・4 番 `VSS`** (ほかの 28 ピンと違う)。3・5 番は `NC`。`T0CKI` は使わなくても `VSS` か `VDD` へ。600 mil (-I/P) と 300 mil (-I/SP) がある) |
-| `SA612` (`SA612A` `NE612` `NE602` …) | `dip8` | `IN_A` `IN_B` `GND` `OUT_A` `OUT_B` `OSC_B` `OSC_E` `VCC` (`IN_A` `IN_B` が RF の入力、`OSC_B` が発振のベース (外の LO の入口)、`OSC_E` が発振のエミッタ) |
-| `MCP6002` (`MCP6002-I/P` `MCP6002-E/P` `MCP6002-I/SN` …) | `dip8` | `VOUTA` `VINA-` `VINA+` `VSS` `VINB+` `VINB-` `VOUTB` `VDD` |
-| `LM386` (`LM386N-1` `LM386N-3` `LM386N-4` …) | `dip8` | `GAIN1` `-INPUT` `+INPUT` `GND` `VOUT` `VS` `BYPASS` `GAIN8` (印字は 1・8 番とも `GAIN` (番号を付けて分けた)。`BYPASS` は C で GND へ) |
-| `CD4017B` (`CD4017` `CD4017BE`) | `dip16` | `Q5` `Q1` `Q0` `Q2` `Q6` `Q7` `Q3` `VSS` `Q8` `Q4` `Q9` `CO` `INH` `CLOCK` `RESET` `VDD` |
-| `CD4040B` (`CD4040` `CD4040BE`) | `dip16` | `Q12` `Q6` `Q5` `Q7` `Q4` `Q3` `Q2` `VSS` `Q1` `CLOCK` `R` `Q9` `Q8` `Q10` `Q11` `VDD` |
-| `CD4069UB` (`CD4069` `CD4069UBE`) `CD40106B` (`CD40106` `CD40106BE`) | `dip14` | `A` `G` `B` `H` `C` `I` `VSS` `J` `D` `K` `E` `L` `F` `VDD` |
-| `CD4071B` `CD4081B` `CD4011B` `CD4001B` `CD4070B` (`B` / `BE` 無しも) | `dip14` | `A` `B` `J` `K` `C` `D` `VSS` `E` `F` `L` `M` `G` `H` `VDD` |
-| `CD4013B` (`CD4013` `CD4013BE`) | `dip14` | `Q1` `/Q1` `CLOCK1` `RESET1` `D1` `SET1` `VSS` `SET2` `D2` `RESET2` `CLOCK2` `/Q2` `Q2` `VDD` (`/Q` は Q の上に線) |
-| `74HC04` (`SN74HC04` `SN74HC04N`) | `dip14` | `1A` `1Y` `2A` `2Y` `3A` `3Y` `GND` `4Y` `4A` `5Y` `5A` `6Y` `6A` `VCC` |
-| `74HC08` `74HC32` `74HC86` (`SN` 付き・`N` 付きも) | `dip14` | `1A` `1B` `1Y` `2A` `2B` `2Y` `GND` `3Y` `3A` `3B` `4Y` `4A` `4B` `VCC` |
-| `74HC02` (`SN74HC02` `SN74HC02N`) | `dip14` | `1Y` `1A` `1B` `2Y` `2A` `2B` `GND` `3A` `3B` `3Y` `4A` `4B` `4Y` `VCC` (NOR は Y が A・B より前) |
-| `74HC74` (`SN74HC74` `SN74HC74N`) | `dip14` | `1CLR` `1D` `1CLK` `1PRE` `1Q` `/1Q` `GND` `/2Q` `2Q` `2PRE` `2CLK` `2D` `2CLR` `VCC` (`CLR` `PRE` は上に線) |
-| `L293D` (`L293DNE` `L293` `L293NE`) | `dip16` | `12EN` `1A` `1Y` `GROUND` `GROUND` `2Y` `2A` `VCC2` `34EN` `3A` `3Y` `GROUND` `GROUND` `4Y` `4A` `VCC1` |
-| `MCP3008` | `dip16` | `CH0` `CH1` `CH2` `CH3` `CH4` `CH5` `CH6` `CH7` `DGND` `CS/SHDN` `DIN` `DOUT` `CLK` `AGND` `VREF` `VDD` |
-| `74HC595` (`SN74HC595` `SN74HC595N`) | `dip16` | `QB` `QC` `QD` `QE` `QF` `QG` `QH` `GND` `QH'` `SRCLR` `SRCLK` `RCLK` `OE` `SER` `QA` `VCC` (`OE` `SRCLR` は上に線) |
-| `CD4511B` (`CD4511` `CD4511BE`) | `dip16` | `INB` `INC` `LT` `BL` `LE/STROBE` `IND` `INA` `VSS` `Oe` `Od` `Oc` `Ob` `Oa` `Og` `Of` `VDD` (印字の入力 `A`〜`D` と出力 `a`〜`g` は大文字小文字だけが違うので `IN` と `O` を付けた) |
-| `CD74HC283` (`CD74HC283E` `74HC283`) | `dip16` | `S1` `B1` `A1` `S0` `A0` `B0` `CIN` `GND` `COUT` `S3` `B3` `A3` `S2` `A2` `B2` `VCC` |
-| `74HC163` (`SN74HC163N` `CD74HC163E` …) | `dip16` | `CLR` `CLK` `A` `B` `C` `D` `ENP` `GND` `LOAD` `ENT` `QD` `QC` `QB` `QA` `RCO` `VCC` (`CLR` `LOAD` は上に線。クリアは同期) |
-| `74HC154` (`CD74HC154E` `SN74HC154N` …) | `dip24` | `Y0` `Y1` `Y2` `Y3` `Y4` `Y5` `Y6` `Y7` `Y8` `Y9` `Y10` `GND` `Y11` `Y12` `Y13` `Y14` `Y15` `E1` `E2` `A3` `A2` `A1` `A0` `VCC` (`E1` `E2` は上に線) |
-| `62256` (`AS6C62256` `AS6C62256-55PCN` `HM62256` …) | `dip28` | `A14` `A12` `A7` `A6` `A5` `A4` `A3` `A2` `A1` `A0` `DQ0` `DQ1` `DQ2` `VSS` `DQ3` `DQ4` `DQ5` `DQ6` `DQ7` `CE` `A10` `OE` `A11` `A9` `A8` `A13` `WE` `VCC` (`CE` `OE` `WE` は上に線) |
-| `6116` (`IDT6116SA` `HM6116` …) | `dip24` | `A7` `A6` `A5` `A4` `A3` `A2` `A1` `A0` `IO0` `IO1` `IO2` `GND` `IO3` `IO4` `IO5` `IO6` `IO7` `CS` `A10` `OE` `WE` `A9` `A8` `VCC` (`CS` `OE` `WE` は上に線。印字の `I/O` は `IO`) |
-| `74HC245` (`SN74HC245N` `CD74HC245E` …) | `dip20` | `DIR` `A1` `A2` `A3` `A4` `A5` `A6` `A7` `A8` `GND` `B8` `B7` `B6` `B5` `B4` `B3` `B2` `B1` `OE` `VCC` |
-| `74HC273` (`SN74HC273N` `CD74HC273E` …) | `dip20` | `CLR` `1Q` `1D` `2D` `2Q` `3Q` `3D` `4D` `4Q` `GND` `CLK` `5Q` `5D` `6D` `6Q` `7Q` `7D` `8D` `8Q` `VCC` (`CLR` は上に線) |
-| `74HC14` (`SN74HC14` `SN74HC14N`) | `dip14` | `1A` `1Y` `2A` `2Y` `3A` `3Y` `GND` `4Y` `4A` `5Y` `5A` `6Y` `6A` `VCC` |
+| `3SK291` | `dip4` | `G1` `G2` `D` `S` (SMQ の 1〜4 番。基板が番号を変えていれば `pins:` で名前を書く。1 列の変換基板なら `sip4`。面実装しか無いので、実体配線図は緑の変換基板に実寸の胴 (2.9 mm 角、印字 `U.F`) を載せた姿で描く。回路図の記号は `nmos-dg` で、`dip4` には書かない) |
+| `6116` (`IDT6116SA` `IDT6116LA` `HM6116` …) | `dip24/wide` | `A7` `A6` `A5` `A4` `A3` `A2` `A1` `A0` `IO0` `IO1` `IO2` `GND` `IO3` `IO4` `IO5` `IO6` `IO7` `CS` `A10` `OE` `WE` `A9` `A8` `VCC` (`CS` `OE` `WE` は上に線。印字の `I/O` は `IO`) |
+| `62256` (`AS6C62256` `AS6C62256-55PCN` `AS6C62256-55PIN` …) | `dip28/wide` | `A14` `A12` `A7` `A6` `A5` `A4` `A3` `A2` `A1` `A0` `DQ0` `DQ1` `DQ2` `VSS` `DQ3` `DQ4` `DQ5` `DQ6` `DQ7` `CE` `A10` `OE` `A11` `A9` `A8` `A13` `WE` `VCC` (`CE` `OE` `WE` は上に線) |
 | `74HC00` (`SN74HC00` `SN74HC00N`) | `dip14` | `1A` `1B` `1Y` `2A` `2B` `2Y` `GND` `3Y` `3A` `3B` `4Y` `4A` `4B` `VCC` |
-| `74HC161` (`SN74HC161` `SN74HC161N`) | `dip16` | `CLR` `CLK` `A` `B` `C` `D` `ENP` `GND` `LOAD` `ENT` `QD` `QC` `QB` `QA` `RCO` `VCC` (`CLR` `LOAD` は上に線。クリアは非同期。並びは 74HC163 と同じ) |
-| `74HC194` (`CD74HC194` `CD74HC194E`) | `dip16` | `MR` `DSR` `D0` `D1` `D2` `D3` `DSL` `GND` `S0` `S1` `CP` `Q3` `Q2` `Q1` `Q0` `VCC` (`MR` は上に線) |
+| `74HC02` (`SN74HC02` `SN74HC02N`) | `dip14` | `1Y` `1A` `1B` `2Y` `2A` `2B` `GND` `3A` `3B` `3Y` `4A` `4B` `4Y` `VCC` (NOR は Y が A・B より前) |
+| `74HC04` (`SN74HC04` `SN74HC04N`) | `dip14` | `1A` `1Y` `2A` `2Y` `3A` `3Y` `GND` `4Y` `4A` `5Y` `5A` `6Y` `6A` `VCC` |
+| `74HC08` (`SN74HC08` `SN74HC08N`) | `dip14` | `1A` `1B` `1Y` `2A` `2B` `2Y` `GND` `3Y` `3A` `3B` `4Y` `4A` `4B` `VCC` |
 | `74HC10` (`SN74HC10` `SN74HC10N`) | `dip14` | `1A` `1B` `2A` `2B` `2C` `2Y` `GND` `3Y` `3A` `3B` `3C` `1Y` `1C` `VCC` (1 回路目の `1C` `1Y` は 13・12 番に離れて出る) |
 | `74HC11` (`SN74HC11` `SN74HC11N`) | `dip14` | `1A` `1B` `2A` `2B` `2C` `2Y` `GND` `3Y` `3A` `3B` `3C` `1Y` `1C` `VCC` (並びは 74HC10 と同じ) |
-| `74HC27` (`SN74HC27` `SN74HC27N`) | `dip14` | `1A` `1B` `2A` `2B` `2C` `2Y` `GND` `3Y` `3A` `3B` `3C` `1Y` `1C` `VCC` (並びは 74HC10 と同じ) |
-| `74HC20` (`SN74HC20` `SN74HC20N`) | `dip14` | `1A` `1B` `NC` `1C` `1D` `1Y` `GND` `2Y` `2A` `2B` `NC` `2C` `2D` `VCC` (`NC` は 3・11 番。名前では指せず番号で呼ぶ) |
-| `74HC30` (`CD74HC30` `CD74HC30E`) | `dip14` | `A` `B` `C` `D` `E` `F` `GND` `Y` `NC` `NC` `G` `H` `NC` `VCC` (`NC` は 9・10・13 番。番号で呼ぶ) |
-| `74HC132` (`SN74HC132` `SN74HC132N`) | `dip14` | `1A` `1B` `1Y` `2A` `2B` `2Y` `GND` `3Y` `3A` `3B` `4Y` `4A` `4B` `VCC` (並びは 74HC08 と同じ) |
+| `74HC112` (`SN74HC112` `SN74HC112N`) | `dip16` | `1CLK` `1K` `1J` `1PRE` `1Q` `/1Q` `/2Q` `GND` `2Q` `2PRE` `2J` `2K` `2CLK` `2CLR` `1CLR` `VCC` (`CLK` `PRE` `CLR` は上に線 (CLK は立ち下がりで動く)。`/Q` は Q の上に線) |
+| `74HC123` (`CD74HC123` `CD74HC123E`) | `dip16` | `1A` `1B` `1R` `/1Q` `2Q` `2CX` `2RXCX` `GND` `2A` `2B` `2R` `/2Q` `1Q` `1CX` `1RXCX` `VCC` (`A` `R` は上に線。`/Q` は Q の上に線。`R` はリセット、`CX` `RXCX` は外付けの C と R) |
 | `74HC125` (`SN74HC125` `SN74HC125N`) | `dip14` | `1OE` `1A` `1Y` `2OE` `2A` `2Y` `GND` `3Y` `3A` `3OE` `4Y` `4A` `4OE` `VCC` (`OE` は上に線) |
 | `74HC126` (`SN74HC126` `SN74HC126N`) | `dip14` | `1OE` `1A` `1Y` `2OE` `2A` `2Y` `GND` `3Y` `3A` `3OE` `4Y` `4A` `4OE` `VCC` (並びは 74HC125 と同じ。`OE` の極性だけ違う) |
-| `74HC393` (`SN74HC393` `SN74HC393N`) | `dip14` | `1CLK` `1CLR` `1QA` `1QB` `1QC` `1QD` `GND` `2QD` `2QC` `2QB` `2QA` `2CLR` `2CLK` `VCC` (`CLR` は H でクリア) |
-| `74HC164` (`SN74HC164` `SN74HC164N`) | `dip14` | `A` `B` `QA` `QB` `QC` `QD` `GND` `CLK` `CLR` `QE` `QF` `QG` `QH` `VCC` (`CLR` は上に線) |
-| `74HC4066` (`CD74HC4066` `CD74HC4066E`) | `dip14` | `1Y` `1Z` `2Z` `2Y` `2E` `3E` `GND` `3Y` `3Z` `4Z` `4Y` `4E` `1E` `VCC` (`Y` `Z` は双方向。`E` が制御 (H で導通)。端子図は D・PW の 14 ピンから (PDIP も同じ番号)) |
+| `74HC132` (`SN74HC132` `SN74HC132N`) | `dip14` | `1A` `1B` `1Y` `2A` `2B` `2Y` `GND` `3Y` `3A` `3B` `4Y` `4A` `4B` `VCC` (並びは 74HC08 と同じ) |
 | `74HC138` (`SN74HC138` `SN74HC138N`) | `dip16` | `A` `B` `C` `G2A` `G2B` `G1` `Y7` `GND` `Y6` `Y5` `Y4` `Y3` `Y2` `Y1` `Y0` `VCC` (`G2A` `G2B` `Y0`〜`Y7` は上に線) |
 | `74HC139` (`SN74HC139` `SN74HC139N`) | `dip16` | `1G` `1A` `1B` `1Y0` `1Y1` `1Y2` `1Y3` `GND` `2Y3` `2Y2` `2Y1` `2Y0` `2B` `2A` `2G` `VCC` (`G` と `Y` は上に線) |
-| `74HC157` (`SN74HC157` `SN74HC157N`) | `dip16` | `A/B` `1A` `1B` `1Y` `2A` `2B` `2Y` `GND` `3Y` `3B` `3A` `4Y` `4B` `4A` `G` `VCC` (`A/B` が選択 (L で A)。`G` は上に線) |
-| `74HC153` (`SN74HC153` `SN74HC153N`) | `dip16` | `1G` `B` `1C3` `1C2` `1C1` `1C0` `1Y` `GND` `2Y` `2C0` `2C1` `2C2` `2C3` `A` `2G` `VCC` (`A` `B` が選択。`G` は上に線) |
+| `74HC14` (`SN74HC14` `SN74HC14N`) | `dip14` | `1A` `1Y` `2A` `2Y` `3A` `3Y` `GND` `4Y` `4A` `5Y` `5A` `6Y` `6A` `VCC` |
 | `74HC151` (`SN74HC151` `SN74HC151N`) | `dip16` | `D3` `D2` `D1` `D0` `Y` `W` `G` `GND` `C` `B` `A` `D7` `D6` `D5` `D4` `VCC` (`W` は `Y` の反転。`A` `B` `C` が選択。`G` は上に線) |
-| `74HC175` (`SN74HC175` `SN74HC175N`) | `dip16` | `CLR` `1Q` `/1Q` `1D` `2D` `/2Q` `2Q` `GND` `CLK` `3Q` `/3Q` `3D` `4D` `/4Q` `4Q` `VCC` (`CLR` は上に線。`/Q` は Q の上に線) |
-| `74HC174` (`SN74HC174` `SN74HC174N`) | `dip16` | `CLR` `1Q` `1D` `2D` `2Q` `3D` `3Q` `GND` `CLK` `4Q` `4D` `5Q` `5D` `6Q` `6D` `VCC` (`CLR` は上に線) |
-| `74HC112` (`SN74HC112` `SN74HC112N`) | `dip16` | `1CLK` `1K` `1J` `1PRE` `1Q` `/1Q` `/2Q` `GND` `2Q` `2PRE` `2J` `2K` `2CLK` `2CLR` `1CLR` `VCC` (`CLK` `PRE` `CLR` は上に線 (CLK は立ち下がりで動く)。`/Q` は Q の上に線) |
-| `74HC390` (`CD74HC390` `CD74HC390E`) | `dip16` | `1CLKA` `1CLR` `1QA` `1CLKB` `1QB` `1QC` `1QD` `GND` `2QD` `2QC` `2QB` `2CLKB` `2QA` `2CLR` `2CLKA` `VCC` (`CLKA` `CLKB` `CLR` は上に線) |
-| `74HC4040` (`SN74HC4040` `SN74HC4040N`) | `dip16` | `QL` `QF` `QE` `QG` `QD` `QC` `QB` `GND` `QA` `CLK` `CLR` `QI` `QH` `QJ` `QK` `VCC` (`QA` が 2 分周 (CD4040B の `Q1`)、`QL` が 4096 分周 (`Q12`)。`CLR` は H でクリア) |
-| `74HC4060` (`SN74HC4060` `SN74HC4060N`) | `dip16` | `QL` `QM` `QN` `QF` `QE` `QG` `QD` `GND` `CLKO` `/CLKO` `CLKI` `CLR` `QI` `QH` `QJ` `VCC` (`QD` が 16 分周 … `QN` が 16384 分周 (`Q14`)。`/CLKO` は `CLKO` の上に線) |
-| `74HC193` (`SN74HC193` `SN74HC193N`) | `dip16` | `B` `QB` `QA` `DOWN` `UP` `QC` `QD` `GND` `D` `C` `LOAD` `CO` `BO` `CLR` `A` `VCC` (`LOAD` `CO` `BO` は上に線。`CLR` は H でクリア) |
+| `74HC153` (`SN74HC153` `SN74HC153N`) | `dip16` | `1G` `B` `1C3` `1C2` `1C1` `1C0` `1Y` `GND` `2Y` `2C0` `2C1` `2C2` `2C3` `A` `2G` `VCC` (`A` `B` が選択。`G` は上に線) |
+| `74HC154` (`SN74HC154` `SN74HC154N` `74HC154N` …) | `dip24` | `Y0` `Y1` `Y2` `Y3` `Y4` `Y5` `Y6` `Y7` `Y8` `Y9` `Y10` `GND` `Y11` `Y12` `Y13` `Y14` `Y15` `E1` `E2` `A3` `A2` `A1` `A0` `VCC` (`E1` `E2` は上に線) |
+| `74HC157` (`SN74HC157` `SN74HC157N`) | `dip16` | `A/B` `1A` `1B` `1Y` `2A` `2B` `2Y` `GND` `3Y` `3B` `3A` `4Y` `4B` `4A` `G` `VCC` (`A/B` が選択 (L で A)。`G` は上に線) |
+| `74HC161` (`SN74HC161` `SN74HC161N`) | `dip16` | `CLR` `CLK` `A` `B` `C` `D` `ENP` `GND` `LOAD` `ENT` `QD` `QC` `QB` `QA` `RCO` `VCC` (`CLR` `LOAD` は上に線。クリアは非同期。並びは 74HC163 と同じ) |
+| `74HC163` (`SN74HC163` `SN74HC163N` `74HC163N` …) | `dip16` | `CLR` `CLK` `A` `B` `C` `D` `ENP` `GND` `LOAD` `ENT` `QD` `QC` `QB` `QA` `RCO` `VCC` (`CLR` `LOAD` は上に線。クリアは同期) |
+| `74HC164` (`SN74HC164` `SN74HC164N`) | `dip14` | `A` `B` `QA` `QB` `QC` `QD` `GND` `CLK` `CLR` `QE` `QF` `QG` `QH` `VCC` (`CLR` は上に線) |
 | `74HC165` (`SN74HC165` `SN74HC165N`) | `dip16` | `SH/LD` `CLK` `E` `F` `G` `H` `/QH` `GND` `QH` `SER` `A` `B` `C` `D` `CLKINH` `VCC` (`SH/LD` は LD の上に線。`/QH` は `QH` の上に線。`CLKINH` は印字の `CLK INH`) |
-| `74HC85` (`CD74HC85` `CD74HC85E`) | `dip16` | `B3` `LTIN` `EQIN` `GTIN` `GTOUT` `EQOUT` `LTOUT` `GND` `B0` `A0` `B1` `A1` `A2` `B2` `A3` `VCC` (`LTIN` `EQIN` `GTIN` は印字の `(A < B) IN` `(A = B) IN` `(A > B) IN`、`GTOUT` `EQOUT` `LTOUT` は `(A > B) OUT` …) |
-| `74HC123` (`CD74HC123` `CD74HC123E`) | `dip16` | `1A` `1B` `1R` `/1Q` `2Q` `2CX` `2RXCX` `GND` `2A` `2B` `2R` `/2Q` `1Q` `1CX` `1RXCX` `VCC` (`A` `R` は上に線。`/Q` は Q の上に線。`R` はリセット、`CX` `RXCX` は外付けの C と R) |
+| `74HC174` (`SN74HC174` `SN74HC174N`) | `dip16` | `CLR` `1Q` `1D` `2D` `2Q` `3D` `3Q` `GND` `CLK` `4Q` `4D` `5Q` `5D` `6Q` `6D` `VCC` (`CLR` は上に線) |
+| `74HC175` (`SN74HC175` `SN74HC175N`) | `dip16` | `CLR` `1Q` `/1Q` `1D` `2D` `/2Q` `2Q` `GND` `CLK` `3Q` `/3Q` `3D` `4D` `/4Q` `4Q` `VCC` (`CLR` は上に線。`/Q` は Q の上に線) |
+| `74HC193` (`SN74HC193` `SN74HC193N`) | `dip16` | `B` `QB` `QA` `DOWN` `UP` `QC` `QD` `GND` `D` `C` `LOAD` `CO` `BO` `CLR` `A` `VCC` (`LOAD` `CO` `BO` は上に線。`CLR` は H でクリア) |
+| `74HC194` (`CD74HC194` `CD74HC194E`) | `dip16` | `MR` `DSR` `D0` `D1` `D2` `D3` `DSL` `GND` `S0` `S1` `CP` `Q3` `Q2` `Q1` `Q0` `VCC` (`MR` は上に線) |
+| `74HC20` (`SN74HC20` `SN74HC20N`) | `dip14` | `1A` `1B` `NC` `1C` `1D` `1Y` `GND` `2Y` `2A` `2B` `NC` `2C` `2D` `VCC` (`NC` は 3・11 番。名前では指せず番号で呼ぶ) |
+| `74HC240` (`SN74HC240` `SN74HC240N`) | `dip20` | `1OE` `1A1` `2Y4` `1A2` `2Y3` `1A3` `2Y2` `1A4` `2Y1` `GND` `2A1` `1Y4` `2A2` `1Y3` `2A3` `1Y2` `2A4` `1Y1` `2OE` `VCC` (並びは 74HC244 と同じ。`OE` は上に線) |
+| `74HC244` (`SN74HC244` `SN74HC244N`) | `dip20` | `1OE` `1A1` `2Y4` `1A2` `2Y3` `1A3` `2Y2` `1A4` `2Y1` `GND` `2A1` `1Y4` `2A2` `1Y3` `2A3` `1Y2` `2A4` `1Y1` `2OE` `VCC` (`OE` は上に線) |
+| `74HC245` (`SN74HC245` `SN74HC245N` `74HC245N` …) | `dip20` | `DIR` `A1` `A2` `A3` `A4` `A5` `A6` `A7` `A8` `GND` `B8` `B7` `B6` `B5` `B4` `B3` `B2` `B1` `OE` `VCC` |
+| `74HC27` (`SN74HC27` `SN74HC27N`) | `dip14` | `1A` `1B` `2A` `2B` `2C` `2Y` `GND` `3Y` `3A` `3B` `3C` `1Y` `1C` `VCC` (並びは 74HC10 と同じ) |
+| `74HC273` (`SN74HC273` `SN74HC273N` `74HC273N` …) | `dip20` | `CLR` `1Q` `1D` `2D` `2Q` `3Q` `3D` `4D` `4Q` `GND` `CLK` `5Q` `5D` `6D` `6Q` `7Q` `7D` `8D` `8Q` `VCC` (`CLR` は上に線) |
+| `74HC30` (`CD74HC30` `CD74HC30E`) | `dip14` | `A` `B` `C` `D` `E` `F` `GND` `Y` `NC` `NC` `G` `H` `NC` `VCC` (`NC` は 9・10・13 番。番号で呼ぶ) |
+| `74HC32` (`SN74HC32` `SN74HC32N`) | `dip14` | `1A` `1B` `1Y` `2A` `2B` `2Y` `GND` `3Y` `3A` `3B` `4Y` `4A` `4B` `VCC` |
+| `74HC390` (`CD74HC390` `CD74HC390E`) | `dip16` | `1CLKA` `1CLR` `1QA` `1CLKB` `1QB` `1QC` `1QD` `GND` `2QD` `2QC` `2QB` `2CLKB` `2QA` `2CLR` `2CLKA` `VCC` (`CLKA` `CLKB` `CLR` は上に線) |
+| `74HC393` (`SN74HC393` `SN74HC393N`) | `dip14` | `1CLK` `1CLR` `1QA` `1QB` `1QC` `1QD` `GND` `2QD` `2QC` `2QB` `2QA` `2CLR` `2CLK` `VCC` (`CLR` は H でクリア) |
+| `74HC4040` (`SN74HC4040` `SN74HC4040N`) | `dip16` | `QL` `QF` `QE` `QG` `QD` `QC` `QB` `GND` `QA` `CLK` `CLR` `QI` `QH` `QJ` `QK` `VCC` (`QA` が 2 分周 (CD4040B の `Q1`)、`QL` が 4096 分周 (`Q12`)。`CLR` は H でクリア) |
 | `74HC4051` (`CD74HC4051` `CD74HC4051E`) | `dip16` | `A4` `A6` `A` `A7` `A5` `E` `VEE` `GND` `S2` `S1` `S0` `A3` `A0` `A1` `A2` `VCC` (`A` が共通、`A0`〜`A7` がチャネル、`S0`〜`S2` が選択。`E` は上に線。電源は `VCC` `VEE` `GND`) |
 | `74HC4052` (`CD74HC4052` `CD74HC4052E`) | `dip16` | `B0` `B2` `BN` `B3` `B1` `E` `VEE` `GND` `S1` `S0` `A3` `A0` `AN` `A1` `A2` `VCC` (`AN` `BN` が共通、`A0`〜`A3` `B0`〜`B3` がチャネル。`E` は上に線) |
 | `74HC4053` (`CD74HC4053` `CD74HC4053E`) | `dip16` | `B1` `B0` `C1` `CN` `C0` `E` `VEE` `GND` `S2` `S1` `S0` `A0` `A1` `AN` `BN` `VCC` (`AN` `BN` `CN` が共通、`A0` `A1` …がチャネル。`E` は上に線) |
-| `74HC244` (`SN74HC244` `SN74HC244N`) | `dip20` | `1OE` `1A1` `2Y4` `1A2` `2Y3` `1A3` `2Y2` `1A4` `2Y1` `GND` `2A1` `1Y4` `2A2` `1Y3` `2A3` `1Y2` `2A4` `1Y1` `2OE` `VCC` (`OE` は上に線) |
+| `74HC4060` (`SN74HC4060` `SN74HC4060N`) | `dip16` | `QL` `QM` `QN` `QF` `QE` `QG` `QD` `GND` `CLKO` `/CLKO` `CLKI` `CLR` `QI` `QH` `QJ` `VCC` (`QD` が 16 分周 … `QN` が 16384 分周 (`Q14`)。`/CLKO` は `CLKO` の上に線) |
+| `74HC4066` (`CD74HC4066` `CD74HC4066E`) | `dip14` | `1Y` `1Z` `2Z` `2Y` `2E` `3E` `GND` `3Y` `3Z` `4Z` `4Y` `4E` `1E` `VCC` (`Y` `Z` は双方向。`E` が制御 (H で導通)。端子図は D・PW の 14 ピンから (PDIP も同じ番号)) |
 | `74HC541` (`SN74HC541` `SN74HC541N`) | `dip20` | `OE1` `A1` `A2` `A3` `A4` `A5` `A6` `A7` `A8` `GND` `Y8` `Y7` `Y6` `Y5` `Y4` `Y3` `Y2` `Y1` `OE2` `VCC` (`OE1` `OE2` は上に線) |
-| `74HC240` (`SN74HC240` `SN74HC240N`) | `dip20` | `1OE` `1A1` `2Y4` `1A2` `2Y3` `1A3` `2Y2` `1A4` `2Y1` `GND` `2A1` `1Y4` `2A2` `1Y3` `2A3` `1Y2` `2A4` `1Y1` `2OE` `VCC` (並びは 74HC244 と同じ。`OE` は上に線) |
 | `74HC573` (`CD74HC573` `CD74HC573E`) | `dip20` | `OE` `1D` `2D` `3D` `4D` `5D` `6D` `7D` `8D` `GND` `LE` `8Q` `7Q` `6Q` `5Q` `4Q` `3Q` `2Q` `1Q` `VCC` (`OE` は上に線。`LE` が H の間つながる) |
 | `74HC574` (`SN74HC574` `SN74HC574N`) | `dip20` | `OE` `1D` `2D` `3D` `4D` `5D` `6D` `7D` `8D` `GND` `CLK` `8Q` `7Q` `6Q` `5Q` `4Q` `3Q` `2Q` `1Q` `VCC` (`OE` は上に線。並びは 74HC573 と同じ (`LE` が `CLK`)) |
-| `ULN2003A` (`ULN2003` `ULN2003APG` `ULN2003AN`) | `dip16` | `1B` `2B` `3B` `4B` `5B` `6B` `7B` `GND` `COM` `7C` `6C` `5C` `4C` `3C` `2C` `1C` (7 回路のダーリントン (シンクドライバ)。B が入力、C が出力、`GND` はデータシートの `E`。`COM` は負荷の電源側へ) |
-| `3SK291` | `dip4` (2 列の変換基板) / `sip4` (1 列の変換基板) | `G1` `G2` `D` `S` (SMQ の 1〜4 番。基板が番号を変えていれば `pins:` で名前を書く)。面実装しか無いので、緑の変換基板に実寸の胴 (2.9 mm 角、印字 `U.F`) を載せた姿で描く |
-| `SFU455B` (`SFU455A` `SFU455`) | `sip3` | `IN` `GND` `OUT` (村田の 455 kHz セラミックフィルタ。橙の胴で描く) |
-| `KY-040` (`KY040`) | `sip5` | `CLK` `DT` `SW` `VCC` `GND` (ロータリーエンコーダのモジュール。基板のピンヘッダだけを緑の帯で描く。印字の `+` は `VCC`。CLK=A 相、DT=B 相、SW=押しボタン。部品面を上にしてピンを手前に向けると、左から `GND` `VCC` `SW` `DT` `CLK`) |
-| `HC-SR04` (`HCSR04`) | `sip4` | `VCC` `TRIG` `ECHO` `GND` (超音波距離センサのモジュール。青の帯で描く。センサの筒の面から見て左から並ぶ (裏から見ると逆)。`ECHO` は 5 V 出力) |
-| `SG90` (`SG92R` `MG90S`) | `sip3` | `GND` `VCC` `SIG` (RC サーボ。青の胴で描く。コネクタの線は茶 (GND)・赤 (VCC)・橙 (SIG)) |
-| `DHT11` | `sip4` | `VCC` `DATA` `NC` `GND` (温湿度センサ。青の胴で描く。3 番は `NC` で、番号で呼ぶ。`DATA` は 4.7 kΩ〜10 kΩ で `VCC` へ。4 本足の単体の並びで、3 本足の基板 (秋月 AE-DHT11-BO など) は並びが違う) |
-| `HC-SR501` (`HCSR501`) | `sip3` | `VCC` `OUT` `GND` (人感 (焦電) センサのモジュール。緑の帯で描く (基板のピンヘッダだけ)。電源は 4.5〜20 V、`OUT` は 3.3 V の H。見る向きで左右が逆になるので、基板の印字で確かめる) |
-| `GY-9833` (`GY9833`) | `sip7` | `VCC` `DGND` `SDATA` `SCLK` `FSYNC` `AGND` `OUT` (AD9833 の DDS モジュール。紫の帯で描く。印字に `DGND` `AGND` がある版。**実物で確かめる: 製造元の図が無く、並びは個人の KiCad データ 5 つの一致による。CJMCU-9833 の名の基板は REF VCC GND DAT CLK FNC OUT の別の並びが多い。実物は基板の印字で確かめる**) |
+| `74HC595` (`SN74HC595` `SN74HC595N`) | `dip16` | `QB` `QC` `QD` `QE` `QF` `QG` `QH` `GND` `QH'` `SRCLR` `SRCLK` `RCLK` `OE` `SER` `QA` `VCC` (`OE` `SRCLR` は上に線) |
+| `74HC74` (`SN74HC74` `SN74HC74N`) | `dip14` | `1CLR` `1D` `1CLK` `1PRE` `1Q` `/1Q` `GND` `/2Q` `2Q` `2PRE` `2CLK` `2D` `2CLR` `VCC` (`CLR` `PRE` は上に線) |
+| `74HC85` (`CD74HC85` `CD74HC85E`) | `dip16` | `B3` `LTIN` `EQIN` `GTIN` `GTOUT` `EQOUT` `LTOUT` `GND` `B0` `A0` `B1` `A1` `A2` `B2` `A3` `VCC` (`LTIN` `EQIN` `GTIN` は印字の `(A < B) IN` `(A = B) IN` `(A > B) IN`、`GTOUT` `EQOUT` `LTOUT` は `(A > B) OUT` …) |
+| `74HC86` (`SN74HC86` `SN74HC86N`) | `dip14` | `1A` `1B` `1Y` `2A` `2B` `2Y` `GND` `3Y` `3A` `3B` `4Y` `4A` `4B` `VCC` |
+| `74LS00` (`SN74LS00` `SN74LS00N`) | `dip14` | `1A` `1B` `1Y` `2A` `2B` `2Y` `GND` `3Y` `3A` `3B` `4Y` `4A` `4B` `VCC` (TTL。並びは `74HC00` と同じだが、電源は 5 V だけ・静止電流は mA で別の品) |
+| `A1324` (`A1324LUA-T` `A1325` `A1326`) | `sip3` | `VCC` `GND` `VOUT` (リニアホールセンサ。**出力は 3 番**。磁界が無いと `VCC` の半分を出す) |
+| `A3144` (`A3144E` `A3144EUA` `OH3144`) | `sip3` | `VCC` `GND` `OUT` (ホールスイッチ。黒い胴 (実物は TO-92 より小さい UA)。`OUT` は開放コレクタで、プルアップが要る) |
 | `ADAFRUIT-1782` (`MCP9808-BREAKOUT`) | `sip8` | `VDD` `GND` `SCL` `SDA` `ALERT` `A0` `A1` `A2` (Adafruit の MCP9808 ブレークアウト。濃い青の帯で描く。SCL・SDA は基板に 10 kΩ のプルアップ。既定のアドレスは 0x18) |
 | `ADAFRUIT-2045` (`SI5351A-BREAKOUT` `CJMCU-5351`) | `sip7` | `CLK0` `CLK1` `CLK2` `SCL` `SDA` `GND` `VIN` (`sip7` を濃い青の帯で描く (基板のピンヘッダだけ)。出力の印字は `0` `1` `2` (番号と割れないよう `CLK0`〜`CLK2` で呼ぶ)。VIN は 3〜5 V (基板に 3.3 V のレギュレータ)、SCL・SDA は基板でレベル変換 (10 kΩ のプルアップつき)。出力は 3 Vpp の方形波、アドレスは 0x60。紫の互換基板 (`CJMCU-5351`) も同じ印字) |
-| `AE-SI5351A-B` (`AE-SI5351A` `110679`) | `dip8` | `VDDO` `SCL` `SDA` `GND` `CLK0` `CLK1` `CLK2` `VDD` (秋月の 10 mm 角の基板 (`dip8` で置く)。**電源は 3.3 V** — `VDD` (コア) は 2.5〜3.3 V、`VDDO` (出力) は 1.8〜3.3 V で、5 V は掛けられない。レベル変換もプルアップも無いので SCL・SDA は 3.3 V に吊る。アドレスは 0x60) |
-| `TA7642` (`7642` `UTC7642`) | `sip3` / `ic3` | `GND` `IN` `OUT` (AM ラジオ IC。黒い TO-92 の胴。`OUT` は抵抗を通して電源へ。東芝の原本の資料は無く、互換品 (UTC 7642) の資料による) |
-| `A3144` (`A3144E` `A3144EUA` `OH3144`) | `sip3` / `ic3` | `VCC` `GND` `OUT` (ホールスイッチ。黒い胴 (実物は TO-92 より小さい UA)。`OUT` は開放コレクタで、プルアップが要る) |
-| `A1324` (`A1324LUA-T` `A1325` `A1326`) | `sip3` / `ic3` | `VCC` `GND` `VOUT` (リニアホールセンサ。**出力は 3 番**。磁界が無いと `VCC` の半分を出す) |
-| `LM35` (`LM35DZ` `LM35CZ` `LM35CAZ`) | `sip3` / `ic3` | `VS` `VOUT` `GND` (温度センサ 10 mV/℃。黒い TO-92 の胴。印字の `+VS` は `VS`。TO-220 と SO8 は並びが違う) |
-| `LM75` (`LM75B` `LM75C` `LM75A`) | `dip8` (`dip8/sop`) | `SDA` `SCL` `OS` `GND` `A2` `A1` `A0` `VS` (I2C 温度センサ。印字の `+VS` は `VS`、`O.S.` は `OS`) |
-| `MCP9808` | `dip8` (`dip8/sop`) | `SDA` `SCL` `ALERT` `GND` `A2` `A1` `A0` `VDD` (I2C 温度センサ。チップの並び。ブレークアウト基板のヘッダは基板ごとに違うので `pins:` で書く) |
-| `SFELF10M7` (`SFELF10M7FA00` …) | `sip3` | `IN` `GND` `OUT` (村田のセラミックフィルタ 10.7 MHz。足は一直線に 2.5 mm 間隔。入出力 330 Ω) |
-| `CFULA455` (`CFULA455KE4A` `CFULA455KE4A-B0`) | `sip3` | `IN` `GND` `OUT` (村田のセラミックフィルタ 455 kHz。**実物の足は三角の配置で、一直線の図は目安**。入出力 1.5 kΩ) |
-| `AE-RJ-45-LAN-DIP-A` (`AE-RJ-45-LAN-DIP-A-KIT` `105404`) | `sip8` | `P1` 〜 `P8` (秋月の LAN コネクターDIP化キット。`Pn` は RJ45 の n 番。銀の帯で描き、キットの基板とジャックの外形を帯の脇の基板の縁に近い側へ描く (画布はそのぶん広がる。胴の寸法は目安)。パルストランスは無い。10BASE-T の端末 (MDI) は `P1` `P2` で送り `P3` `P6` で受ける。ヘッダとジャックの対応は資料に無いので導通で確かめる) |
 | `AE-DC-POWER-JACK-DIP` (`AE-DC-POWER-JACK-DIP-KIT` `105148` `114610`) | `sip4` | `GND` `NC` `NC` `VIN` (秋月の 2.1 mm DC ジャック DIP 化キット。1 列だけにヘッダを立てる。1 番 `GND` (シルク −)・4 番 `VIN` (シルク +、中心ピン)。2・3 番は使わない (番号で呼ぶ)。銀の帯で描き、キットの基板とジャックを帯の脇へ描く (胴の寸法は目安)。**実物で確かめる: 秋月の図は線画だけで、2・3 番がどちらにつながるかは読み取れない。シルクのある 1 番 (−) と 4 番 (+) だけを使い、実物はテスタで確かめる**) |
 | `AE-PHONE-JACK-DIP` (`AE-PHONE-JACK-DIP-KIT` `105363` `105707`) | `sip4` | `R` `GND` `GND` `L` (秋月の 3.5 mm ステレオミニジャック DIP 化キット。シルクの `G` (スリーブ) は `GND` で、2 本あるので番号で呼ぶ。切替の端子は出ていない。銀の帯で描き、キットの基板とジャックを帯の脇へ描く (胴の寸法は目安)) |
+| `AE-RJ-45-LAN-DIP-A` (`AE-RJ-45-LAN-DIP-A-KIT` `105404`) | `sip8` | `P1` `P2` `P3` `P4` `P5` `P6` `P7` `P8` (秋月の LAN コネクターDIP化キット。`Pn` は RJ45 の n 番。回路図では `dip8` の箱に名前を刷る。実体配線図はヘッダを銀の帯で描き、キットの基板とジャックの外形を添える (ブレッドボードは溝の側 (穴の上) に半透明で、ユニバーサル基板は帯の脇の基板の縁に近い側へ。胴の寸法は目安)。パルストランスは無い。10BASE-T の端末 (MDI) は `P1` `P2` で送り `P3` `P6` で受ける。ヘッダとジャックの対応は資料に無いので導通で確かめる) |
+| `AE-SI5351A-B` (`AE-SI5351A` `110679`) | `dip8` | `VDDO` `SCL` `SDA` `GND` `CLK0` `CLK1` `CLK2` `VDD` (秋月の 10 mm 角の基板 (`dip8` で置く)。**電源は 3.3 V** — `VDD` (コア) は 2.5〜3.3 V、`VDDO` (出力) は 1.8〜3.3 V で、5 V は掛けられない。レベル変換もプルアップも無いので SCL・SDA は 3.3 V に吊る。アドレスは 0x60) |
+| `ATmega328P` (`ATmega328P-PU` `ATmega328` `ATmega168` …) | `dip28` | `PC6` `PD0` `PD1` `PD2` `PD3` `PD4` `VCC` `GND` `PB6` `PB7` `PD5` `PD6` `PD7` `PB0` `PB1` `PB2` `PB3` `PB4` `PB5` `AVCC` `AREF` `GND` `PC0` `PC1` `PC2` `PC3` `PC4` `PC5` (1 番 `PC6` は RESET 兼用。8 番と 22 番は GND (番号で指す)。PB6・PB7 は水晶 (XTAL1・XTAL2)) |
+| `ATtiny85` (`ATtiny85-20PU` `ATtiny45` `ATtiny25`) | `dip8` | `PB5` `PB3` `PB4` `GND` `PB0` `PB1` `PB2` `VCC` (1 番 `PB5` は RESET 兼用。PB0=MOSI/SDA、PB1=MISO、PB2=SCK/SCL、PB3=XTAL1、PB4=XTAL2) |
+| `CD4001B` (`CD4001` `CD4001BE`) | `dip14` | `A` `B` `J` `K` `C` `D` `VSS` `E` `F` `L` `M` `G` `H` `VDD` |
+| `CD40106B` (`CD40106` `CD40106BE`) | `dip14` | `A` `G` `B` `H` `C` `I` `VSS` `J` `D` `K` `E` `L` `F` `VDD` |
+| `CD4011B` (`CD4011` `CD4011BE`) | `dip14` | `A` `B` `J` `K` `C` `D` `VSS` `E` `F` `L` `M` `G` `H` `VDD` |
+| `CD4013B` (`CD4013` `CD4013BE`) | `dip14` | `Q1` `/Q1` `CLOCK1` `RESET1` `D1` `SET1` `VSS` `SET2` `D2` `RESET2` `CLOCK2` `/Q2` `Q2` `VDD` (`/Q` は Q の上に線) |
+| `CD4017B` (`CD4017` `CD4017BE`) | `dip16` | `Q5` `Q1` `Q0` `Q2` `Q6` `Q7` `Q3` `VSS` `Q8` `Q4` `Q9` `CO` `INH` `CLOCK` `RESET` `VDD` |
+| `CD4040B` (`CD4040` `CD4040BE`) | `dip16` | `Q12` `Q6` `Q5` `Q7` `Q4` `Q3` `Q2` `VSS` `Q1` `CLOCK` `R` `Q9` `Q8` `Q10` `Q11` `VDD` |
+| `CD4069UB` (`CD4069` `CD4069UBE`) | `dip14` | `A` `G` `B` `H` `C` `I` `VSS` `J` `D` `K` `E` `L` `F` `VDD` |
+| `CD4070B` (`CD4070` `CD4070BE`) | `dip14` | `A` `B` `J` `K` `C` `D` `VSS` `E` `F` `L` `M` `G` `H` `VDD` |
+| `CD4071B` (`CD4071` `CD4071BE`) | `dip14` | `A` `B` `J` `K` `C` `D` `VSS` `E` `F` `L` `M` `G` `H` `VDD` |
+| `CD4081B` (`CD4081` `CD4081BE`) | `dip14` | `A` `B` `J` `K` `C` `D` `VSS` `E` `F` `L` `M` `G` `H` `VDD` |
+| `CD4511B` (`CD4511` `CD4511BE`) | `dip16` | `INB` `INC` `LT` `BL` `LE/STROBE` `IND` `INA` `VSS` `Oe` `Od` `Oc` `Ob` `Oa` `Og` `Of` `VDD` (印字の入力 `A`〜`D` と出力 `a`〜`g` は大文字小文字だけが違うので `IN` と `O` を付けた) |
+| `CD74HC283` (`CD74HC283E` `74HC283`) | `dip16` | `S1` `B1` `A1` `S0` `A0` `B0` `CIN` `GND` `COUT` `S3` `B3` `A3` `S2` `A2` `B2` `VCC` |
+| `CFULA455` (`CFULA455KE4A` `CFULA455KE4A-B0`) | `sip3` | `IN` `GND` `OUT` (村田のセラミックフィルタ 455 kHz。**実物の足は三角の配置で、一直線の図は目安**。入出力 1.5 kΩ) |
+| `DHT11` | `sip4` | `VCC` `DATA` `NC` `GND` (温湿度センサ。青の胴で描く。3 番は `NC` で、番号で呼ぶ。`DATA` は 4.7 kΩ〜10 kΩ で `VCC` へ。4 本足の単体の並びで、3 本足の基板 (秋月 AE-DHT11-BO など) は並びが違う) |
+| `GY-9833` (`GY9833`) | `sip7` | `VCC` `DGND` `SDATA` `SCLK` `FSYNC` `AGND` `OUT` (AD9833 の DDS モジュール。紫の帯で描く。印字に `DGND` `AGND` がある版。**実物で確かめる: 製造元の図が無く、並びは個人の KiCad データ 5 つの一致による。CJMCU-9833 の名の基板は REF VCC GND DAT CLK FNC OUT の別の並びが多い。実物は基板の印字で確かめる**) |
+| `HC-SR04` (`HCSR04`) | `sip4` | `VCC` `TRIG` `ECHO` `GND` (超音波距離センサのモジュール。青の帯で描く。センサの筒の面から見て左から並ぶ (裏から見ると逆)。`ECHO` は 5 V 出力) |
+| `HC-SR501` (`HCSR501`) | `sip3` | `VCC` `OUT` `GND` (人感 (焦電) センサのモジュール。緑の帯で描く (基板のピンヘッダだけ)。電源は 4.5〜20 V、`OUT` は 3.3 V の H。見る向きで左右が逆になるので、基板の印字で確かめる) |
+| `KY-040` (`KY040`) | `sip5` | `CLK` `DT` `SW` `VCC` `GND` (ロータリーエンコーダのモジュール。基板のピンヘッダだけを緑の帯で描く。印字の `+` は `VCC`。CLK=A 相、DT=B 相、SW=押しボタン。部品面を上にしてピンを手前に向けると、左から `GND` `VCC` `SW` `DT` `CLK`) |
+| `L293D` (`L293DNE` `L293` `L293NE`) | `dip16` | `12EN` `1A` `1Y` `GROUND` `GROUND` `2Y` `2A` `VCC2` `34EN` `3A` `3Y` `GROUND` `GROUND` `4Y` `4A` `VCC1` |
+| `LM324` (`LM324N` `LM324AN` `LM2902` …) | `dip14` | `1OUT` `1IN-` `1IN+` `VCC+` `2IN+` `2IN-` `2OUT` `3OUT` `3IN-` `3IN+` `VCC-` `4IN+` `4IN-` `4OUT` |
+| `LM35` (`LM35DZ` `LM35CZ` `LM35CAZ`) | `sip3` | `VS` `VOUT` `GND` (温度センサ 10 mV/℃。黒い TO-92 の胴。印字の `+VS` は `VS`。TO-220 と SO8 は並びが違う) |
+| `LM358` (`LM358P` `LM358N` `LM358A` …) | `dip8` | `OUT1` `IN1-` `IN1+` `V-` `IN2+` `IN2-` `OUT2` `V+` |
+| `LM386` (`LM386N` `LM386N-1` `LM386N-3` …) | `dip8` | `GAIN1` `-INPUT` `+INPUT` `GND` `VOUT` `VS` `BYPASS` `GAIN8` (印字は 1・8 番とも `GAIN` (番号を付けて分けた)。`BYPASS` は C で GND へ) |
+| `LM393` (`LM393P` `LM393N` `LM393A` …) | `dip8` | `1OUT` `1IN-` `1IN+` `GND` `2IN+` `2IN-` `2OUT` `VCC` |
+| `LM741` (`LM741CN` `LM741N` `UA741` …) | `dip8` | `OFFSET1` `IN-` `IN+` `V-` `OFFSET2` `OUT` `V+` `NC` (1・5 番はオフセット調整。8 番は NC) |
+| `LM75` (`LM75B` `LM75C` `LM75A`) | `dip8` | `SDA` `SCL` `OS` `GND` `A2` `A1` `A0` `VS` (I2C 温度センサ。印字の `+VS` は `VS`、`O.S.` は `OS`) |
+| `MCP3008` | `dip16` | `CH0` `CH1` `CH2` `CH3` `CH4` `CH5` `CH6` `CH7` `DGND` `CS/SHDN` `DIN` `DOUT` `CLK` `AGND` `VREF` `VDD` |
+| `MCP6002` (`MCP6002-I/P` `MCP6002-E/P` `MCP6002-I/SN` …) | `dip8` | `VOUTA` `VINA-` `VINA+` `VSS` `VINB+` `VINB-` `VOUTB` `VDD` |
+| `MCP9808` | `dip8` | `SDA` `SCL` `ALERT` `GND` `A2` `A1` `A0` `VDD` (I2C 温度センサ。チップの並び。ブレークアウト基板のヘッダは基板ごとに違うので `pins:` で書く) |
+| `NE5532` (`NE5532P` `NE5532AP` `SA5532` …) | `dip8` | `1OUT` `1IN-` `1IN+` `VCC-` `2IN+` `2IN-` `2OUT` `VCC+` |
+| `NE555` (`NE555P` `SA555` `SA555P` …) | `dip8` | `GND` `TRIG` `OUT` `RESET` `CONT` `THRES` `DISCH` `VCC` |
+| `NJM4556A` (`NJM4556AD`) | `dip8` | `AOUT` `AIN-` `AIN+` `V-` `BIN+` `BIN-` `BOUT` `V+` |
 | `OSTA5131A` (`OSTA5131A-R/PG/B` `102476`) | `sip4` | `G` `B` `K` `R` (フルカラー LED 5 mm、カソードコモン。`G` `B` `R` が各色のアノード、3 番 `K` が共通カソード (いちばん長い足)。足は格子に乗らないので広げて隣の 4 穴に挿す。乳白の胴で描く) |
 | `OSTAMA5B31A` (`112167`) | `sip4` | `G` `B` `A` `R` (フルカラー LED 5 mm、アノードコモン。並びは `OSTA5131A` と同じで極性が逆。3 番 `A` が共通アノード (いちばん長い足)。乳白の胴で描く) |
+| `PIC12F1822` (`PIC12F1822-I/P` `PIC12LF1822`) | `dip8` | `VDD` `RA5` `RA4` `RA3` `RA2` `RA1` `RA0` `VSS` (PIC マイコン。4 番 `RA3` は MCLR 兼用の入力専用。RA5=OSC1、RA4=OSC2、RA0=ICSPDAT、RA1=ICSPCLK) |
+| `PIC12F683` (`PIC12F683-I/P` `PIC12F675` `PIC12F675-I/P` …) | `dip8` | `VDD` `GP5` `GP4` `GP3` `GP2` `GP1` `GP0` `VSS` (PIC マイコン。4 番 `GP3` は MCLR 兼用の入力専用。GP5=OSC1、GP4=OSC2、GP0=ICSPDAT、GP1=ICSPCLK) |
+| `PIC16F57` (`PIC16F57-I/P` `PIC16F57-I/SP`) | `dip28` | `T0CKI` `VDD` `NC` `VSS` `NC` `RA0` `RA1` `RA2` `RA3` `RB0` `RB1` `RB2` `RB3` `RB4` `RB5` `RB6` `RB7` `RC0` `RC1` `RC2` `RC3` `RC4` `RC5` `RC6` `RC7` `OSC2` `OSC1` `MCLR` (PIC マイコン。**電源は 2 番 `VDD`・4 番 `VSS`** (ほかの 28 ピンと違う)。3・5 番は `NC`。`T0CKI` は使わなくても `VSS` か `VDD` へ。600 mil (-I/P) と 300 mil (-I/SP) がある) |
+| `PIC16F628A` (`PIC16F628A-I/P` `PIC16F627A` `PIC16F648A` …) | `dip18` | `RA2` `RA3` `RA4` `RA5` `VSS` `RB0` `RB1` `RB2` `RB3` `RB4` `RB5` `RB6` `RB7` `VDD` `RA6` `RA7` `RA0` `RA1` (PIC マイコン。628A・88・1827 は同じ並び。4 番 `RA5` は MCLR 兼用。RA7=OSC1、RA6=OSC2、RB6=ICSPCLK、RB7=ICSPDAT) |
+| `PIC16F84A` (`PIC16F84A-04/P` `PIC16F84A-20/P`) | `dip18` | `RA2` `RA3` `RA4` `MCLR` `VSS` `RB0` `RB1` `RB2` `RB3` `RB4` `RB5` `RB6` `RB7` `VDD` `OSC2` `OSC1` `RA0` `RA1` (PIC マイコン。4 番 `MCLR`、15 番 `OSC2`・16 番 `OSC1` は専用ピン。`RA4` はオープンドレイン) |
+| `PIC16F886` (`PIC16F886-I/SP` `PIC16F883` `PIC16F882` …) | `dip28` | `RE3` `RA0` `RA1` `RA2` `RA3` `RA4` `RA5` `VSS` `RA7` `RA6` `RC0` `RC1` `RC2` `RC3` `RC4` `RC5` `RC6` `RC7` `VSS` `VDD` `RB0` `RB1` `RB2` `RB3` `RB4` `RB5` `RB6` `RB7` (PIC マイコン。886・1938・18857 は同じ並び。1 番 `RE3` は MCLR 兼用の入力専用。8 番と 19 番は `VSS` (番号で指す)。RA7=OSC1、RA6=OSC2、RB6=ICSPCLK、RB7=ICSPDAT) |
+| `SA612` (`SA612A` `SA612AD` `NE612` …) | `dip8` | `IN_A` `IN_B` `GND` `OUT_A` `OUT_B` `OSC_B` `OSC_E` `VCC` (`IN_A` `IN_B` が RF の入力、`OSC_B` が発振のベース (外の LO の入口)、`OSC_E` が発振のエミッタ) |
+| `SFELF10M7` (`SFELF10M7FA00` `SFELF10M7GA00` `SFELF10M7HA00` …) | `sip3` | `IN` `GND` `OUT` (村田のセラミックフィルタ 10.7 MHz。足は一直線に 2.5 mm 間隔。入出力 330 Ω) |
+| `SFU455B` (`SFU455A` `SFU455`) | `sip3` | `IN` `GND` `OUT` (村田の 455 kHz セラミックフィルタ。実体配線図は橙の胴で描く。回路図の記号は `ceramic-filter`) |
+| `SG90` (`SG92R` `MG90S`) | `sip3` | `GND` `VCC` `SIG` (RC サーボ。青の胴で描く。コネクタの線は茶 (GND)・赤 (VCC)・橙 (SIG)) |
+| `TA7642` (`7642` `UTC7642`) | `sip3` | `GND` `IN` `OUT` (AM ラジオ IC。黒い TO-92 の胴。`OUT` は抵抗を通して電源へ。東芝の原本の資料は無く、互換品 (UTC 7642) の資料による) |
+| `TL071` (`TL071CP` `TL071ACP` `TL071BCP` …) | `dip8` | `NC` `IN-` `IN+` `VCC-` `NC` `OUT` `VCC+` `NC` |
+| `TL072` (`TL072CP` `TL072ACP` `TL072BCP` …) | `dip8` | `1OUT` `1IN-` `1IN+` `VCC-` `2IN+` `2IN-` `2OUT` `VCC+` |
+| `TLC555` (`TLC555CP` `TLC555IP`) | `dip8` | `GND` `TRIG` `OUT` `RESET` `CONT` `THRES` `DISCH` `VDD` |
+| `ULN2003A` (`ULN2003` `ULN2003APG` `ULN2003AN`) | `dip16` | `1B` `2B` `3B` `4B` `5B` `6B` `7B` `GND` `COM` `7C` `6C` `5C` `4C` `3C` `2C` `1C` (7 回路のダーリントン (シンクドライバ)。B が入力、C が出力、`GND` はデータシートの `E`。`COM` は負荷の電源側へ) |
 
-<!-- part-cards:begin `npm run rows` が書き出す。手で直さない (52 の docs/158) -->
-
-同梱の部品カード (`packages/fence-kit/parts/*.part.yaml`) の型番。書き方は上の表と同じ (`model:` や穴の後ろに型番を書く)。
-
-| 型番 | 置き方 | ピンの名前 |
-| --- | --- | --- |
-| `74LS00` (`SN74LS00` `SN74LS00N`) | `dip14` | `1A` `1B` `1Y` `2A` `2B` `2Y` `GND` `3Y` `3A` `3B` `4Y` `4A` `4B` `VCC` (TTL。並びは `74HC00` と同じだが、電源は 5 V だけ・静止電流は mA で別の品) |
-
-<!-- part-cards:end -->
+<!-- part-rows:chips end -->
 
 ### 3 ピンのトランジスタ・FET・レギュレータの穴の順
 

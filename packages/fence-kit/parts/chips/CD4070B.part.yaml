@@ -1,0 +1,7 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [CD4070B, CD4070, CD4070BE]
+package: dip14
+role: 2 入力 XOR ×4
+role-en: 2-input XOR ×4
+pins: [A, B, J, K, C, D, VSS, E, F, L, M, G, H, VDD]
+source: SCHS055E、端子図 (Pinouts)

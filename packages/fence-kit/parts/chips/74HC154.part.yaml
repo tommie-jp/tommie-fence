@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# E1・E2 は上に線 (両方 L で Y が動く)。
+models: [74HC154, SN74HC154, SN74HC154N, 74HC154N, CD74HC154, CD74HC154E]
+package: dip24
+role: 4 → 16 デコーダ
+role-en: 4-to-16 decoder
+pins: [Y0, Y1, Y2, Y3, Y4, Y5, Y6, Y7, Y8, Y9, Y10, GND, Y11, Y12, Y13, Y14, Y15, E1, E2, A3, A2, A1, A0, VCC]
+note: "`E1` `E2` は上に線"
+source: CD74HC154 SCHS152D、Pinout (PDIP)

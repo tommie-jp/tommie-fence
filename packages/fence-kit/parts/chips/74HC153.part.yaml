@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [74HC153, SN74HC153, SN74HC153N]
+package: dip16
+role: 4 入力データセレクタ ×2
+role-en: 4-input data selector ×2
+pins: [1G, B, 1C3, 1C2, 1C1, 1C0, 1Y, GND, 2Y, 2C0, 2C1, 2C2, 2C3, A, 2G, VCC]
+note: "`A` `B` が選択。`G` は上に線"
+source: TI の SN74HC161 などの Pin Functions と端子図 (N)。74HC85 の 13・14 番は端子図で A2・B2 (調査の読み取りは逆だったので直した)

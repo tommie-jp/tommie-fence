@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [74HC126, SN74HC126, SN74HC126N]
+package: dip14
+role: 3 ステート バッファ ×4 (OE が H で有効)
+role-en: 3-state buffer ×4 (OE active high)
+pins: [1OE, 1A, 1Y, 2OE, 2A, 2Y, GND, 3Y, 3A, 3OE, 4Y, 4A, 4OE, VCC]
+note: 並びは 74HC125 と同じ。`OE` の極性だけ違う
+source: TI SN74HC14 などの Pin Functions (N)。74HC74・86・02 は 2026-10-04 に突き合わせ済み

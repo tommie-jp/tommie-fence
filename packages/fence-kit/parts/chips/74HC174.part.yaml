@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [74HC174, SN74HC174, SN74HC174N]
+package: dip16
+role: D フリップフロップ ×6 (共通クリア)
+role-en: D flip-flop ×6 (common clear)
+pins: [CLR, 1Q, 1D, 2D, 2Q, 3D, 3Q, GND, CLK, 4Q, 4D, 5Q, 5D, 6Q, 6D, VCC]
+note: "`CLR` は上に線"
+source: TI の SN74HC161 などの Pin Functions と端子図 (N)。74HC85 の 13・14 番は端子図で A2・B2 (調査の読み取りは逆だったので直した)

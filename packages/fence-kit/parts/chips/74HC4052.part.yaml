@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [74HC4052, CD74HC4052, CD74HC4052E]
+package: dip16
+role: 4 チャネル アナログ マルチプレクサ ×2
+role-en: 4-channel analog multiplexer ×2
+pins: [B0, B2, BN, B3, B1, E, VEE, GND, S1, S0, A3, A0, AN, A1, A2, VCC]
+note: "`AN` `BN` が共通、`A0`〜`A3` `B0`〜`B3` がチャネル。`E` は上に線"
+source: CD74HC4051 (SCHS122O) の Figure 4-1〜4-3。共通の入出力・選択の印字は `A`・`AN`・`S0`〜

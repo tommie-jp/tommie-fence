@@ -1,0 +1,7 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [CD4017B, CD4017, CD4017BE]
+package: dip16
+role: 10 進カウンタ
+role-en: decade counter
+pins: [Q5, Q1, Q0, Q2, Q6, Q7, Q3, VSS, Q8, Q4, Q9, CO, INH, CLOCK, RESET, VDD]
+source: SCHS027C、端子図 (TERMINAL DIAGRAM)

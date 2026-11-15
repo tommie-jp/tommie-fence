@@ -1,0 +1,24 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# 秋月の 3.5 mm ステレオミニジャック DIP 化キット (キット 105363、基板 105707、AE-PHONE-JACK-DIP)。
+# 秋月の基板図 (AE-PHONE-JACK-DIP.pdf、2016-03-01): 18 mm 角、ピンは縁から 1.34 mm に縦 1 列 4 本で、シルクは
+# 上から R G G L (G はスリーブ = GND)。切替の端子はピンに出ていない。ジャックの口はピンと反対の縁から出る。
+# ジャックの胴は写真から取った目安で、幅 6 mm、列から 4〜18 mm。
+models: [AE-PHONE-JACK-DIP, AE-PHONE-JACK-DIP-KIT, "105363", "105707"]
+package: sip4
+role: 3.5 mm ステレオミニジャックの DIP 化キット
+role-en: 3.5 mm stereo mini jack DIP breakout kit
+pins: [R, GND, GND, L]
+look:
+  body: "#b9bec5"
+  edge: "#7a8089"
+outline:
+  along: 18
+  across: 18
+  inset: 1.34
+  jack:
+    along: 6
+    from: 4
+    to: 18
+  mark: "3.5"
+note: 秋月の 3.5 mm ステレオミニジャック DIP 化キット。シルクの `G` (スリーブ) は `GND` で、2 本あるので番号で呼ぶ。切替の端子は出ていない。銀の帯で描き、キットの基板とジャックを帯の脇へ描く (胴の寸法は目安)
+source: "秋月の 3.5 mm ステレオミニジャック DIP 化キット (キット 105363、基板 105707、AE-PHONE-JACK-DIP)。 秋月の基板図 (AE-PHONE-JACK-DIP.pdf、2016-03-01): 18 mm 角、ピンは縁から 1.34 mm に縦 1 列 4 本で、シルクは 上から R G G L (G はスリーブ = GND)。切替の端子はピンに出ていない。ジャックの口はピンと反対の縁から出る。 ジャックの胴は写真から取った目安で、幅 6 mm、列から 4〜18 mm。"

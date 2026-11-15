@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [74HC27, SN74HC27, SN74HC27N]
+package: dip14
+role: 3 入力 NOR ×3
+role-en: 3-input NOR ×3
+pins: [1A, 1B, 2A, 2B, 2C, 2Y, GND, 3Y, 3A, 3B, 3C, 1Y, 1C, VCC]
+note: 並びは 74HC10 と同じ
+source: TI SN74HC14 などの Pin Functions (N)。74HC74・86・02 は 2026-10-04 に突き合わせ済み

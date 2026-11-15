@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# 入力は B (base)、出力は C (collector)、COM はクランプダイオードの共通 (負荷の電源側へ)。
+models: [ULN2003A, ULN2003, ULN2003APG, ULN2003AN]
+package: dip16
+role: 7 回路のダーリントン (シンクドライバ)
+role-en: 7-channel Darlington (sink driver)
+pins: [1B, 2B, 3B, 4B, 5B, 6B, 7B, GND, COM, 7C, 6C, 5C, 4C, 3C, 2C, 1C]
+note: 7 回路のダーリントン (シンクドライバ)。B が入力、C が出力、`GND` はデータシートの `E`。`COM` は負荷の電源側へ
+source: TI ULN2003A SLRS027T (2025-03)、Pin Functions (D・N・NS・PW)。8 番の印字は `E` (エミッタ共通 = 接地) だが、他の行に合わせて `GND` にした

@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [74HC4066, CD74HC4066, CD74HC4066E]
+package: dip14
+role: アナログ スイッチ ×4
+role-en: analog switch ×4
+pins: [1Y, 1Z, 2Z, 2Y, 2E, 3E, GND, 3Y, 3Z, 4Z, 4Y, 4E, 1E, VCC]
+note: "`Y` `Z` は双方向。`E` が制御 (H で導通)。端子図は D・PW の 14 ピンから (PDIP も同じ番号)"
+source: TI の CD74HC30 / CD74HC4066 / CD74HC194 / CD74HC390 / CD74HC85 / CD74HC123 / CD74HC573 (SN74HC は無い)。4066 は D・PW の端子図 (14 ピンで PDIP と同じ番号)

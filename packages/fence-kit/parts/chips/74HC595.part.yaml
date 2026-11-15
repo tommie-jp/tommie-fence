@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [74HC595, SN74HC595, SN74HC595N]
+package: dip16
+role: 8 bit シフトレジスタ
+role-en: 8-bit shift register
+pins: [QB, QC, QD, QE, QF, QG, QH, GND, QH', SRCLR, SRCLK, RCLK, OE, SER, QA, VCC]
+note: "`OE` `SRCLR` は上に線"
+source: SN74HC595 SCLS041J、Figure と Table 5-1 (PDIP)

@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [CD4013B, CD4013, CD4013BE]
+package: dip14
+role: D フリップフロップ ×2
+role-en: D flip-flop ×2
+pins: [Q1, /Q1, CLOCK1, RESET1, D1, SET1, VSS, SET2, D2, RESET2, CLOCK2, /Q2, Q2, VDD]
+note: "`/Q` は Q の上に線"
+source: SCHS023E、Pin Functions

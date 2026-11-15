@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# PB5 は RESET と兼用 (印字は PB5 (… RESET …))。
+models: [ATtiny85, ATtiny85-20PU, ATtiny45, ATtiny25]
+package: dip8
+role: AVR マイコン (8 ピン)
+role-en: AVR microcontroller (8-pin)
+pins: [PB5, PB3, PB4, GND, PB0, PB1, PB2, VCC]
+note: 1 番 `PB5` は RESET 兼用。PB0=MOSI/SDA、PB1=MISO、PB2=SCK/SCL、PB3=XTAL1、PB4=XTAL2
+source: Atmel 2586Q (2013-08)、Figure 1-1 (PDIP)。名前は IO ポートの印字 (`PB0`〜`PB5`) だけ

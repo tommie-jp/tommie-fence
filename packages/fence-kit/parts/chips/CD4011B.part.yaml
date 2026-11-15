@@ -1,0 +1,7 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [CD4011B, CD4011, CD4011BE]
+package: dip14
+role: 2 入力 NAND ×4
+role-en: 2-input NAND ×4
+pins: [A, B, J, K, C, D, VSS, E, F, L, M, G, H, VDD]
+source: SCHS056D / SCHS057C / SCHS021D / SCHS015C の端子図

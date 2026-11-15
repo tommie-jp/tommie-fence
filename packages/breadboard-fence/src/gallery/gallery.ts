@@ -123,17 +123,14 @@ const looksOf = (type: string): readonly string[] => (typesWithVariants().includ
 
 // ---- 型番 (ピンの名前の表) --------------------------------------------------
 
-/** 1 列で描く行。奇数ピン、樹脂の色や胴の字を持つ物、モジュールの外形を持つ物。 */
-const isSip = (row: PinoutRow): boolean => row.names.length % 2 === 1 || row.look !== undefined || row.module !== undefined;
-
-/** 600 mil で売られている SRAM。表は幅を持たないので、ここで姿を選ぶ。 */
-const WIDE_MODELS: ReadonlySet<string> = new Set(['62256', '6116']);
+/** 1 列で描く行。置き方は部品カードの `package:` (52 の docs/160)。 */
+const isSip = (row: PinoutRow): boolean => (row.package ?? '').startsWith('sip');
 
 const dipItem = (row: PinoutRow): Item => {
   const model = row.models[0] ?? '';
   const pins = row.names.length;
-  const token = WIDE_MODELS.has(model) ? `dip${pins}/wide` : `dip${pins}`;
-  return anchored('U', token, pins / 2 + 2, model);
+  // 600 mil の SRAM は `dip28/wide` のように姿まで書いてある。
+  return anchored('U', row.package ?? `dip${pins}`, pins / 2 + 2, model);
 };
 
 /** 名札 (`U1 型番`) の幅を列で見積もる。1 列に字が 3 つほど。 */

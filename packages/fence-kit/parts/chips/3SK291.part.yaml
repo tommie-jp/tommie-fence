@@ -1,0 +1,20 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# 面実装 (SMQ) の 4 ピン。変換基板に載せて `dip4` (2 列) か `sip4` (1 列) で置く。
+# 基板が SMQ の番号をそのまま使う前提 — 並びが違う基板は `pins:` で名前を書く。
+models: [3SK291]
+package: dip4
+role: デュアルゲート MOSFET (N)
+role-en: dual-gate MOSFET (N)
+pins: [G1, G2, D, S]
+smd:
+  length: 2.9
+  width: 1.5
+  span: 2.9
+  pitch: 1.9
+  lead: 0.4
+  wide:
+    pin: 4
+    lead: 0.6
+  mark: U.F
+note: "SMQ の 1〜4 番。基板が番号を変えていれば `pins:` で名前を書く。1 列の変換基板なら `sip4`。面実装しか無いので、実体配線図は緑の変換基板に実寸の胴 (2.9 mm 角、印字 `U.F`) を載せた姿で描く。回路図の記号は `nmos-dg` で、`dip4` には書かない"
+source: 東芝 3SK291 (2014-03-01)、外形図の端子の番号 (SMQ。1 G1・2 G2・3 D・4 S)。変換基板が SMQ の番号をそのまま DIP / SIP の番号にしている前提

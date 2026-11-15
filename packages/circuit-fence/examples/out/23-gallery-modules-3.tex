@@ -498,60 +498,67 @@
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
 \coordinate (x2y2p5) at (2,-3);
-\coordinate (x4y2p5) at (6,-3);
+\coordinate (x3p75y2p5) at (5.5,-3);
 \coordinate (x6y2p5) at (10,-3);
-\coordinate (x7p75y2p5) at (13.5,-3);
-\coordinate (x9p75y2p5) at (17.5,-3);
-\coordinate (x11p75y2p5) at (21.5,-3);
-\coordinate (x13p75y2p5) at (25.5,-3);
-\coordinate (x2p25y5) at (2.5,-8);
-\coordinate (x4p75y5) at (7.5,-8);
-\coordinate (x7y5) at (12,-8);
-\coordinate (x9y5) at (16,-8);
-\coordinate (x10p75y5) at (19.5,-8);
-\coordinate (x12p75y5) at (23.5,-8);
-\coordinate (x14p75y5) at (27.5,-8);
-\coordinate (x2y8) at (2,-14);
-\coordinate (x4p25y8) at (6.5,-14);
-\coordinate (x7p25y8) at (12.5,-14);
-\coordinate (x10y8) at (18,-14);
-\coordinate (x12p5y8) at (23,-14);
-\coordinate (x14p5y8) at (27,-14);
-\node[dev3w12n7, draw, font=\scriptsize] (part-M1) at (x2y2p5) {$\mathrm{SFU455B}$}; % line 4
+\coordinate (x8p5y2p5) at (15,-3);
+\coordinate (x11p25y2p5) at (20.5,-3);
+\coordinate (x14p25y2p5) at (26.5,-3);
+\coordinate (x2p25y5p5) at (2.5,-9);
+\coordinate (x4p75y5p5) at (7.5,-9);
+\coordinate (x6p75y5p5) at (11.5,-9);
+\coordinate (x8p75y5p5) at (15.5,-9);
+\coordinate (x10p75y5p5) at (19.5,-9);
+\coordinate (x13y5p5) at (24,-9);
+\coordinate (x15y5p5) at (28,-9);
+\coordinate (x1p75y8) at (1.5,-14);
+\coordinate (x3p75y8) at (5.5,-14);
+\coordinate (x6y8) at (10,-14);
+\coordinate (x8y8) at (14,-14);
+\coordinate (x10p25y8) at (18.5,-14);
+\coordinate (x12y8) at (22,-14);
+\coordinate (x14y8) at (26,-14);
+\node[dev3w11n8, draw, font=\scriptsize] (part-M1) at (x2y2p5) {$\mathrm{A1324}$}; % line 4
 \node[anchor=south] at (part-M1.north) {$M_{1}$}; % line 4
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M1.bpin 1) {X}; % line 4
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M1.bpin 2) {X}; % line 4
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M1.bpin 3) {X}; % line 4
-\node[dev5w11n7, draw, font=\scriptsize] (part-M2) at (x4y2p5) {$\mathrm{KY\mbox{-}040}$}; % line 8
+\node[dev3w10n7, draw, font=\scriptsize] (part-M2) at (x3p75y2p5) {$\mathrm{A3144}$}; % line 8
 \node[anchor=south] at (part-M2.north) {$M_{2}$}; % line 8
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M2.bpin 1) {X}; % line 8
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M2.bpin 2) {X}; % line 8
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M2.bpin 3) {X}; % line 8
-\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M2.bpin 4) {X}; % line 8
-\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M2.bpin 5) {X}; % line 8
-\node[dev4w12n8, draw, font=\scriptsize] (part-M3) at (x6y2p5) {$\mathrm{HC\mbox{-}SR04}$}; % line 12
+\node[dev8w17n9, draw, font=\scriptsize] (part-M3) at (x6y2p5) {$\mathrm{ADAFRUIT\mbox{-}1782}$}; % line 12
 \node[anchor=south] at (part-M3.north) {$M_{3}$}; % line 12
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M3.bpin 1) {X}; % line 12
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M3.bpin 2) {X}; % line 12
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M3.bpin 3) {X}; % line 12
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M3.bpin 4) {X}; % line 12
-\node[dev3w9n7, draw, font=\scriptsize] (part-M4) at (x7p75y2p5) {$\mathrm{SG90}$}; % line 16
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M3.bpin 5) {X}; % line 12
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M3.bpin 6) {X}; % line 12
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M3.bpin 7) {X}; % line 12
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M3.bpin 8) {X}; % line 12
+\node[dev7w17n8, draw, font=\scriptsize] (part-M4) at (x8p5y2p5) {$\mathrm{ADAFRUIT\mbox{-}2045}$}; % line 16
 \node[anchor=south] at (part-M4.north) {$M_{4}$}; % line 16
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M4.bpin 1) {X}; % line 16
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M4.bpin 2) {X}; % line 16
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M4.bpin 3) {X}; % line 16
-\node[dev4w11n8, draw, font=\scriptsize] (part-M5) at (x9p75y2p5) {$\mathrm{DHT11}$}; % line 20
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M4.bpin 4) {X}; % line 16
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M4.bpin 5) {X}; % line 16
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M4.bpin 6) {X}; % line 16
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M4.bpin 7) {X}; % line 16
+\node[dev4w21n7, draw, font=\scriptsize] (part-M5) at (x11p25y2p5) {$\mathrm{AE\mbox{-}DC\mbox{-}POWER\mbox{-}JACK\mbox{-}DIP}$}; % line 20
 \node[anchor=south] at (part-M5.north) {$M_{5}$}; % line 20
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M5.bpin 1) {X}; % line 20
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M5.bpin 2) {X}; % line 20
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M5.bpin 3) {X}; % line 20
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M5.bpin 4) {X}; % line 20
-\node[dev3w12n7, draw, font=\scriptsize] (part-M6) at (x11p75y2p5) {$\mathrm{HC\mbox{-}SR501}$}; % line 24
+\node[dev4w19n7, draw, font=\scriptsize] (part-M6) at (x14p25y2p5) {$\mathrm{AE\mbox{-}PHONE\mbox{-}JACK\mbox{-}DIP}$}; % line 24
 \node[anchor=south] at (part-M6.north) {$M_{6}$}; % line 24
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M6.bpin 1) {X}; % line 24
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M6.bpin 2) {X}; % line 24
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M6.bpin 3) {X}; % line 24
-\node[dev7w13n9, draw, font=\scriptsize] (part-M7) at (x13p75y2p5) {$\mathrm{GY\mbox{-}9833}$}; % line 28
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M6.bpin 4) {X}; % line 24
+\node[dev8w19n5, draw, font=\scriptsize] (part-M7) at (x2p25y5p5) {$\mathrm{AE\mbox{-}RJ\mbox{-}45\mbox{-}LAN\mbox{-}DIP\mbox{-}A}$}; % line 28
 \node[anchor=south] at (part-M7.north) {$M_{7}$}; % line 28
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M7.bpin 1) {X}; % line 28
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M7.bpin 2) {X}; % line 28
@@ -560,89 +567,82 @@
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M7.bpin 5) {X}; % line 28
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M7.bpin 6) {X}; % line 28
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M7.bpin 7) {X}; % line 28
-\node[dev8w17n9, draw, font=\scriptsize] (part-M8) at (x2p25y5) {$\mathrm{ADAFRUIT\mbox{-}1782}$}; % line 32
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M7.bpin 8) {X}; % line 28
+\node[dev3w12n7, draw, font=\scriptsize] (part-M8) at (x4p75y5p5) {$\mathrm{CFULA455}$}; % line 32
 \node[anchor=south] at (part-M8.north) {$M_{8}$}; % line 32
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M8.bpin 1) {X}; % line 32
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M8.bpin 2) {X}; % line 32
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M8.bpin 3) {X}; % line 32
-\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M8.bpin 4) {X}; % line 32
-\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M8.bpin 5) {X}; % line 32
-\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M8.bpin 6) {X}; % line 32
-\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M8.bpin 7) {X}; % line 32
-\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M8.bpin 8) {X}; % line 32
-\node[dev7w17n8, draw, font=\scriptsize] (part-M9) at (x4p75y5) {$\mathrm{ADAFRUIT\mbox{-}2045}$}; % line 36
+\node[dev4w11n8, draw, font=\scriptsize] (part-M9) at (x6p75y5p5) {$\mathrm{DHT11}$}; % line 36
 \node[anchor=south] at (part-M9.north) {$M_{9}$}; % line 36
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M9.bpin 1) {X}; % line 36
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M9.bpin 2) {X}; % line 36
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M9.bpin 3) {X}; % line 36
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M9.bpin 4) {X}; % line 36
-\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M9.bpin 5) {X}; % line 36
-\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M9.bpin 6) {X}; % line 36
-\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M9.bpin 7) {X}; % line 36
-\node[dev3w11n7, draw, font=\scriptsize] (part-M10) at (x7y5) {$\mathrm{TA7642}$}; % line 40
+\node[dev7w13n9, draw, font=\scriptsize] (part-M10) at (x8p75y5p5) {$\mathrm{GY\mbox{-}9833}$}; % line 40
 \node[anchor=south] at (part-M10.north) {$M_{10}$}; % line 40
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M10.bpin 1) {X}; % line 40
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M10.bpin 2) {X}; % line 40
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M10.bpin 3) {X}; % line 40
-\node[dev3w10n7, draw, font=\scriptsize] (part-M11) at (x9y5) {$\mathrm{A3144}$}; % line 44
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M10.bpin 4) {X}; % line 40
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M10.bpin 5) {X}; % line 40
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M10.bpin 6) {X}; % line 40
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M10.bpin 7) {X}; % line 40
+\node[dev4w12n8, draw, font=\scriptsize] (part-M11) at (x10p75y5p5) {$\mathrm{HC\mbox{-}SR04}$}; % line 44
 \node[anchor=south] at (part-M11.north) {$M_{11}$}; % line 44
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M11.bpin 1) {X}; % line 44
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M11.bpin 2) {X}; % line 44
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M11.bpin 3) {X}; % line 44
-\node[dev3w11n8, draw, font=\scriptsize] (part-M12) at (x10p75y5) {$\mathrm{A1324}$}; % line 48
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M11.bpin 4) {X}; % line 44
+\node[dev3w12n7, draw, font=\scriptsize] (part-M12) at (x13y5p5) {$\mathrm{HC\mbox{-}SR501}$}; % line 48
 \node[anchor=south] at (part-M12.north) {$M_{12}$}; % line 48
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M12.bpin 1) {X}; % line 48
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M12.bpin 2) {X}; % line 48
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M12.bpin 3) {X}; % line 48
-\node[dev3w10n8, draw, font=\scriptsize] (part-M13) at (x12p75y5) {$\mathrm{LM35}$}; % line 52
+\node[dev5w11n7, draw, font=\scriptsize] (part-M13) at (x15y5p5) {$\mathrm{KY\mbox{-}040}$}; % line 52
 \node[anchor=south] at (part-M13.north) {$M_{13}$}; % line 52
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M13.bpin 1) {X}; % line 52
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M13.bpin 2) {X}; % line 52
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M13.bpin 3) {X}; % line 52
-\node[dev3w13n7, draw, font=\scriptsize] (part-M14) at (x14p75y5) {$\mathrm{SFELF10M7}$}; % line 56
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M13.bpin 4) {X}; % line 52
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M13.bpin 5) {X}; % line 52
+\node[dev3w10n8, draw, font=\scriptsize] (part-M14) at (x1p75y8) {$\mathrm{LM35}$}; % line 56
 \node[anchor=south] at (part-M14.north) {$M_{14}$}; % line 56
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M14.bpin 1) {X}; % line 56
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M14.bpin 2) {X}; % line 56
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M14.bpin 3) {X}; % line 56
-\node[dev3w12n7, draw, font=\scriptsize] (part-M15) at (x2y8) {$\mathrm{CFULA455}$}; % line 60
+\node[dev4w12n4, draw, font=\scriptsize] (part-M15) at (x3p75y8) {$\mathrm{OSTA5131A}$}; % line 60
 \node[anchor=south] at (part-M15.north) {$M_{15}$}; % line 60
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M15.bpin 1) {X}; % line 60
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M15.bpin 2) {X}; % line 60
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M15.bpin 3) {X}; % line 60
-\node[dev8w19n5, draw, font=\scriptsize] (part-M16) at (x4p25y8) {$\mathrm{AE\mbox{-}RJ\mbox{-}45\mbox{-}LAN\mbox{-}DIP\mbox{-}A}$}; % line 64
+\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M15.bpin 4) {X}; % line 60
+\node[dev4w13n4, draw, font=\scriptsize] (part-M16) at (x6y8) {$\mathrm{OSTAMA5B31A}$}; % line 64
 \node[anchor=south] at (part-M16.north) {$M_{16}$}; % line 64
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M16.bpin 1) {X}; % line 64
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M16.bpin 2) {X}; % line 64
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M16.bpin 3) {X}; % line 64
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M16.bpin 4) {X}; % line 64
-\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M16.bpin 5) {X}; % line 64
-\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M16.bpin 6) {X}; % line 64
-\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M16.bpin 7) {X}; % line 64
-\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M16.bpin 8) {X}; % line 64
-\node[dev4w21n7, draw, font=\scriptsize] (part-M17) at (x7p25y8) {$\mathrm{AE\mbox{-}DC\mbox{-}POWER\mbox{-}JACK\mbox{-}DIP}$}; % line 68
+\node[dev3w13n7, draw, font=\scriptsize] (part-M17) at (x8y8) {$\mathrm{SFELF10M7}$}; % line 68
 \node[anchor=south] at (part-M17.north) {$M_{17}$}; % line 68
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M17.bpin 1) {X}; % line 68
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M17.bpin 2) {X}; % line 68
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M17.bpin 3) {X}; % line 68
-\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M17.bpin 4) {X}; % line 68
-\node[dev4w19n7, draw, font=\scriptsize] (part-M18) at (x10y8) {$\mathrm{AE\mbox{-}PHONE\mbox{-}JACK\mbox{-}DIP}$}; % line 72
+\node[dev3w12n7, draw, font=\scriptsize] (part-M18) at (x10p25y8) {$\mathrm{SFU455B}$}; % line 72
 \node[anchor=south] at (part-M18.north) {$M_{18}$}; % line 72
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M18.bpin 1) {X}; % line 72
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M18.bpin 2) {X}; % line 72
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M18.bpin 3) {X}; % line 72
-\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M18.bpin 4) {X}; % line 72
-\node[dev4w12n4, draw, font=\scriptsize] (part-M19) at (x12p5y8) {$\mathrm{OSTA5131A}$}; % line 76
+\node[dev3w9n7, draw, font=\scriptsize] (part-M19) at (x12y8) {$\mathrm{SG90}$}; % line 76
 \node[anchor=south] at (part-M19.north) {$M_{19}$}; % line 76
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M19.bpin 1) {X}; % line 76
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M19.bpin 2) {X}; % line 76
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M19.bpin 3) {X}; % line 76
-\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M19.bpin 4) {X}; % line 76
-\node[dev4w13n4, draw, font=\scriptsize] (part-M20) at (x14p5y8) {$\mathrm{OSTAMA5B31A}$}; % line 80
+\node[dev3w11n7, draw, font=\scriptsize] (part-M20) at (x14y8) {$\mathrm{TA7642}$}; % line 80
 \node[anchor=south] at (part-M20.north) {$M_{20}$}; % line 80
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M20.bpin 1) {X}; % line 80
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M20.bpin 2) {X}; % line 80
 \node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M20.bpin 3) {X}; % line 80
-\node[circuitnotemark, font=\scriptsize, anchor=west, xshift=2pt, inner sep=0] at (part-M20.bpin 4) {X}; % line 80
 \node[anchor=south west, inner sep=2pt, yshift=4pt, circuitnotemark, font=\LARGE\bfseries] (circuittitle) at (current bounding box.north west) {X};
 \path (circuittitle.south west) rectangle ++(15.667,0.853);
 \node[anchor=north east, inner sep=2pt, circuitnotemark, font=\large] (circuitstamp) at ([yshift=-0.593cm]current bounding box.south east) {X};

@@ -1,0 +1,10 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# Microchip DS20005095B の Table 3-1 (MSOP・DFN。DFN の 9 番 EP は GND)。
+# ブレークアウト基板 (Adafruit 1782 など) のヘッダの並びは基板ごとに違うので、この行はチップだけ。
+models: [MCP9808]
+package: dip8
+role: I2C 温度センサ (±0.5 ℃)
+role-en: I2C temperature sensor (±0.5 °C)
+pins: [SDA, SCL, ALERT, GND, A2, A1, A0, VDD]
+note: I2C 温度センサ。チップの並び。ブレークアウト基板のヘッダは基板ごとに違うので `pins:` で書く
+source: Microchip DS20005095B の Table 3-1 (MSOP・DFN。DFN の 9 番 EP は GND)。 ブレークアウト基板 (Adafruit 1782 など) のヘッダの並びは基板ごとに違うので、この行はチップだけ。

@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# 印字は 1・8 番とも `GAIN` (利得を決める C をこの 2 本の間に付ける)。番号を付けて分けた。
+models: [LM386, LM386N, LM386N-1, LM386N-3, LM386N-4, LM386M-1, LM386MX-1]
+package: dip8
+role: 低電圧のオーディオ パワー アンプ
+role-en: low-voltage audio power amplifier
+pins: [GAIN1, -INPUT, +INPUT, GND, VOUT, VS, BYPASS, GAIN8]
+note: 印字は 1・8 番とも `GAIN` (番号を付けて分けた)。`BYPASS` は C で GND へ
+source: TI SNAS545D (2023-08)、Figure 5-1 と Table 5-1。2026-10-06 に確かめた。1 番と 8 番の印字はどちらも `GAIN`

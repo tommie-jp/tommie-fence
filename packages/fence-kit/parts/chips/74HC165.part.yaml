@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [74HC165, SN74HC165, SN74HC165N]
+package: dip16
+role: 8 ビット 並列入力・直列出力 シフトレジスタ
+role-en: 8-bit parallel-in serial-out shift register
+pins: [SH/LD, CLK, E, F, G, H, /QH, GND, QH, SER, A, B, C, D, CLKINH, VCC]
+note: "`SH/LD` は LD の上に線。`/QH` は `QH` の上に線。`CLKINH` は印字の `CLK INH`"
+source: TI の SN74HC161 などの Pin Functions と端子図 (N)。74HC85 の 13・14 番は端子図で A2・B2 (調査の読み取りは逆だったので直した)

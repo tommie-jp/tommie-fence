@@ -1,0 +1,7 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [LM393, LM393P, LM393N, LM393A, LM393AP, LM393B, LM393BP, LM2903, LM2903P, LM293, LM193]
+package: dip8
+role: コンパレータ ×2
+role-en: comparator ×2
+pins: [1OUT, 1IN-, 1IN+, GND, 2IN+, 2IN-, 2OUT, VCC]
+source: SLCS005AH (LM393 / LM2903 / LM193 / LM293)、4 Pin Configuration (D・P の 8 ピン)。2026-10-05 に確かめた

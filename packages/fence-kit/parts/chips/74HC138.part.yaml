@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [74HC138, SN74HC138, SN74HC138N]
+package: dip16
+role: 3 → 8 デコーダ
+role-en: 3-to-8 decoder
+pins: [A, B, C, G2A, G2B, G1, Y7, GND, Y6, Y5, Y4, Y3, Y2, Y1, Y0, VCC]
+note: "`G2A` `G2B` `Y0`〜`Y7` は上に線"
+source: TI の SN74HC161 などの Pin Functions と端子図 (N)。74HC85 の 13・14 番は端子図で A2・B2 (調査の読み取りは逆だったので直した)

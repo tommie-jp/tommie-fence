@@ -1,5 +1,5 @@
-import { discreteTable, moduleTable } from 'fence-kit';
-import type { DiscreteRow, ModuleRow, PartCard } from 'fence-kit';
+import { discreteTable, moduleTable, pinoutTable } from 'fence-kit';
+import type { DiscreteRow, ModuleRow, PinoutRow } from 'fence-kit';
 
 /**
  * 部品の表を、文書の表にする (52 の docs/158 の 4-3、docs/160 の 1-3)。
@@ -47,7 +47,19 @@ const discreteRow = (row: DiscreteRow): string =>
 const moduleRow = (row: ModuleRow): string =>
   `| ${head(row.models)} | ${pinList(row.names)} | ${row.role}。${row.product}。並びは${row.view}${row.note === undefined ? '' : `。${row.note}`} |`;
 
+const chipRow = (row: PinoutRow): string =>
+  `| ${head(row.models)} | ${code(row.package ?? `dip${row.names.length}`)} | ${pinList(row.names)}${row.note === undefined ? '' : ` (${row.note})`} |`;
+
 export const ROW_BLOCKS: readonly RowBlock[] = [
+  {
+    name: 'chips',
+    docs: CHEATSHEETS,
+    render: () => [
+      '| 型番 (別名) | 種類 | ピンの名前 (1 番から) |',
+      '| --- | --- | --- |',
+      ...pinoutTable().map(chipRow),
+    ].join('\n'),
+  },
   {
     name: 'discretes',
     docs: CHEATSHEETS,
@@ -81,40 +93,3 @@ export function replaceRowBlock(markdown: string, block: RowBlock): string | nul
   if (begin < 0 || end < begin) return null;
   return `${markdown.slice(0, begin)}${rowBlockText(block)}${markdown.slice(end + endOf(block.name).length)}`;
 }
-
-// ---- 同梱の部品カードのうち、ピンの名前の表 (DIP・1 列) に入る物 (docs/158 の 4-3) ----
-// ピンの名前の表をまるごと書き出すようになったら (docs/160 の段 4)、この区切りは消す。
-
-export const CARD_ROWS_BEGIN = '<!-- part-cards:begin `npm run rows` が書き出す。手で直さない (52 の docs/158) -->';
-export const CARD_ROWS_END = '<!-- part-cards:end -->';
-
-function cardRow(card: PartCard): string {
-  const note = card.note === undefined ? '' : ` (${card.note})`;
-  return `| ${head(card.models)} | ${code(card.package)} | ${pinList(card.pins)}${note} |`;
-}
-
-/** 印を含めた区切りの全部。DIP と 1 列のカードだけ (3 ピンとモジュールは表をまるごと書き出す)。 */
-export function cardRowsBlock(cards: readonly PartCard[]): string {
-  const chips = cards.filter((card) => card.kind === 'chip');
-  const body = chips.length === 0
-    ? ['同梱の部品カードはまだありません。']
-    : [
-      '同梱の部品カード (`packages/fence-kit/parts/*.part.yaml`) の型番。書き方は上の表と同じ (`model:` や穴の後ろに型番を書く)。',
-      '',
-      '| 型番 | 置き方 | ピンの名前 |',
-      '| --- | --- | --- |',
-      ...chips.map(cardRow),
-    ];
-  return [CARD_ROWS_BEGIN, '', ...body, '', CARD_ROWS_END].join('\n');
-}
-
-/** 文書の印の間を書き換える。印が無ければ null。 */
-export function replaceCardRows(markdown: string, cards: readonly PartCard[]): string | null {
-  const begin = markdown.indexOf(CARD_ROWS_BEGIN);
-  const end = markdown.indexOf(CARD_ROWS_END);
-  if (begin < 0 || end < begin) return null;
-  return `${markdown.slice(0, begin)}${cardRowsBlock(cards)}${markdown.slice(end + CARD_ROWS_END.length)}`;
-}
-
-/** 同梱のカードの区切りを書き換える文書。 */
-export const CARD_ROW_DOCS: readonly string[] = CHEATSHEETS;

@@ -1,0 +1,7 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [TLC555, TLC555CP, TLC555IP]
+package: dip8
+role: タイマー (CMOS)
+role-en: timer (CMOS)
+pins: [GND, TRIG, OUT, RESET, CONT, THRES, DISCH, VDD]
+source: SLFS043K (TLC555)、Table 4-1 — 電源のピンは `VDD`

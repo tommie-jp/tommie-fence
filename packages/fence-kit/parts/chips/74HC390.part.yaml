@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [74HC390, CD74HC390, CD74HC390E]
+package: dip16
+role: 10 進カウンタ ×2 (2 分周と 5 分周)
+role-en: decade counter ×2 (divide by 2 and 5)
+pins: [1CLKA, 1CLR, 1QA, 1CLKB, 1QB, 1QC, 1QD, GND, 2QD, 2QC, 2QB, 2CLKB, 2QA, 2CLR, 2CLKA, VCC]
+note: "`CLKA` `CLKB` `CLR` は上に線"
+source: TI の CD74HC30 / CD74HC4066 / CD74HC194 / CD74HC390 / CD74HC85 / CD74HC123 / CD74HC573 (SN74HC は無い)。4066 は D・PW の端子図 (14 ピンで PDIP と同じ番号)

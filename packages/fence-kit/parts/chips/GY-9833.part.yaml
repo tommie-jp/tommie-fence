@@ -1,0 +1,17 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# AD9833 の DDS モジュール (GY-9833、1 列 7 本。印字に DGND と AGND がある版)。製造元の図は無く、独立した
+# 5 つの個人の KiCad データ (daumemo/DIY-Signal-Generator・Sonicators/UltrasonicSystem・
+# ostojaatanasijevic/analog_solder_station・LTVA1/STM32CrapSynth・jonsag/myCAD) と hirakuni45/R8C の
+# GY-9833 の結線のコメントで並びが一致した (2026-10-22)。
+# **`CJMCU-9833` の名で売られる基板は REF・VCC・GND・DAT・CLK・FNC・OUT の別の並びが多い**ので別名に入れない
+# (protosupplies・s59mz/kicad-clocks-pmod・lpires211002/CHIDORI)。
+models: [GY-9833, GY9833]
+package: sip7
+role: DDS の信号発生モジュール (AD9833)
+role-en: DDS signal generator module (AD9833)
+pins: [VCC, DGND, SDATA, SCLK, FSYNC, AGND, OUT]
+look:
+  body: "#6b3fa0"
+  edge: "#47296b"
+note: "AD9833 の DDS モジュール。紫の帯で描く。印字に `DGND` `AGND` がある版。**実物で確かめる: 製造元の図が無く、並びは個人の KiCad データ 5 つの一致による。CJMCU-9833 の名の基板は REF VCC GND DAT CLK FNC OUT の別の並びが多い。実物は基板の印字で確かめる**"
+source: AD9833 の DDS モジュール (GY-9833、1 列 7 本。印字に DGND と AGND がある版)。製造元の図は無く、独立した 5 つの個人の KiCad データ (daumemo/DIY-Signal-Generator・Sonicators/UltrasonicSystem・ ostojaatanasijevic/analog_solder_station・LTVA1/STM32CrapSynth・jonsag/myCAD) と hirakuni45/R8C の GY-9833 の結線のコメントで並びが一致した (2026-10-22)。 **`CJMCU-9833` の名で売られる基板は REF・VCC・GND・DAT・CLK・FNC・OUT の別の並びが多い**ので別名に入れない (protosupplies・s59mz/kicad-clocks-pmod・lpires211002/CHIDORI)。

@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# 1・5 番はオフセット調整、8 番は NC。
+models: [LM741, LM741CN, LM741N, UA741, UA741CP]
+package: dip8
+role: オペアンプ
+role-en: op-amp
+pins: [OFFSET1, IN-, IN+, V-, OFFSET2, OUT, V+, NC]
+note: 1・5 番はオフセット調整。8 番は NC
+source: TI SNOSC25D (NAB の 8 ピン CDIP/PDIP)。印字は OFFSET NULL を `OFFSET1` `OFFSET2` に、INVERTING INPUT を `IN-` などに略した

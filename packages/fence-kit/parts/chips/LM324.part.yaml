@@ -1,0 +1,7 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [LM324, LM324N, LM324AN, LM2902, LM2902N, LM224, LM124]
+package: dip14
+role: オペアンプ ×4
+role-en: op-amp ×4
+pins: [1OUT, 1IN-, 1IN+, VCC+, 2IN+, 2IN-, 2OUT, 3OUT, 3IN-, 3IN+, VCC-, 4IN+, 4IN-, 4OUT]
+source: TI SLOS066AE (2025-09)、Figure 5-1 (N の PDIP) と Table 5-1

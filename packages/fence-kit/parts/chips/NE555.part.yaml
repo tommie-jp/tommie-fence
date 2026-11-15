@@ -1,0 +1,7 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [NE555, NE555P, SA555, SA555P, SE555, SE555P]
+package: dip8
+role: タイマー
+role-en: timer
+pins: [GND, TRIG, OUT, RESET, CONT, THRES, DISCH, VCC]
+source: SLFS022K (NE555 / SA555 / SE555)、Table 4-1

@@ -1,0 +1,13 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# 温湿度センサ。青い樹脂の胴にピン 4 本 (正面から見て左から VCC DATA NC GND)。3 番は NC。
+# 製造元 Aosong のデータシート V1.3 (2017-03-31、秋月 107003 の付属資料) の外形図と Pin description で確かめた。
+models: [DHT11]
+package: sip4
+role: 温湿度センサ
+role-en: temperature and humidity sensor
+pins: [VCC, DATA, NC, GND]
+look:
+  body: "#2f7fc1"
+  edge: "#1d5a8f"
+note: 温湿度センサ。青の胴で描く。3 番は `NC` で、番号で呼ぶ。`DATA` は 4.7 kΩ〜10 kΩ で `VCC` へ。4 本足の単体の並びで、3 本足の基板 (秋月 AE-DHT11-BO など) は並びが違う
+source: 温湿度センサ。青い樹脂の胴にピン 4 本 (正面から見て左から VCC DATA NC GND)。3 番は NC。 製造元 Aosong のデータシート V1.3 (2017-03-31、秋月 107003 の付属資料) の外形図と Pin description で確かめた。

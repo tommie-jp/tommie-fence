@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# L293 (ダイオード無し) も同じデータシート・同じ印字。
+models: [L293D, L293DNE, L293, L293NE]
+package: dip16
+role: ハーフ H ブリッジ ×4
+role-en: half H-bridge ×4
+pins: [12EN, 1A, 1Y, GROUND, GROUND, 2Y, 2A, VCC2, 34EN, 3A, 3Y, GROUND, GROUND, 4Y, 4A, VCC1]
+source: SLRS008D (L293 / L293D)、NE の端子図と Pin Functions

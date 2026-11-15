@@ -1,0 +1,12 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# TI SNIS159H の LP (TO-92) の底面図。印字は `+VS` だが、電源のピンを `V…` で始める決まりで `VS` にした。
+models: [LM35, LM35DZ, LM35CZ, LM35CAZ]
+package: sip3
+role: 温度センサ (10 mV/℃)
+role-en: temperature sensor (10 mV/°C)
+pins: [VS, VOUT, GND]
+look:
+  body: "#2b2b2b"
+  edge: "#111111"
+note: 温度センサ 10 mV/℃。黒い TO-92 の胴。印字の `+VS` は `VS`。TO-220 と SO8 は並びが違う
+source: TI SNIS159H の LP (TO-92) の底面図。印字は `+VS` だが、電源のピンを `V…` で始める決まりで `VS` にした。

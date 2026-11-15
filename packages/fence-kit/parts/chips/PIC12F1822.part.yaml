@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [PIC12F1822, PIC12F1822-I/P, PIC12LF1822]
+package: dip8
+role: PIC マイコン (8 ピン)
+role-en: PIC microcontroller (8-pin)
+pins: [VDD, RA5, RA4, RA3, RA2, RA1, RA0, VSS]
+note: PIC マイコン。4 番 `RA3` は MCLR 兼用の入力専用。RA5=OSC1、RA4=OSC2、RA0=ICSPDAT、RA1=ICSPCLK
+source: Microchip DS40001413E、FIGURE 1 と TABLE 2 (8-PIN ALLOCATION)

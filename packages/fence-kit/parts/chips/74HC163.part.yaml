@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# 同期クリア (CLR はクロックの立ち上がりで効く)。非同期クリアは 74HC161 (未収録)。
+models: [74HC163, SN74HC163, SN74HC163N, 74HC163N, CD74HC163, CD74HC163E]
+package: dip16
+role: 4 ビット同期カウンタ (同期クリア)
+role-en: 4-bit synchronous counter (sync clear)
+pins: [CLR, CLK, A, B, C, D, ENP, GND, LOAD, ENT, QD, QC, QB, QA, RCO, VCC]
+note: "`CLR` `LOAD` は上に線。クリアは同期"
+source: SN74HC163 SCLS298D、TOP VIEW (N)

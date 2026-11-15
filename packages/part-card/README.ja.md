@@ -75,7 +75,7 @@ YAML のファイルで `part-card` と打つと、骨組みのスニペット�
 | `ic:` | 省ける | 回路図の `ic` の箱の `left:` `right:` `top:` `bottom:` に並べるピン。**全部のピンを 1 度ずつ**置く |
 | `spice:` | 省ける | LTspice の模型 (`model:` `lib:` `nodes:`)。今は形だけ見る |
 
-手本は [examples/](examples/) にあります (3 ピン・1 列・外形つき・面実装・機器・ボード)。
+手本は同梱のカード [packages/fence-kit/parts/](../fence-kit/parts/) にあります。種類ごとに `chips/` (DIP・1 列。外形つきの `AE-DC-POWER-JACK-DIP`、面実装の `3SK291` もここ)・`discretes/` (3 ピン)・`modules/` (機器)・`boards/` (2 列のボード) に分けてあります。
 
 ### ピンの名前の決まり
 
@@ -124,8 +124,8 @@ part-card preview .tommie-fence/parts/74LS00.part.yaml   # 隣の preview/ に S
 手元のカード (`.tommie-fence/parts/`) を読めるのは、VS Code のデスクトップ版とフェンスの CLI だけです。
 web 版の VS Code・playground・フェンスを束ねて使うほかのアプリでは「表に無い」になります。ほかの場所でも使う部品は、公開側へ足します。
 
-1. カードを `packages/fence-kit/parts/` へ移す (手元のカードは消す)
-2. `npm run cards` (表に焼く) → `npm run rows` (早見表の表を書き出す) → 各フェンスで `npm run gallery`
+1. カードを `packages/fence-kit/parts/` の種類のディレクトリ (`chips/` `discretes/` `modules/` `boards/`) へ移す (手元のカードは消す)
+2. `npm run cards` (表に焼く) → `npm run rows` (文書の部品の表を書き出す) → 各フェンスで `npm run gallery`
 3. `npm run check`
 4. CHANGELOG の `[Unreleased]` に 1 行 (fence-kit と、図の変わるフェンス)
 

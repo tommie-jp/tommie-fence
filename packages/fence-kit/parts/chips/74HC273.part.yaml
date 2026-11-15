@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# CLR は上に線 (L でクリア、非同期)。
+models: [74HC273, SN74HC273, SN74HC273N, 74HC273N, CD74HC273, CD74HC273E]
+package: dip20
+role: 8 ビット D フリップフロップ (クリア付き)
+role-en: 8-bit D flip-flop (with clear)
+pins: [CLR, 1Q, 1D, 2D, 2Q, 3Q, 3D, 4D, 4Q, GND, CLK, 5Q, 5D, 6D, 6Q, 7Q, 7D, 8D, 8Q, VCC]
+note: "`CLR` は上に線"
+source: SN74HC273 SCLS136F、Table 5-1 (N)

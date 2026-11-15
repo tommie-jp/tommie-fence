@@ -1,0 +1,7 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [CD4040B, CD4040, CD4040BE]
+package: dip16
+role: 12 段 2 進カウンタ
+role-en: 12-stage binary counter
+pins: [Q12, Q6, Q5, Q7, Q4, Q3, Q2, VSS, Q1, CLOCK, R, Q9, Q8, Q10, Q11, VDD]
+source: SCHS030D、端子図

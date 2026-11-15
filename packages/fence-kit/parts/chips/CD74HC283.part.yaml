@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# CD74HCT283 (TTL の入力の段) は同じ印字だが別の品なので入れない。
+models: [CD74HC283, CD74HC283E, 74HC283]
+package: dip16
+role: 4 bit 全加算器
+role-en: 4-bit full adder
+pins: [S1, B1, A1, S0, A0, B0, CIN, GND, COUT, S3, B3, A3, S2, A2, B2, VCC]
+source: SCHS176E、4 Pin Configuration (PDIP)

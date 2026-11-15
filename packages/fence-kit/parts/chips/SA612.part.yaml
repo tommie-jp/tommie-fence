@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [SA612, SA612A, SA612AD, NE612, NE612A, NE612AN, NE612AD, SA602, SA602A, NE602, NE602A, NE602AN, NE602AD]
+package: dip8
+role: ミキサ + 発振器 (ダブルバランスド)
+role-en: mixer + oscillator (double balanced)
+pins: [IN_A, IN_B, GND, OUT_A, OUT_B, OSC_B, OSC_E, VCC]
+note: "`IN_A` `IN_B` が RF の入力、`OSC_B` が発振のベース (外の LO の入口)、`OSC_E` が発振のエミッタ"
+source: NXP SA612A Rev. 3 (2014-06-04)、6.1 Pinning と Table 3 Pin description (SO8)。2026-10-06 に確かめた。NXP の頁は機械の取得を断るので Internet Archive の写しで読んだ。NE612・SA602・NE602 (DIP8 の `AN` も) は同じ並びの旧品で、その版のデータシートは確かめていない

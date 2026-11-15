@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# NOR は Y が A・B より前に来る (74HC08 などと並びが違う)。
+models: [74HC02, SN74HC02, SN74HC02N]
+package: dip14
+role: 2 入力 NOR ×4
+role-en: 2-input NOR ×4
+pins: [1Y, 1A, 1B, 2Y, 2A, 2B, GND, 3A, 3B, 3Y, 4A, 4B, 4Y, VCC]
+note: NOR は Y が A・B より前
+source: TI SN74HC14 などの Pin Functions (N)。74HC74・86・02 は 2026-10-04 に突き合わせ済み

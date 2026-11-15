@@ -82,21 +82,6 @@ const PICO_DEBUG: BoardDebug = { pads: ['SWCLK', 'SWGND', 'SWDIO'], along: -0.5 
 const PICO_W_DEBUG: BoardDebug = { ...PICO_DEBUG, along: 6.5 };
 
 /**
- * Sipeed Tang Nano 9K (Gowin GW1NR-9) の 2×24 ヘッダ。**1 番は USB-C 側の左上**、
- * 左の列を下へ 24 本、折り返して右の列を上へ 24 本。
- * 名前は Sipeed の wiki のピン配置図の **FPGA のピン番号に `IO` を付けた物** (`IO38`)。
- * 数字だけだと、ピンの番号 (`01`〜`48`) と見分けられない。電源の 3 本は印字どおり。
- * 右の列の `IO79`〜`IO86` は BANK3 で **1.8 V** (ほかの IO は 3.3 V)。
- * 出典: wiki のピン配置図と寸法図 (列の間 22.8169 mm = 9 ピッチ、基板 26.0 × 70.0 mm)。
- */
-const TANG_NANO_9K_PINS: readonly string[] = [
-  'IO38', 'IO37', 'IO36', 'IO39', 'IO25', 'IO26', 'IO27', 'IO28', 'IO29', 'IO30', 'IO33', 'IO34',
-  'IO40', 'IO35', 'IO41', 'IO42', 'IO51', 'IO53', 'IO54', 'IO55', 'IO56', 'IO57', 'IO68', 'IO69',
-  '3V3', 'GND', 'IO32', 'IO31', 'IO49', 'IO48', '5V', 'IO70', 'IO71', 'IO72', 'IO73', 'IO74',
-  'IO75', 'IO76', 'IO77', 'IO79', 'IO80', 'IO81', 'IO82', 'IO83', 'IO84', 'IO85', 'IO86', 'IO63',
-];
-
-/**
  * Pico シリーズの GPIO の機能 (UART・I2C・SPI・ADC)。**ピンの名前の欄に、使う機能の名前を出す**ため
  * (`use=GP27:ADC1` で `GP27 32` が `ADC1 32` になる。52 の docs/157)。
  * 出典: SunFounder の Pico 2 のピン配置図 (pico-2-r4-pinout.svg、Raspberry Pi の公式のピン配置図と同じ並び)。
@@ -122,9 +107,7 @@ const BOARD_PARTS: Record<string, BoardPart> = {
   'pico-w': { name: 'Pico W', chip: 'RP2040', wireless: true, ...PICO_SHAPE, pins: PICO_PINS, functions: PICO_FUNCTIONS, debug: PICO_W_DEBUG },
   pico2: { name: 'Pico 2', chip: 'RP2350', wireless: false, ...PICO_SHAPE, pins: PICO_PINS, functions: PICO_FUNCTIONS, debug: PICO_DEBUG },
   'pico2-w': { name: 'Pico 2 W', chip: 'RP2350', wireless: true, ...PICO_SHAPE, pins: PICO_PINS, functions: PICO_FUNCTIONS, debug: PICO_W_DEBUG },
-  'tang-nano-9k': {
-    name: 'Tang Nano 9K', chip: 'GW1NR-9', wireless: false, hdmi: true, rowSpan: 9, reach: 2.28, usb: 'usb-c', mark: 'GW1NR', pins: TANG_NANO_9K_PINS,
-  },
+  // Tang Nano 9K は同梱の部品カード (`packages/fence-kit/parts/boards/tang-nano-9k.part.yaml`) に移した (52 の docs/160)。
 };
 
 /** 同梱の表のボード (TS の行と同梱の部品カード)。 */

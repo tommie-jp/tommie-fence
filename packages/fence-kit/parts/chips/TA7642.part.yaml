@@ -1,0 +1,12 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# 東芝の原本は見つからず、互換の UTC 7642 (TO-92) と Wiltronics の資料による。UTC の SOT-23 は並びが違う。
+models: [TA7642, "7642", UTC7642]
+package: sip3
+role: AM ラジオ IC (ストレート)
+role-en: AM radio IC (TRF)
+pins: [GND, IN, OUT]
+look:
+  body: "#2b2b2b"
+  edge: "#111111"
+note: AM ラジオ IC。黒い TO-92 の胴。`OUT` は抵抗を通して電源へ。東芝の原本の資料は無く、互換品 (UTC 7642) の資料による
+source: 東芝の原本は見つからず、互換の UTC 7642 (TO-92) と Wiltronics の資料による。UTC の SOT-23 は並びが違う。

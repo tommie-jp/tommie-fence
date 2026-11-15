@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [74HC393, SN74HC393, SN74HC393N]
+package: dip14
+role: 4 ビット 2 進カウンタ ×2
+role-en: 4-bit binary counter ×2
+pins: [1CLK, 1CLR, 1QA, 1QB, 1QC, 1QD, GND, 2QD, 2QC, 2QB, 2QA, 2CLR, 2CLK, VCC]
+note: "`CLR` は H でクリア"
+source: TI SN74HC14 などの Pin Functions (N)。74HC74・86・02 は 2026-10-04 に突き合わせ済み

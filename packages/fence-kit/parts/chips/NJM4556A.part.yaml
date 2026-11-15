@@ -1,0 +1,7 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [NJM4556A, NJM4556AD]
+package: dip8
+role: オペアンプ ×2 (大出力電流)
+role-en: op-amp ×2 (high output current)
+pins: [AOUT, AIN-, AIN+, V-, BIN+, BIN-, BOUT, V+]
+source: 日清紡マイクロデバイス NJM4556A (20250306)、PIN CONFIGURATION / PIN FUNCTION。印字の `A OUTPUT` は `AOUT`、`A –INPUT` は `AIN-` に略した (LM741 と同じ決まり)

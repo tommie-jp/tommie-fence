@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# 4・15・16 番はポートと兼用しない専用ピン。RA4 は T0CKI 兼用のオープンドレイン。
+models: [PIC16F84A, PIC16F84A-04/P, PIC16F84A-20/P]
+package: dip18
+role: PIC マイコン (18 ピン)
+role-en: PIC microcontroller (18-pin)
+pins: [RA2, RA3, RA4, MCLR, VSS, RB0, RB1, RB2, RB3, RB4, RB5, RB6, RB7, VDD, OSC2, OSC1, RA0, RA1]
+note: PIC マイコン。4 番 `MCLR`、15 番 `OSC2`・16 番 `OSC1` は専用ピン。`RA4` はオープンドレイン
+source: Microchip DS35007C、Pin Diagrams (PDIP) と TABLE 1-1 の PDIP の列。4 番 `MCLR`・15 番 `OSC2`・16 番 `OSC1` は専用ピン

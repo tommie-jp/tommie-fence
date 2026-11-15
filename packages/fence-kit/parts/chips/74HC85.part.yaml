@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [74HC85, CD74HC85, CD74HC85E]
+package: dip16
+role: 4 ビット 比較器
+role-en: 4-bit comparator
+pins: [B3, LTIN, EQIN, GTIN, GTOUT, EQOUT, LTOUT, GND, B0, A0, B1, A1, A2, B2, A3, VCC]
+note: "`LTIN` `EQIN` `GTIN` は印字の `(A < B) IN` `(A = B) IN` `(A > B) IN`、`GTOUT` `EQOUT` `LTOUT` は `(A > B) OUT` …"
+source: TI の CD74HC30 / CD74HC4066 / CD74HC194 / CD74HC390 / CD74HC85 / CD74HC123 / CD74HC573 (SN74HC は無い)。4066 は D・PW の端子図 (14 ピンで PDIP と同じ番号)

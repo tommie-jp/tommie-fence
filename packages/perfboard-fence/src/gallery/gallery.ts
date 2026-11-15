@@ -133,8 +133,8 @@ const looksOf = (type: string): readonly string[] => LOOKS.get(type) ?? [];
 
 // ---- 型番 (ピンの名前の表) --------------------------------------------------
 
-/** 1 列で描く行。奇数ピン、樹脂の色や胴の字を持つ物、モジュールの外形を持つ物。 */
-const isSip = (row: PinoutRow): boolean => row.names.length % 2 === 1 || row.look !== undefined || row.module !== undefined;
+/** 1 列で描く行。置き方は部品カードの `package:` (52 の docs/160)。幅 (`/wide`) は使わず、標準の幅で並べる。 */
+const isSip = (row: PinoutRow): boolean => (row.package ?? '').startsWith('sip');
 
 /** 名札 (`U1 型番`) の幅を列で見積もる。1 列に字が 3 つほど。 */
 const labelColumns = (model: string): number => Math.ceil((model.length + 3) / 3);

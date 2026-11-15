@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# TI SNIS153D の Pin Functions (D・DGK)。印字の `+VS` は `VS`、`O.S.` は `.` が書けないので `OS`。
+models: [LM75, LM75B, LM75C, LM75A]
+package: dip8
+role: I2C 温度センサ
+role-en: I2C temperature sensor
+pins: [SDA, SCL, OS, GND, A2, A1, A0, VS]
+note: I2C 温度センサ。印字の `+VS` は `VS`、`O.S.` は `OS`
+source: TI SNIS153D の Pin Functions (D・DGK)。印字の `+VS` は `VS`、`O.S.` は `.` が書けないので `OS`。

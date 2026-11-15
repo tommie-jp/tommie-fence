@@ -1,0 +1,7 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [MCP6002, MCP6002-I/P, MCP6002-E/P, MCP6002-I/SN, MCP6002-E/SN, MCP6002-I/MS]
+package: dip8
+role: オペアンプ ×2 (CMOS・レール ツー レール)
+role-en: op-amp ×2 (CMOS, rail-to-rail)
+pins: [VOUTA, VINA-, VINA+, VSS, VINB+, VINB-, VOUTB, VDD]
+source: Microchip DS20001733L (MCP6001/1R/1U/2/4)、Table 3-1 (PDIP・SOIC・MSOP)。2026-10-06 に確かめた

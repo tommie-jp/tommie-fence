@@ -1,0 +1,7 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [LM358, LM358P, LM358N, LM358A, LM358AP, LM358B, LM358BP, LM2904, LM2904P, LM258, LM258P]
+package: dip8
+role: オペアンプ ×2
+role-en: op-amp ×2
+pins: [OUT1, IN1-, IN1+, V-, IN2+, IN2-, OUT2, V+]
+source: SLOS068AB (LM358 / LM2904 / LM258 / LM158)、Table 4-1

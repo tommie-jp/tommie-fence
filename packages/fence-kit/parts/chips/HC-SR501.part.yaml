@@ -1,0 +1,13 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# 人感センサのモジュール。ピンは 1 列 3 本。HK Shan Hai の資料の写真 (レンズを外した部品面、ヘッダが上) は
+# 左から GND・OUT・+Power で、ヘッダを手前にすると逆 (VCC OUT GND)。番号は Components101 の 1 Vcc・2 Dout・3 GND。
+models: [HC-SR501, HCSR501]
+package: sip3
+role: 人感 (焦電) センサのモジュール
+role-en: PIR motion sensor module
+pins: [VCC, OUT, GND]
+look:
+  body: "#2f7d4f"
+  edge: "#1d5434"
+note: 人感 (焦電) センサのモジュール。緑の帯で描く (基板のピンヘッダだけ)。電源は 4.5〜20 V、`OUT` は 3.3 V の H。見る向きで左右が逆になるので、基板の印字で確かめる
+source: 人感センサのモジュール。ピンは 1 列 3 本。HK Shan Hai の資料の写真 (レンズを外した部品面、ヘッダが上) は 左から GND・OUT・+Power で、ヘッダを手前にすると逆 (VCC OUT GND)。番号は Components101 の 1 Vcc・2 Dout・3 GND。

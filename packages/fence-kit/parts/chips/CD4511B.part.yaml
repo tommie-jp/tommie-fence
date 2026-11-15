@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [CD4511B, CD4511, CD4511BE]
+package: dip16
+role: BCD → 7 セグ デコーダ
+role-en: BCD to 7-segment decoder
+pins: [INB, INC, LT, BL, LE/STROBE, IND, INA, VSS, Oe, Od, Oc, Ob, Oa, Og, Of, VDD]
+note: 印字の入力 `A`〜`D` と出力 `a`〜`g` は大文字小文字だけが違うので `IN` と `O` を付けた
+source: SCHS072B、端子図 (TERMINAL ASSIGNMENT)

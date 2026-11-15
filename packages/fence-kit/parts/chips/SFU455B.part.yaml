@@ -1,0 +1,13 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# 村田の 455 kHz。ピンは 1 列 3 本 (a 入力・b アース・c 出力)、間隔 2.5 mm。
+# 橙の樹脂 (`SFU` の字は図に刷らない)。左右対称なので向きの目印は無い。
+models: [SFU455B, SFU455A, SFU455]
+package: sip3
+role: セラミックフィルタ 455 kHz
+role-en: ceramic filter 455 kHz
+pins: [IN, GND, OUT]
+look:
+  body: "#e8842a"
+  edge: "#a85a12"
+note: "村田の 455 kHz セラミックフィルタ。実体配線図は橙の胴で描く。回路図の記号は `ceramic-filter`"
+source: 村田の 455 kHz。ピンは 1 列 3 本 (a 入力・b アース・c 出力)、間隔 2.5 mm。 橙の樹脂 (`SFU` の字は図に刷らない)。左右対称なので向きの目印は無い。

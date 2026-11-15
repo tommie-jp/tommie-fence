@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# P (PDIP) の印字。1・5・8 番は NC (オフセット調整のピンがあるのは TL071C の PS だけ)。
+models: [TL071, TL071CP, TL071ACP, TL071BCP, TL071H]
+package: dip8
+role: オペアンプ
+role-en: op-amp
+pins: [NC, IN-, IN+, VCC-, NC, OUT, VCC+, NC]
+source: SLOS080W、Table 4-1 (TL071x の D・P) / 4-3 (TL072x)

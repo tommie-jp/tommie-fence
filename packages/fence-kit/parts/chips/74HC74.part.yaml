@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# CLR・PRE は上に線 (L で効く)。Q の反転は `/1Q`・`/2Q`。
+models: [74HC74, SN74HC74, SN74HC74N]
+package: dip14
+role: D フリップフロップ ×2
+role-en: D flip-flop ×2
+pins: [1CLR, 1D, 1CLK, 1PRE, 1Q, /1Q, GND, /2Q, 2Q, 2PRE, 2CLK, 2D, 2CLR, VCC]
+note: "`CLR` `PRE` は上に線"
+source: TI SN74HC14 などの Pin Functions (N)。74HC74・86・02 は 2026-10-04 に突き合わせ済み

@@ -15,7 +15,7 @@ const optional = <K extends string, V>(key: K, value: V | undefined): { [P in K]
   (value === undefined ? {} : { [key]: value }) as { [P in K]?: V };
 
 const chipRow = (card: ChipCard, origin: Origin): PinoutRow => ({
-  models: card.models, names: card.pins, role: card.role,
+  models: card.models, names: card.pins, role: card.role, package: card.package,
   ...optional('note', card.note),
   ...optional('look', card.look),
   ...optional('chip', card.smd),

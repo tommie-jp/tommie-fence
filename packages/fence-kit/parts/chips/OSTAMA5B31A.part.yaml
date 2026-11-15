@@ -1,0 +1,13 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# 5 mm のフルカラー LED (アノードコモン)。秋月 112167。OptoSupply の図 (OSTAMA5B31A Ver a1.3) で並びは
+# OSTA5131A と同じ (1 緑・2 青・3 共通・4 赤) で、極性だけが逆 (3 番が共通アノード)。
+models: [OSTAMA5B31A, "112167"]
+package: sip4
+role: フルカラー LED 5 mm (アノードコモン)
+role-en: RGB LED 5 mm (common anode)
+pins: [G, B, A, R]
+look:
+  body: "#eef0f2"
+  edge: "#a9adb3"
+note: フルカラー LED 5 mm、アノードコモン。並びは `OSTA5131A` と同じで極性が逆。3 番 `A` が共通アノード (いちばん長い足)。乳白の胴で描く
+source: 5 mm のフルカラー LED (アノードコモン)。秋月 112167。OptoSupply の図 (OSTAMA5B31A Ver a1.3) で並びは OSTA5131A と同じ (1 緑・2 青・3 共通・4 赤) で、極性だけが逆 (3 番が共通アノード)。

@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# CS・OE・WE は上に線。I/O の `/` は落とす。
+models: ["6116", IDT6116SA, IDT6116LA, HM6116, HM6116P]
+package: dip24/wide
+role: SRAM 2K×8
+pins: [A7, A6, A5, A4, A3, A2, A1, A0, IO0, IO1, IO2, GND, IO3, IO4, IO5, IO6, IO7, CS, A10, OE, WE, A9, A8, VCC]
+note: "`CS` `OE` `WE` は上に線。印字の `I/O` は `IO`"
+source: Renesas (IDT) IDT6116SA/LA DSC-3089/03、Pin Configurations (DIP) — I/O 0〜7 は `IO0`〜`IO7`

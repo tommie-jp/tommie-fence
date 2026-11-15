@@ -6,36 +6,36 @@
 \begin{circuitikz}[american, line width=0.8pt]
 \ctikzset{bipoles/length=1.2cm}
 \coordinate (x1p75y2p5) at (1.5,-3);
-\coordinate (x4y2p5) at (6,-3);
-\coordinate (x6y2p5) at (10,-3);
-\coordinate (x8p25y2p5) at (14.5,-3);
-\coordinate (x10p5y2p5) at (19,-3);
-\coordinate (x12p75y2p5) at (23.5,-3);
-\coordinate (x15y2p5) at (28,-3);
+\coordinate (x3p75y2p5) at (5.5,-3);
+\coordinate (x5p75y2p5) at (9.5,-3);
+\coordinate (x7p75y2p5) at (13.5,-3);
+\coordinate (x9p75y2p5) at (17.5,-3);
+\coordinate (x11p5y2p5) at (21,-3);
+\coordinate (x13p5y2p5) at (25,-3);
+\coordinate (x15p5y2p5) at (29,-3);
 \coordinate (x1p75y5p5) at (1.5,-9);
-\coordinate (x3p75y5p5) at (5.5,-9);
-\coordinate (x5p75y5p5) at (9.5,-9);
+\coordinate (x4y5p5) at (6,-9);
+\coordinate (x6y5p5) at (10,-9);
 \coordinate (x7p75y5p5) at (13.5,-9);
-\coordinate (x9p5y5p5) at (17,-9);
-\coordinate (x11p5y5p5) at (21,-9);
-\coordinate (x13p25y5p5) at (24.5,-9);
-\coordinate (x15p25y5p5) at (28.5,-9);
+\coordinate (x9p75y5p5) at (17.5,-9);
+\coordinate (x11p75y5p5) at (21.5,-9);
+\coordinate (x13p75y5p5) at (25.5,-9);
+\coordinate (x15p75y5p5) at (29.5,-9);
 \coordinate (x1p75y8p5) at (1.5,-15);
 \coordinate (x3p75y8p5) at (5.5,-15);
 \coordinate (x5p5y8p5) at (9,-15);
-\coordinate (x7p75y8p5) at (13.5,-15);
+\coordinate (x7p5y8p5) at (13,-15);
 \coordinate (x9p75y8p5) at (17.5,-15);
 \coordinate (x11p75y8p5) at (21.5,-15);
 \coordinate (x13p75y8p5) at (25.5,-15);
-\coordinate (x2y11p5) at (2,-21);
-\coordinate (x4y11p5) at (6,-21);
-\coordinate (x6p25y11p5) at (10.5,-21);
-\coordinate (x8p25y11p5) at (14.5,-21);
-\coordinate (x10y11p5) at (18,-21);
-\coordinate (x12y11p5) at (22,-21);
-\coordinate (x13p75y11p5) at (25.5,-21);
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.7, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U1) at (x1p75y2p5) {}; % line 4
-\node[font=\scriptsize, anchor=north] at (part-U1.south) {$\mathrm{CD4017B}$}; % line 4
+\coordinate (x1p75y11p5) at (1.5,-21);
+\coordinate (x4p25y11p5) at (6.5,-21);
+\coordinate (x6p5y11p5) at (11,-21);
+\coordinate (x8p5y11p5) at (15,-21);
+\coordinate (x10p75y11p5) at (19.5,-21);
+\coordinate (x12p75y11p5) at (23.5,-21);
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.5, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U1) at (x1p75y2p5) {}; % line 4
+\node[font=\scriptsize, anchor=north] at (part-U1.south) {$\mathrm{74HC112}$}; % line 4
 \node[anchor=south] at (part-U1.north) {$U_{1}$}; % line 4
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 1) {X}; % line 4
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U1.bpin 2) {X}; % line 4
@@ -53,8 +53,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 14) {X}; % line 4
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 15) {X}; % line 4
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U1.bpin 16) {X}; % line 4
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.7, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U2) at (x4y2p5) {}; % line 5
-\node[font=\scriptsize, anchor=north] at (part-U2.south) {$\mathrm{CD4040B}$}; % line 5
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.7, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U2) at (x3p75y2p5) {}; % line 5
+\node[font=\scriptsize, anchor=north] at (part-U2.south) {$\mathrm{74HC123}$}; % line 5
 \node[anchor=south] at (part-U2.north) {$U_{2}$}; % line 5
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 1) {X}; % line 5
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U2.bpin 2) {X}; % line 5
@@ -72,8 +72,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 14) {X}; % line 5
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 15) {X}; % line 5
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U2.bpin 16) {X}; % line 5
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.9, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U3) at (x6y2p5) {}; % line 6
-\node[font=\scriptsize, anchor=north] at (part-U3.south) {$\mathrm{L293D}$}; % line 6
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U3) at (x5p75y2p5) {}; % line 6
+\node[font=\scriptsize, anchor=north] at (part-U3.south) {$\mathrm{74HC138}$}; % line 6
 \node[anchor=south] at (part-U3.north) {$U_{3}$}; % line 6
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 1) {X}; % line 6
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U3.bpin 2) {X}; % line 6
@@ -91,8 +91,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 14) {X}; % line 6
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 15) {X}; % line 6
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U3.bpin 16) {X}; % line 6
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=2, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U4) at (x8p25y2p5) {}; % line 7
-\node[font=\scriptsize, anchor=north] at (part-U4.south) {$\mathrm{MCP3008}$}; % line 7
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U4) at (x7p75y2p5) {}; % line 7
+\node[font=\scriptsize, anchor=north] at (part-U4.south) {$\mathrm{74HC139}$}; % line 7
 \node[anchor=south] at (part-U4.north) {$U_{4}$}; % line 7
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 1) {X}; % line 7
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U4.bpin 2) {X}; % line 7
@@ -110,8 +110,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 14) {X}; % line 7
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 15) {X}; % line 7
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U4.bpin 16) {X}; % line 7
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.7, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U5) at (x10p5y2p5) {}; % line 8
-\node[font=\scriptsize, anchor=north] at (part-U5.south) {$\mathrm{74HC595}$}; % line 8
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U5) at (x9p75y2p5) {}; % line 8
+\node[font=\scriptsize, anchor=north] at (part-U5.south) {$\mathrm{74HC151}$}; % line 8
 \node[anchor=south] at (part-U5.north) {$U_{5}$}; % line 8
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 1) {X}; % line 8
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U5.bpin 2) {X}; % line 8
@@ -129,8 +129,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 14) {X}; % line 8
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 15) {X}; % line 8
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U5.bpin 16) {X}; % line 8
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=2.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U6) at (x12p75y2p5) {}; % line 9
-\node[font=\scriptsize, anchor=north] at (part-U6.south) {$\mathrm{CD4511B}$}; % line 9
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U6) at (x11p5y2p5) {}; % line 9
+\node[font=\scriptsize, anchor=north] at (part-U6.south) {$\mathrm{74HC153}$}; % line 9
 \node[anchor=south] at (part-U6.north) {$U_{6}$}; % line 9
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U6.bpin 1) {X}; % line 9
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U6.bpin 2) {X}; % line 9
@@ -148,8 +148,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U6.bpin 14) {X}; % line 9
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U6.bpin 15) {X}; % line 9
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U6.bpin 16) {X}; % line 9
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.5, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U7) at (x15y2p5) {}; % line 10
-\node[font=\scriptsize, anchor=north] at (part-U7.south) {$\mathrm{CD74HC283}$}; % line 10
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U7) at (x13p5y2p5) {}; % line 10
+\node[font=\scriptsize, anchor=north] at (part-U7.south) {$\mathrm{74HC157}$}; % line 10
 \node[anchor=south] at (part-U7.north) {$U_{7}$}; % line 10
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U7.bpin 1) {X}; % line 10
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U7.bpin 2) {X}; % line 10
@@ -167,8 +167,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U7.bpin 14) {X}; % line 10
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U7.bpin 15) {X}; % line 10
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U7.bpin 16) {X}; % line 10
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.5, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U8) at (x1p75y5p5) {}; % line 11
-\node[font=\scriptsize, anchor=north] at (part-U8.south) {$\mathrm{74HC163}$}; % line 11
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.5, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U8) at (x15p5y2p5) {}; % line 11
+\node[font=\scriptsize, anchor=north] at (part-U8.south) {$\mathrm{74HC161}$}; % line 11
 \node[anchor=south] at (part-U8.north) {$U_{8}$}; % line 11
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U8.bpin 1) {X}; % line 11
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U8.bpin 2) {X}; % line 11
@@ -186,8 +186,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U8.bpin 14) {X}; % line 11
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U8.bpin 15) {X}; % line 11
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U8.bpin 16) {X}; % line 11
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.5, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U9) at (x3p75y5p5) {}; % line 12
-\node[font=\scriptsize, anchor=north] at (part-U9.south) {$\mathrm{74HC161}$}; % line 12
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.5, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U9) at (x1p75y5p5) {}; % line 12
+\node[font=\scriptsize, anchor=north] at (part-U9.south) {$\mathrm{74HC163}$}; % line 12
 \node[anchor=south] at (part-U9.north) {$U_{9}$}; % line 12
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U9.bpin 1) {X}; % line 12
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U9.bpin 2) {X}; % line 12
@@ -205,8 +205,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U9.bpin 14) {X}; % line 12
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U9.bpin 15) {X}; % line 12
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U9.bpin 16) {X}; % line 12
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U10) at (x5p75y5p5) {}; % line 13
-\node[font=\scriptsize, anchor=north] at (part-U10.south) {$\mathrm{74HC194}$}; % line 13
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.9, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U10) at (x4y5p5) {}; % line 13
+\node[font=\scriptsize, anchor=north] at (part-U10.south) {$\mathrm{74HC165}$}; % line 13
 \node[anchor=south] at (part-U10.north) {$U_{10}$}; % line 13
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U10.bpin 1) {X}; % line 13
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U10.bpin 2) {X}; % line 13
@@ -224,8 +224,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U10.bpin 14) {X}; % line 13
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U10.bpin 15) {X}; % line 13
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U10.bpin 16) {X}; % line 13
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U11) at (x7p75y5p5) {}; % line 14
-\node[font=\scriptsize, anchor=north] at (part-U11.south) {$\mathrm{74HC138}$}; % line 14
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U11) at (x6y5p5) {}; % line 14
+\node[font=\scriptsize, anchor=north] at (part-U11.south) {$\mathrm{74HC174}$}; % line 14
 \node[anchor=south] at (part-U11.north) {$U_{11}$}; % line 14
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U11.bpin 1) {X}; % line 14
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U11.bpin 2) {X}; % line 14
@@ -243,8 +243,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U11.bpin 14) {X}; % line 14
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U11.bpin 15) {X}; % line 14
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U11.bpin 16) {X}; % line 14
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U12) at (x9p5y5p5) {}; % line 15
-\node[font=\scriptsize, anchor=north] at (part-U12.south) {$\mathrm{74HC139}$}; % line 15
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U12) at (x7p75y5p5) {}; % line 15
+\node[font=\scriptsize, anchor=north] at (part-U12.south) {$\mathrm{74HC175}$}; % line 15
 \node[anchor=south] at (part-U12.north) {$U_{12}$}; % line 15
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U12.bpin 1) {X}; % line 15
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U12.bpin 2) {X}; % line 15
@@ -262,8 +262,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U12.bpin 14) {X}; % line 15
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U12.bpin 15) {X}; % line 15
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U12.bpin 16) {X}; % line 15
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U13) at (x11p5y5p5) {}; % line 16
-\node[font=\scriptsize, anchor=north] at (part-U13.south) {$\mathrm{74HC157}$}; % line 16
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.5, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U13) at (x9p75y5p5) {}; % line 16
+\node[font=\scriptsize, anchor=north] at (part-U13.south) {$\mathrm{74HC193}$}; % line 16
 \node[anchor=south] at (part-U13.north) {$U_{13}$}; % line 16
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U13.bpin 1) {X}; % line 16
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U13.bpin 2) {X}; % line 16
@@ -281,8 +281,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U13.bpin 14) {X}; % line 16
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U13.bpin 15) {X}; % line 16
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U13.bpin 16) {X}; % line 16
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U14) at (x13p25y5p5) {}; % line 17
-\node[font=\scriptsize, anchor=north] at (part-U14.south) {$\mathrm{74HC153}$}; % line 17
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U14) at (x11p75y5p5) {}; % line 17
+\node[font=\scriptsize, anchor=north] at (part-U14.south) {$\mathrm{74HC194}$}; % line 17
 \node[anchor=south] at (part-U14.north) {$U_{14}$}; % line 17
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U14.bpin 1) {X}; % line 17
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U14.bpin 2) {X}; % line 17
@@ -300,8 +300,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U14.bpin 14) {X}; % line 17
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U14.bpin 15) {X}; % line 17
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U14.bpin 16) {X}; % line 17
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U15) at (x15p25y5p5) {}; % line 18
-\node[font=\scriptsize, anchor=north] at (part-U15.south) {$\mathrm{74HC151}$}; % line 18
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.7, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U15) at (x13p75y5p5) {}; % line 18
+\node[font=\scriptsize, anchor=north] at (part-U15.south) {$\mathrm{74HC390}$}; % line 18
 \node[anchor=south] at (part-U15.north) {$U_{15}$}; % line 18
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U15.bpin 1) {X}; % line 18
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U15.bpin 2) {X}; % line 18
@@ -319,8 +319,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U15.bpin 14) {X}; % line 18
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U15.bpin 15) {X}; % line 18
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U15.bpin 16) {X}; % line 18
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U16) at (x1p75y8p5) {}; % line 19
-\node[font=\scriptsize, anchor=north] at (part-U16.south) {$\mathrm{74HC175}$}; % line 19
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U16) at (x15p75y5p5) {}; % line 19
+\node[font=\scriptsize, anchor=north] at (part-U16.south) {$\mathrm{74HC4040}$}; % line 19
 \node[anchor=south] at (part-U16.north) {$U_{16}$}; % line 19
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U16.bpin 1) {X}; % line 19
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U16.bpin 2) {X}; % line 19
@@ -338,8 +338,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U16.bpin 14) {X}; % line 19
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U16.bpin 15) {X}; % line 19
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U16.bpin 16) {X}; % line 19
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U17) at (x3p75y8p5) {}; % line 20
-\node[font=\scriptsize, anchor=north] at (part-U17.south) {$\mathrm{74HC174}$}; % line 20
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U17) at (x1p75y8p5) {}; % line 20
+\node[font=\scriptsize, anchor=north] at (part-U17.south) {$\mathrm{74HC4051}$}; % line 20
 \node[anchor=south] at (part-U17.north) {$U_{17}$}; % line 20
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U17.bpin 1) {X}; % line 20
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U17.bpin 2) {X}; % line 20
@@ -357,8 +357,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U17.bpin 14) {X}; % line 20
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U17.bpin 15) {X}; % line 20
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U17.bpin 16) {X}; % line 20
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.5, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U18) at (x5p5y8p5) {}; % line 21
-\node[font=\scriptsize, anchor=north] at (part-U18.south) {$\mathrm{74HC112}$}; % line 21
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U18) at (x3p75y8p5) {}; % line 21
+\node[font=\scriptsize, anchor=north] at (part-U18.south) {$\mathrm{74HC4052}$}; % line 21
 \node[anchor=south] at (part-U18.north) {$U_{18}$}; % line 21
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U18.bpin 1) {X}; % line 21
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U18.bpin 2) {X}; % line 21
@@ -376,8 +376,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U18.bpin 14) {X}; % line 21
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U18.bpin 15) {X}; % line 21
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U18.bpin 16) {X}; % line 21
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.7, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U19) at (x7p75y8p5) {}; % line 22
-\node[font=\scriptsize, anchor=north] at (part-U19.south) {$\mathrm{74HC390}$}; % line 22
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U19) at (x5p5y8p5) {}; % line 22
+\node[font=\scriptsize, anchor=north] at (part-U19.south) {$\mathrm{74HC4053}$}; % line 22
 \node[anchor=south] at (part-U19.north) {$U_{19}$}; % line 22
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U19.bpin 1) {X}; % line 22
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U19.bpin 2) {X}; % line 22
@@ -395,8 +395,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U19.bpin 14) {X}; % line 22
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U19.bpin 15) {X}; % line 22
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U19.bpin 16) {X}; % line 22
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U20) at (x9p75y8p5) {}; % line 23
-\node[font=\scriptsize, anchor=north] at (part-U20.south) {$\mathrm{74HC4040}$}; % line 23
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.7, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U20) at (x7p5y8p5) {}; % line 23
+\node[font=\scriptsize, anchor=north] at (part-U20.south) {$\mathrm{74HC4060}$}; % line 23
 \node[anchor=south] at (part-U20.north) {$U_{20}$}; % line 23
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U20.bpin 1) {X}; % line 23
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U20.bpin 2) {X}; % line 23
@@ -414,8 +414,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U20.bpin 14) {X}; % line 23
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U20.bpin 15) {X}; % line 23
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U20.bpin 16) {X}; % line 23
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.7, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U21) at (x11p75y8p5) {}; % line 24
-\node[font=\scriptsize, anchor=north] at (part-U21.south) {$\mathrm{74HC4060}$}; % line 24
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.7, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U21) at (x9p75y8p5) {}; % line 24
+\node[font=\scriptsize, anchor=north] at (part-U21.south) {$\mathrm{74HC595}$}; % line 24
 \node[anchor=south] at (part-U21.north) {$U_{21}$}; % line 24
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U21.bpin 1) {X}; % line 24
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U21.bpin 2) {X}; % line 24
@@ -433,8 +433,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U21.bpin 14) {X}; % line 24
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U21.bpin 15) {X}; % line 24
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U21.bpin 16) {X}; % line 24
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.5, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U22) at (x13p75y8p5) {}; % line 25
-\node[font=\scriptsize, anchor=north] at (part-U22.south) {$\mathrm{74HC193}$}; % line 25
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.7, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U22) at (x11p75y8p5) {}; % line 25
+\node[font=\scriptsize, anchor=north] at (part-U22.south) {$\mathrm{74HC85}$}; % line 25
 \node[anchor=south] at (part-U22.north) {$U_{22}$}; % line 25
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U22.bpin 1) {X}; % line 25
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U22.bpin 2) {X}; % line 25
@@ -452,8 +452,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U22.bpin 14) {X}; % line 25
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U22.bpin 15) {X}; % line 25
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U22.bpin 16) {X}; % line 25
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.9, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U23) at (x2y11p5) {}; % line 26
-\node[font=\scriptsize, anchor=north] at (part-U23.south) {$\mathrm{74HC165}$}; % line 26
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.7, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U23) at (x13p75y8p5) {}; % line 26
+\node[font=\scriptsize, anchor=north] at (part-U23.south) {$\mathrm{CD4017B}$}; % line 26
 \node[anchor=south] at (part-U23.north) {$U_{23}$}; % line 26
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U23.bpin 1) {X}; % line 26
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U23.bpin 2) {X}; % line 26
@@ -471,8 +471,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U23.bpin 14) {X}; % line 26
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U23.bpin 15) {X}; % line 26
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U23.bpin 16) {X}; % line 26
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.7, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U24) at (x4y11p5) {}; % line 27
-\node[font=\scriptsize, anchor=north] at (part-U24.south) {$\mathrm{74HC85}$}; % line 27
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.7, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U24) at (x1p75y11p5) {}; % line 27
+\node[font=\scriptsize, anchor=north] at (part-U24.south) {$\mathrm{CD4040B}$}; % line 27
 \node[anchor=south] at (part-U24.north) {$U_{24}$}; % line 27
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U24.bpin 1) {X}; % line 27
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U24.bpin 2) {X}; % line 27
@@ -490,8 +490,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U24.bpin 14) {X}; % line 27
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U24.bpin 15) {X}; % line 27
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U24.bpin 16) {X}; % line 27
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.7, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U25) at (x6p25y11p5) {}; % line 28
-\node[font=\scriptsize, anchor=north] at (part-U25.south) {$\mathrm{74HC123}$}; % line 28
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=2.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U25) at (x4p25y11p5) {}; % line 28
+\node[font=\scriptsize, anchor=north] at (part-U25.south) {$\mathrm{CD4511B}$}; % line 28
 \node[anchor=south] at (part-U25.north) {$U_{25}$}; % line 28
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U25.bpin 1) {X}; % line 28
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U25.bpin 2) {X}; % line 28
@@ -509,8 +509,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U25.bpin 14) {X}; % line 28
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U25.bpin 15) {X}; % line 28
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U25.bpin 16) {X}; % line 28
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U26) at (x8p25y11p5) {}; % line 29
-\node[font=\scriptsize, anchor=north] at (part-U26.south) {$\mathrm{74HC4051}$}; % line 29
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.5, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U26) at (x6p5y11p5) {}; % line 29
+\node[font=\scriptsize, anchor=north] at (part-U26.south) {$\mathrm{CD74HC283}$}; % line 29
 \node[anchor=south] at (part-U26.north) {$U_{26}$}; % line 29
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U26.bpin 1) {X}; % line 29
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U26.bpin 2) {X}; % line 29
@@ -528,8 +528,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U26.bpin 14) {X}; % line 29
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U26.bpin 15) {X}; % line 29
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U26.bpin 16) {X}; % line 29
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U27) at (x10y11p5) {}; % line 30
-\node[font=\scriptsize, anchor=north] at (part-U27.south) {$\mathrm{74HC4052}$}; % line 30
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.9, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U27) at (x8p5y11p5) {}; % line 30
+\node[font=\scriptsize, anchor=north] at (part-U27.south) {$\mathrm{L293D}$}; % line 30
 \node[anchor=south] at (part-U27.north) {$U_{27}$}; % line 30
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U27.bpin 1) {X}; % line 30
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U27.bpin 2) {X}; % line 30
@@ -547,8 +547,8 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U27.bpin 14) {X}; % line 30
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U27.bpin 15) {X}; % line 30
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U27.bpin 16) {X}; % line 30
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U28) at (x12y11p5) {}; % line 31
-\node[font=\scriptsize, anchor=north] at (part-U28.south) {$\mathrm{74HC4053}$}; % line 31
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=2, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U28) at (x10p75y11p5) {}; % line 31
+\node[font=\scriptsize, anchor=north] at (part-U28.south) {$\mathrm{MCP3008}$}; % line 31
 \node[anchor=south] at (part-U28.north) {$U_{28}$}; % line 31
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U28.bpin 1) {X}; % line 31
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U28.bpin 2) {X}; % line 31
@@ -566,7 +566,7 @@
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U28.bpin 14) {X}; % line 31
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U28.bpin 15) {X}; % line 31
 \node[circuitnotemark, font=\tiny, anchor=east, xshift=-2pt, inner sep=0] at (part-U28.bpin 16) {X}; % line 31
-\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U29) at (x13p75y11p5) {}; % line 32
+\node[dipchip, num pins=16, hide numbers, font=\scriptsize, /tikz/circuitikz/multipoles/dipchip/width=1.4, /tikz/circuitikz/multipoles/dipchip/pin spacing=0.416667, yshift=-0.25cm] (part-U29) at (x12p75y11p5) {}; % line 32
 \node[font=\scriptsize, anchor=north] at (part-U29.south) {$\mathrm{ULN2003A}$}; % line 32
 \node[anchor=south] at (part-U29.north) {$U_{29}$}; % line 32
 \node[circuitnotemark, font=\tiny, anchor=west, xshift=2pt, inner sep=0] at (part-U29.bpin 1) {X}; % line 32

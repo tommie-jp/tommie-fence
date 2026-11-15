@@ -1,0 +1,20 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# Adafruit 2045 (Si5351A のクロック発生器のブレークアウト、1 列 7 本)。Adafruit の GitHub の基板データ
+# (Adafruit-Si5351A-Clock-Generator-Breakout-PCB の Adafruit Si5351A.brd、2026-11-12 に確かめた): ヘッダ JP1 の
+# 部品面のシルクは、ヘッダを手前にして左から `0` `1` `2` `SCL` `SDA` `GND` `VIN` (x = 7.62〜22.86 mm)。
+# 信号は JP1 の 7 番 CLK0・6 番 CLK1・5 番 CLK2・4 番 SCL_5V・3 番 SDA_5V・2 番 GND・1 番 VIN で、
+# **Eagle のパッドの番号は右から数える** (1 番が VIN)。表は ADAFRUIT-1782 と同じく左からの並び。
+# **出力の印字は数字だけ** (`0` `1` `2`) なので、番号と割れないよう基板データの信号名 (SMA の側のシルクも
+# `CLK0`〜`CLK2`) で呼ぶ — CD4017B の出力に `Q` を付けたのと同じ決まり。
+# 紫の互換基板 CJMCU-5351 は販売元 (DollaTek) の説明書の写真で同じ印字・同じ並びを確かめたので別名に入れる
+# (https://manuals.plus/asin/B07HBMLN1S.pdf)。`GY-SI5351` の名の基板は確かめていないので入れない。
+models: [ADAFRUIT-2045, SI5351A-BREAKOUT, CJMCU-5351]
+package: sip7
+role: I2C クロック発生器のブレークアウト (Si5351A)
+role-en: I2C clock generator breakout (Si5351A)
+pins: [CLK0, CLK1, CLK2, SCL, SDA, GND, VIN]
+look:
+  body: "#1f2a44"
+  edge: "#111827"
+note: "`sip7` を濃い青の帯で描く (基板のピンヘッダだけ)。出力の印字は `0` `1` `2` (番号と割れないよう `CLK0`〜`CLK2` で呼ぶ)。VIN は 3〜5 V (基板に 3.3 V のレギュレータ)、SCL・SDA は基板でレベル変換 (10 kΩ のプルアップつき)。出力は 3 Vpp の方形波、アドレスは 0x60。紫の互換基板 (`CJMCU-5351`) も同じ印字"
+source: "Adafruit 2045 (Si5351A のクロック発生器のブレークアウト、1 列 7 本)。Adafruit の GitHub の基板データ (Adafruit-Si5351A-Clock-Generator-Breakout-PCB の Adafruit Si5351A.brd、2026-11-12 に確かめた): ヘッダ JP1 の 部品面のシルクは、ヘッダを手前にして左から `0` `1` `2` `SCL` `SDA` `GND` `VIN` (x = 7.62〜22.86 mm)。 信号は JP1 の 7 番 CLK0・6 番 CLK1・5 番 CLK2・4 番 SCL_5V・3 番 SDA_5V・2 番 GND・1 番 VIN で、 **Eagle のパッドの番号は右から数える** (1 番が VIN)。表は ADAFRUIT-1782 と同じく左からの並び。 **出力の印字は数字だけ** (`0` `1` `2`) なので、番号と割れないよう基板データの信号名 (SMA の側のシルクも `CLK0`〜`CLK2`) で呼ぶ — CD4017B の出力に `Q` を付けたのと同じ決まり。 紫の互換基板 CJMCU-5351 は販売元 (DollaTek) の説明書の写真で同じ印字・同じ並びを確かめたので別名に入れる (https://manuals.plus/asin/B07HBMLN1S.pdf)。`GY-SI5351` の名の基板は確かめていないので入れない。"

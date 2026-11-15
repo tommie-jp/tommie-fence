@@ -2,6 +2,7 @@
 models: [74LS00, SN74LS00, SN74LS00N]
 package: dip14
 role: 2 入力 NAND ×4
+role-en: 2-input NAND ×4
 # TTL (LS) の NAND。74HC00 と並びは同じだが、電源は 5 V だけ・入力は TTL レベル・静止電流は mA で
 # 別の品なので、74HC00 の別名にしない (教科書の 02-analog-discovery 7-20 で 74HC00 と差し替える)。
 note: TTL。並びは `74HC00` と同じだが、電源は 5 V だけ・静止電流は mA で別の品

@@ -1,0 +1,12 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# 村田 P50E-6 の SFELF の外形図。足は一直線に 2.5 mm 間隔。
+models: [SFELF10M7, SFELF10M7FA00, SFELF10M7GA00, SFELF10M7HA00, SFELF10M7FA00-B0]
+package: sip3
+role: セラミックフィルタ 10.7 MHz
+role-en: ceramic filter 10.7 MHz
+pins: [IN, GND, OUT]
+look:
+  body: "#3a3a3a"
+  edge: "#1c1c1c"
+note: 村田のセラミックフィルタ 10.7 MHz。足は一直線に 2.5 mm 間隔。入出力 330 Ω
+source: 村田 P50E-6 の SFELF の外形図。足は一直線に 2.5 mm 間隔。

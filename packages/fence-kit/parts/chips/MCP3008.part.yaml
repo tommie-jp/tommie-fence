@@ -1,0 +1,7 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [MCP3008]
+package: dip16
+role: 10 bit A/D 変換 8 ch
+role-en: 10-bit ADC, 8 ch
+pins: [CH0, CH1, CH2, CH3, CH4, CH5, CH6, CH7, DGND, CS/SHDN, DIN, DOUT, CLK, AGND, VREF, VDD]
+source: Microchip DS21295D (MCP3004/3008)、Table 3-1 (PDIP)

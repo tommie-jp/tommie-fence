@@ -27,4 +27,4 @@ source: TI SN74LS00 (SDLS025), pin diagram (N)   # required: where the order was
   the playground), move the card to `packages/fence-kit/parts/` and run `npm run cards` and `npm run rows`.
 
 The full guide (fields, pin order per package, the naming rules) is in Japanese: [README.ja.md](README.ja.md).
-Worked examples are in [examples/](examples/).
+Worked examples are the bundled cards in [packages/fence-kit/parts/](../fence-kit/parts/) (`chips/`, `discretes/`, `modules/`, `boards/`).

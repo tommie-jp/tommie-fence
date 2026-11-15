@@ -59,7 +59,7 @@ export const PARTS_SYMBOL_HEADING_BY_LANG: Readonly<Record<Lang, string>> = { ja
 /** 種類の欄に、綴り (`sip3`) の代わりに出す呼び名。 */
 const CERAMIC_FILTER: Readonly<Record<Lang, string>> = { ja: 'セラミックフィルター', en: 'ceramic filter' };
 
-/** 型番の働きの表 (pinouts・pinoutRolesEn) での書き出し。 */
+/** 型番の働きの表 (pinouts。英語は部品カードの role-en:) での書き出し。 */
 const CERAMIC_ROLE: Readonly<Record<Lang, string>> = { ja: 'セラミックフィルタ', en: 'ceramic filter' };
 
 /**

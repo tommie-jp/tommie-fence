@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [74HC20, SN74HC20, SN74HC20N]
+package: dip14
+role: 4 入力 NAND ×2
+role-en: 4-input NAND ×2
+pins: [1A, 1B, NC, 1C, 1D, 1Y, GND, 2Y, 2A, 2B, NC, 2C, 2D, VCC]
+note: "`NC` は 3・11 番。名前では指せず番号で呼ぶ"
+source: TI SN74HC14 などの Pin Functions (N)。74HC74・86・02 は 2026-10-04 に突き合わせ済み

@@ -1,0 +1,13 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# Adafruit 1782 (MCP9808 のブレークアウト、0.8 × 0.5 インチ)。Adafruit の GitHub の基板データ
+# (Adafruit-MCP9808-Breakout-PCB の Breakout.brd、JP2 と部品面のシルク) で、左から並ぶ。
+models: [ADAFRUIT-1782, MCP9808-BREAKOUT]
+package: sip8
+role: I2C 温度センサのブレークアウト (MCP9808)
+role-en: I2C temperature sensor breakout (MCP9808)
+pins: [VDD, GND, SCL, SDA, ALERT, A0, A1, A2]
+look:
+  body: "#1f2a44"
+  edge: "#111827"
+note: Adafruit の MCP9808 ブレークアウト。濃い青の帯で描く。SCL・SDA は基板に 10 kΩ のプルアップ。既定のアドレスは 0x18
+source: Adafruit 1782 (MCP9808 のブレークアウト、0.8 × 0.5 インチ)。Adafruit の GitHub の基板データ (Adafruit-MCP9808-Breakout-PCB の Breakout.brd、JP2 と部品面のシルク) で、左から並ぶ。

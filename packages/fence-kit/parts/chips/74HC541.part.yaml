@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [74HC541, SN74HC541, SN74HC541N]
+package: dip20
+role: 8 ビット 3 ステート バッファ (入力が片側)
+role-en: 8-bit 3-state buffer (inputs on one side)
+pins: [OE1, A1, A2, A3, A4, A5, A6, A7, A8, GND, Y8, Y7, Y6, Y5, Y4, Y3, Y2, Y1, OE2, VCC]
+note: "`OE1` `OE2` は上に線"
+source: TI の SN74HC161 などの Pin Functions と端子図 (N)。74HC85 の 13・14 番は端子図で A2・B2 (調査の読み取りは逆だったので直した)

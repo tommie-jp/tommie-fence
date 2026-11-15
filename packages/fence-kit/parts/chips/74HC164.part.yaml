@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [74HC164, SN74HC164, SN74HC164N]
+package: dip14
+role: 8 ビット 直列入力・並列出力 シフトレジスタ
+role-en: 8-bit serial-in parallel-out shift register
+pins: [A, B, QA, QB, QC, QD, GND, CLK, CLR, QE, QF, QG, QH, VCC]
+note: "`CLR` は上に線"
+source: TI SN74HC14 などの Pin Functions (N)。74HC74・86・02 は 2026-10-04 に突き合わせ済み

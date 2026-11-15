@@ -158,25 +158,16 @@ describe('ピンの名前の表', () => {
   test('lists the models it knows, one spelling per row, optionally for one package', () => {
     const all = pinoutModels();
 
-    // 先頭の 35 行は 74HC273 まで (既存の並び。LM393 は 6 行目、そのあとに SA612・MCP6002・LM386)、
-    // そのあとにロジック IC、そのあとに 3SK291、SFU455B、1 列のモジュール (KY-040・HC-SR04・SG90・DHT11・HC-SR501)、
-    // 3 本足の IC・センサ、8 ピンの温度センサ、村田のフィルタ 2 つ、RJ45・DC・オーディオの DIP 化キット、フルカラー LED、74LS00。
-    expect(all.slice(0, 9)).toEqual(['NE555', 'TLC555', 'LM358', 'TL071', 'TL072', 'LM393', 'SA612', 'MCP6002', 'LM386']);
-    expect(all.slice(32, 39)).toEqual(['62256', '6116', '74HC245', '74HC273', '74HC14', '74HC00', '74HC161']);
-    expect(all.slice(-25)).toEqual([
-      '3SK291', 'SFU455B', 'KY-040', 'HC-SR04', 'SG90', 'DHT11', 'HC-SR501', 'GY-9833', 'ADAFRUIT-1782',
-      'ADAFRUIT-2045', 'AE-SI5351A-B', 'TA7642', 'A3144', 'A1324', 'LM35', 'LM75', 'MCP9808', 'SFELF10M7', 'CFULA455', 'AE-RJ-45-LAN-DIP-A',
-      'AE-DC-POWER-JACK-DIP', 'AE-PHONE-JACK-DIP', 'OSTA5131A', 'OSTAMA5B31A', '74LS00',
-    ]);
+    // 並びは同梱の部品カードのファイルの名前の順 (52 の docs/160。ギャラリーの順にはこだわらない)。並びに依らず中身を見る。
+    expect(all.length).toBe(112);
+    expect(all).toEqual(expect.arrayContaining(['NE555', 'TLC555', 'LM358', '62256', '6116', '74HC245', '3SK291', 'KY-040', '74LS00']));
     expect(new Set(all).size).toBe(all.length);
-    expect(pinoutModels(3)).toEqual(['SFU455B', 'SG90', 'HC-SR501', 'TA7642', 'A3144', 'A1324', 'LM35', 'SFELF10M7', 'CFULA455']);
-    expect(pinoutModels(4)).toEqual(['3SK291', 'HC-SR04', 'DHT11', 'AE-DC-POWER-JACK-DIP', 'AE-PHONE-JACK-DIP', 'OSTA5131A', 'OSTAMA5B31A']);
+    expect([...pinoutModels(3)].sort()).toEqual(['A1324', 'A3144', 'CFULA455', 'HC-SR501', 'LM35', 'SFELF10M7', 'SFU455B', 'SG90', 'TA7642']);
+    expect([...pinoutModels(4)].sort()).toEqual(['3SK291', 'AE-DC-POWER-JACK-DIP', 'AE-PHONE-JACK-DIP', 'DHT11', 'HC-SR04', 'OSTA5131A', 'OSTAMA5B31A']);
     expect(pinoutModels(5)).toEqual(['KY-040']);
-    expect(pinoutModels(20)).toEqual([
-      '74HC245', '74HC273', '74HC244', '74HC541', '74HC240', '74HC573', '74HC574',
-    ]);
-    expect(pinoutModels(24)).toEqual(['74HC154', '6116']);
-    expect(pinoutModels(28)).toEqual(['62256', 'ATmega328P', 'PIC16F886', 'PIC16F57']);
+    expect([...pinoutModels(20)].sort()).toEqual(['74HC240', '74HC244', '74HC245', '74HC273', '74HC541', '74HC573', '74HC574']);
+    expect([...pinoutModels(24)].sort()).toEqual(['6116', '74HC154']);
+    expect([...pinoutModels(28)].sort()).toEqual(['62256', 'ATmega328P', 'PIC16F57', 'PIC16F886']);
     for (const model of ['74HC14', '74HC00', '74LS00', '74HC10', '74HC20', '74HC125', '74HC393', '74HC164', '74HC4066']) {
       expect(pinoutModels(14), model).toContain(model);
     }
@@ -188,7 +179,7 @@ describe('ピンの名前の表', () => {
   test('hands out the whole table with every spelling, for the cheat sheet', () => {
     const table = pinoutTable();
     expect(table.map((row) => row.models[0])).toEqual(pinoutModels());
-    expect(table[0]?.models).toContain('NE555P');
+    expect(table.find((row) => row.models[0] === 'NE555')?.models).toContain('NE555P');
     expect(table.every((row) => [3, 4, 5, 7, 8, 14, 16, 18, 20, 24, 28].includes(row.names.length))).toBe(true);
   });
 

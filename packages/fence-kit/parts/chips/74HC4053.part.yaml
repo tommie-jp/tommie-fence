@@ -1,0 +1,8 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [74HC4053, CD74HC4053, CD74HC4053E]
+package: dip16
+role: 2 チャネル アナログ マルチプレクサ ×3
+role-en: 2-channel analog multiplexer ×3
+pins: [B1, B0, C1, CN, C0, E, VEE, GND, S2, S1, S0, A0, A1, AN, BN, VCC]
+note: "`AN` `BN` `CN` が共通、`A0` `A1` …がチャネル。`E` は上に線"
+source: CD74HC4051 (SCHS122O) の Figure 4-1〜4-3。共通の入出力・選択の印字は `A`・`AN`・`S0`〜

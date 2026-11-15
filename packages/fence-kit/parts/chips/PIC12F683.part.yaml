@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# PIC の 8 ピン (52 の docs/140)。GP3 は MCLR と兼用の入力専用。12F629 は AN と VREF が無いだけで印字は同じ。
+models: [PIC12F683, PIC12F683-I/P, PIC12F675, PIC12F675-I/P, PIC12F629]
+package: dip8
+role: PIC マイコン (8 ピン)
+role-en: PIC microcontroller (8-pin)
+pins: [VDD, GP5, GP4, GP3, GP2, GP1, GP0, VSS]
+note: PIC マイコン。4 番 `GP3` は MCLR 兼用の入力専用。GP5=OSC1、GP4=OSC2、GP0=ICSPDAT、GP1=ICSPCLK
+source: Microchip DS41211D (12F683) と DS41190G (12F629/675) の 8-Pin Diagram (PDIP)。TABLE 1 / 1-1 と突き合わせた (2026-10-22)。名前は IO ポートの印字だけ (`GP0`〜`GP5`)

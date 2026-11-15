@@ -1,0 +1,14 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# 秋月の Si5351A モジュール (型番 AE-Si5351A-B、販売コード 110679)。10 mm 角の基板に 2.54 mm ピッチの穴が
+# 4 個ずつ 2 列 (列の間 7.62 mm) で、**DIP8 と同じ形**。秋月の説明書
+# https://akizukidenshi.com/goodsaffix/AE-Si5351A.PDF の端子説明の表と基板図 (2026-11-12 に確かめた):
+# 1 VDDO・2 SCL・3 SDA・4 GND・5 CLK0・6 CLK1・7 CLK2・8 VDD。基板図のシルクは左の列が上から
+# VDDO SCL SDA GND、右の列が上から VDD CLK2 CLK1 CLK0 で、番号は DIP と同じ回り方。
+# レギュレータもレベル変換もプルアップも載っていない (回路図は IC・水晶・0.1 µF 2 個だけ)。
+models: [AE-SI5351A-B, AE-SI5351A, "110679"]
+package: dip8
+role: クロック発生器のモジュール (Si5351A、DIP8 形)
+role-en: clock generator module (Si5351A, DIP-8 shape)
+pins: [VDDO, SCL, SDA, GND, CLK0, CLK1, CLK2, VDD]
+note: 秋月の 10 mm 角の基板 (`dip8` で置く)。**電源は 3.3 V** — `VDD` (コア) は 2.5〜3.3 V、`VDDO` (出力) は 1.8〜3.3 V で、5 V は掛けられない。レベル変換もプルアップも無いので SCL・SDA は 3.3 V に吊る。アドレスは 0x60
+source: "秋月の Si5351A モジュール (型番 AE-Si5351A-B、販売コード 110679)。10 mm 角の基板に 2.54 mm ピッチの穴が 4 個ずつ 2 列 (列の間 7.62 mm) で、**DIP8 と同じ形**。秋月の説明書 https://akizukidenshi.com/goodsaffix/AE-Si5351A.PDF の端子説明の表と基板図 (2026-11-12 に確かめた): 1 VDDO・2 SCL・3 SDA・4 GND・5 CLK0・6 CLK1・7 CLK2・8 VDD。基板図のシルクは左の列が上から VDDO SCL SDA GND、右の列が上から VDD CLK2 CLK1 CLK0 で、番号は DIP と同じ回り方。 レギュレータもレベル変換もプルアップも載っていない (回路図は IC・水晶・0.1 µF 2 個だけ)。"

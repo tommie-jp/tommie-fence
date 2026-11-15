@@ -1,0 +1,12 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# Allegro A1324-DS Rev. 9 の Pinout Diagrams (UA、足を下にした正面図)。A1325・A1326 は感度だけ違う。
+models: [A1324, A1324LUA-T, A1325, A1326]
+package: sip3
+role: リニアホールセンサ (アナログ出力)
+role-en: linear Hall-effect sensor (analog output)
+pins: [VCC, GND, VOUT]
+look:
+  body: "#2b2b2b"
+  edge: "#111111"
+note: リニアホールセンサ。**出力は 3 番**。磁界が無いと `VCC` の半分を出す
+source: Allegro A1324-DS Rev. 9 の Pinout Diagrams (UA、足を下にした正面図)。A1325・A1326 は感度だけ違う。

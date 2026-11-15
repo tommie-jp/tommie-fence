@@ -1,0 +1,9 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# 電源が 2 番 VDD・4 番 VSS で、ほかの 28 ピンと位置が違う。600 mil (-I/P) と 300 mil (-I/SP) がある。
+models: [PIC16F57, PIC16F57-I/P, PIC16F57-I/SP]
+package: dip28
+role: PIC マイコン (28 ピン)
+role-en: PIC microcontroller (28-pin)
+pins: [T0CKI, VDD, NC, VSS, NC, RA0, RA1, RA2, RA3, RB0, RB1, RB2, RB3, RB4, RB5, RB6, RB7, RC0, RC1, RC2, RC3, RC4, RC5, RC6, RC7, OSC2, OSC1, MCLR]
+note: PIC マイコン。**電源は 2 番 `VDD`・4 番 `VSS`** (ほかの 28 ピンと違う)。3・5 番は `NC`。`T0CKI` は使わなくても `VSS` か `VDD` へ。600 mil (-I/P) と 300 mil (-I/SP) がある
+source: Microchip DS41213D (PIC16F5X) の PIC16F57 の端子図 (PDIP)。印字の `N/C` は `NC`

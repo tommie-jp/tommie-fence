@@ -1,0 +1,13 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# 超音波距離センサのモジュール。ピンは 1 列 4 本 (VCC Trig Echo GND)。2026-10-22 に秋月 111009 の付属資料
+# (HC-SR04 の取扱説明書 V-2020、中国語: 1 Vcc 2 Trig 3 Echo 4 Gnd、外形図は裏から見て逆)・ElecFreaks・Cytron V1.0 で確かめた。
+models: [HC-SR04, HCSR04]
+package: sip4
+role: 超音波距離センサのモジュール
+role-en: ultrasonic distance sensor module
+pins: [VCC, TRIG, ECHO, GND]
+look:
+  body: "#2b6cb0"
+  edge: "#1c4a7d"
+note: 超音波距離センサのモジュール。青の帯で描く。センサの筒の面から見て左から並ぶ (裏から見ると逆)。`ECHO` は 5 V 出力
+source: "超音波距離センサのモジュール。ピンは 1 列 4 本 (VCC Trig Echo GND)。2026-10-22 に秋月 111009 の付属資料 (HC-SR04 の取扱説明書 V-2020、中国語: 1 Vcc 2 Trig 3 Echo 4 Gnd、外形図は裏から見て逆)・ElecFreaks・Cytron V1.0 で確かめた。"

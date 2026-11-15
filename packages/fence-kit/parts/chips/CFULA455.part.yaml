@@ -1,0 +1,12 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# 村田 P05E-16 の CFULA の外形図。**足は一直線でなく三角** ((1)(2) が 2.7 mm の列、(3) が 4.2 mm 離れた列)。
+models: [CFULA455, CFULA455KE4A, CFULA455KE4A-B0]
+package: sip3
+role: セラミックフィルタ 455 kHz (4 素子)
+role-en: ceramic filter 455 kHz (4 elements)
+pins: [IN, GND, OUT]
+look:
+  body: "#3a3a3a"
+  edge: "#1c1c1c"
+note: 村田のセラミックフィルタ 455 kHz。**実物の足は三角の配置で、一直線の図は目安**。入出力 1.5 kΩ
+source: 村田 P05E-16 の CFULA の外形図。**足は一直線でなく三角** ((1)(2) が 2.7 mm の列、(3) が 4.2 mm 離れた列)。

@@ -1575,6 +1575,8 @@
    "D",
    "S"
   ],
+  "note": "SMQ の 1〜4 番。基板が番号を変えていれば `pins:` で名前を書く。1 列の変換基板なら `sip4`。面実装しか無いので、実体配線図は緑の変換基板に実寸の胴 (2.9 mm 角、印字 `U.F`) を載せた姿で描く。回路図の記号は `nmos-dg` で、`dip4` には書かない",
+  "package": "dip4",
   "role": "デュアルゲート MOSFET (N)",
   "roleEn": "dual-gate MOSFET (N)"
  },
@@ -1612,6 +1614,8 @@
    "A8",
    "VCC"
   ],
+  "note": "`CS` `OE` `WE` は上に線。印字の `I/O` は `IO`",
+  "package": "dip24/wide",
   "role": "SRAM 2K×8",
   "roleEn": "SRAM 2K×8"
  },
@@ -1656,6 +1660,8 @@
    "WE",
    "VCC"
   ],
+  "note": "`CE` `OE` `WE` は上に線",
+  "package": "dip28/wide",
   "role": "SRAM 32K×8",
   "roleEn": "SRAM 32K×8"
  },
@@ -1681,6 +1687,7 @@
    "4B",
    "VCC"
   ],
+  "package": "dip14",
   "role": "2 入力 NAND ×4",
   "roleEn": "2-input NAND ×4"
  },
@@ -1706,6 +1713,8 @@
    "4Y",
    "VCC"
   ],
+  "note": "NOR は Y が A・B より前",
+  "package": "dip14",
   "role": "2 入力 NOR ×4",
   "roleEn": "2-input NOR ×4"
  },
@@ -1731,6 +1740,7 @@
    "6A",
    "VCC"
   ],
+  "package": "dip14",
   "role": "NOT ×6",
   "roleEn": "NOT ×6"
  },
@@ -1756,6 +1766,7 @@
    "4B",
    "VCC"
   ],
+  "package": "dip14",
   "role": "2 入力 AND ×4",
   "roleEn": "2-input AND ×4"
  },
@@ -1782,6 +1793,7 @@
    "VCC"
   ],
   "note": "1 回路目の `1C` `1Y` は 13・12 番に離れて出る",
+  "package": "dip14",
   "role": "3 入力 NAND ×3",
   "roleEn": "3-input NAND ×3"
  },
@@ -1808,6 +1820,7 @@
    "VCC"
   ],
   "note": "並びは 74HC10 と同じ",
+  "package": "dip14",
   "role": "3 入力 AND ×3",
   "roleEn": "3-input AND ×3"
  },
@@ -1836,6 +1849,7 @@
    "VCC"
   ],
   "note": "`CLK` `PRE` `CLR` は上に線 (CLK は立ち下がりで動く)。`/Q` は Q の上に線",
+  "package": "dip16",
   "role": "JK フリップフロップ ×2 (プリセット・クリア付き)",
   "roleEn": "JK flip-flop ×2 (with preset and clear)"
  },
@@ -1864,6 +1878,7 @@
    "VCC"
   ],
   "note": "`A` `R` は上に線。`/Q` は Q の上に線。`R` はリセット、`CX` `RXCX` は外付けの C と R",
+  "package": "dip16",
   "role": "再トリガ単安定マルチバイブレータ ×2",
   "roleEn": "retriggerable monostable multivibrator ×2"
  },
@@ -1890,6 +1905,7 @@
    "VCC"
   ],
   "note": "`OE` は上に線",
+  "package": "dip14",
   "role": "3 ステート バッファ ×4 (OE が L で有効)",
   "roleEn": "3-state buffer ×4 (OE active low)"
  },
@@ -1916,6 +1932,7 @@
    "VCC"
   ],
   "note": "並びは 74HC125 と同じ。`OE` の極性だけ違う",
+  "package": "dip14",
   "role": "3 ステート バッファ ×4 (OE が H で有効)",
   "roleEn": "3-state buffer ×4 (OE active high)"
  },
@@ -1942,6 +1959,7 @@
    "VCC"
   ],
   "note": "並びは 74HC08 と同じ",
+  "package": "dip14",
   "role": "シュミット トリガ 2 入力 NAND ×4",
   "roleEn": "Schmitt-trigger 2-input NAND ×4"
  },
@@ -1970,6 +1988,7 @@
    "VCC"
   ],
   "note": "`G2A` `G2B` `Y0`〜`Y7` は上に線",
+  "package": "dip16",
   "role": "3 → 8 デコーダ",
   "roleEn": "3-to-8 decoder"
  },
@@ -1998,6 +2017,7 @@
    "VCC"
   ],
   "note": "`G` と `Y` は上に線",
+  "package": "dip16",
   "role": "2 → 4 デコーダ ×2",
   "roleEn": "2-to-4 decoder ×2"
  },
@@ -2023,6 +2043,7 @@
    "6A",
    "VCC"
   ],
+  "package": "dip14",
   "role": "シュミット トリガ インバータ ×6",
   "roleEn": "Schmitt-trigger inverter ×6"
  },
@@ -2051,6 +2072,7 @@
    "VCC"
   ],
   "note": "`W` は `Y` の反転。`A` `B` `C` が選択。`G` は上に線",
+  "package": "dip16",
   "role": "8 入力データセレクタ",
   "roleEn": "8-input data selector"
  },
@@ -2079,6 +2101,7 @@
    "VCC"
   ],
   "note": "`A` `B` が選択。`G` は上に線",
+  "package": "dip16",
   "role": "4 入力データセレクタ ×2",
   "roleEn": "4-input data selector ×2"
  },
@@ -2117,6 +2140,8 @@
    "A0",
    "VCC"
   ],
+  "note": "`E1` `E2` は上に線",
+  "package": "dip24",
   "role": "4 → 16 デコーダ",
   "roleEn": "4-to-16 decoder"
  },
@@ -2145,6 +2170,7 @@
    "VCC"
   ],
   "note": "`A/B` が選択 (L で A)。`G` は上に線",
+  "package": "dip16",
   "role": "2 入力データセレクタ ×4",
   "roleEn": "2-input data selector ×4"
  },
@@ -2173,6 +2199,7 @@
    "VCC"
   ],
   "note": "`CLR` `LOAD` は上に線。クリアは非同期。並びは 74HC163 と同じ",
+  "package": "dip16",
   "role": "4 ビット同期カウンタ (非同期クリア)",
   "roleEn": "4-bit synchronous counter (async clear)"
  },
@@ -2203,6 +2230,8 @@
    "RCO",
    "VCC"
   ],
+  "note": "`CLR` `LOAD` は上に線。クリアは同期",
+  "package": "dip16",
   "role": "4 ビット同期カウンタ (同期クリア)",
   "roleEn": "4-bit synchronous counter (sync clear)"
  },
@@ -2229,6 +2258,7 @@
    "VCC"
   ],
   "note": "`CLR` は上に線",
+  "package": "dip14",
   "role": "8 ビット 直列入力・並列出力 シフトレジスタ",
   "roleEn": "8-bit serial-in parallel-out shift register"
  },
@@ -2257,6 +2287,7 @@
    "VCC"
   ],
   "note": "`SH/LD` は LD の上に線。`/QH` は `QH` の上に線。`CLKINH` は印字の `CLK INH`",
+  "package": "dip16",
   "role": "8 ビット 並列入力・直列出力 シフトレジスタ",
   "roleEn": "8-bit parallel-in serial-out shift register"
  },
@@ -2285,6 +2316,7 @@
    "VCC"
   ],
   "note": "`CLR` は上に線",
+  "package": "dip16",
   "role": "D フリップフロップ ×6 (共通クリア)",
   "roleEn": "D flip-flop ×6 (common clear)"
  },
@@ -2313,6 +2345,7 @@
    "VCC"
   ],
   "note": "`CLR` は上に線。`/Q` は Q の上に線",
+  "package": "dip16",
   "role": "D フリップフロップ ×4 (共通クリア、相補出力)",
   "roleEn": "D flip-flop ×4 (common clear, complementary outputs)"
  },
@@ -2341,6 +2374,7 @@
    "VCC"
   ],
   "note": "`LOAD` `CO` `BO` は上に線。`CLR` は H でクリア",
+  "package": "dip16",
   "role": "4 ビット アップダウン カウンタ",
   "roleEn": "4-bit up/down counter"
  },
@@ -2369,6 +2403,7 @@
    "VCC"
   ],
   "note": "`MR` は上に線",
+  "package": "dip16",
   "role": "4 ビット双方向シフトレジスタ",
   "roleEn": "4-bit bidirectional shift register"
  },
@@ -2395,6 +2430,7 @@
    "VCC"
   ],
   "note": "`NC` は 3・11 番。名前では指せず番号で呼ぶ",
+  "package": "dip14",
   "role": "4 入力 NAND ×2",
   "roleEn": "4-input NAND ×2"
  },
@@ -2427,6 +2463,7 @@
    "VCC"
   ],
   "note": "並びは 74HC244 と同じ。`OE` は上に線",
+  "package": "dip20",
   "role": "8 ビット 3 ステート バッファ (反転)",
   "roleEn": "8-bit 3-state buffer (inverting)"
  },
@@ -2459,6 +2496,7 @@
    "VCC"
   ],
   "note": "`OE` は上に線",
+  "package": "dip20",
   "role": "8 ビット 3 ステート バッファ",
   "roleEn": "8-bit 3-state buffer"
  },
@@ -2493,6 +2531,7 @@
    "OE",
    "VCC"
   ],
+  "package": "dip20",
   "role": "8 ビット バス トランシーバ",
   "roleEn": "8-bit bus transceiver"
  },
@@ -2519,6 +2558,7 @@
    "VCC"
   ],
   "note": "並びは 74HC10 と同じ",
+  "package": "dip14",
   "role": "3 入力 NOR ×3",
   "roleEn": "3-input NOR ×3"
  },
@@ -2553,6 +2593,8 @@
    "8Q",
    "VCC"
   ],
+  "note": "`CLR` は上に線",
+  "package": "dip20",
   "role": "8 ビット D フリップフロップ (クリア付き)",
   "roleEn": "8-bit D flip-flop (with clear)"
  },
@@ -2579,6 +2621,7 @@
    "VCC"
   ],
   "note": "`NC` は 9・10・13 番。番号で呼ぶ",
+  "package": "dip14",
   "role": "8 入力 NAND",
   "roleEn": "8-input NAND"
  },
@@ -2604,6 +2647,7 @@
    "4B",
    "VCC"
   ],
+  "package": "dip14",
   "role": "2 入力 OR ×4",
   "roleEn": "2-input OR ×4"
  },
@@ -2632,6 +2676,7 @@
    "VCC"
   ],
   "note": "`CLKA` `CLKB` `CLR` は上に線",
+  "package": "dip16",
   "role": "10 進カウンタ ×2 (2 分周と 5 分周)",
   "roleEn": "decade counter ×2 (divide by 2 and 5)"
  },
@@ -2658,6 +2703,7 @@
    "VCC"
   ],
   "note": "`CLR` は H でクリア",
+  "package": "dip14",
   "role": "4 ビット 2 進カウンタ ×2",
   "roleEn": "4-bit binary counter ×2"
  },
@@ -2686,6 +2732,7 @@
    "VCC"
   ],
   "note": "`QA` が 2 分周 (CD4040B の `Q1`)、`QL` が 4096 分周 (`Q12`)。`CLR` は H でクリア",
+  "package": "dip16",
   "role": "12 段 2 進カウンタ",
   "roleEn": "12-stage binary counter"
  },
@@ -2714,6 +2761,7 @@
    "VCC"
   ],
   "note": "`A` が共通、`A0`〜`A7` がチャネル、`S0`〜`S2` が選択。`E` は上に線。電源は `VCC` `VEE` `GND`",
+  "package": "dip16",
   "role": "8 チャネル アナログ マルチプレクサ",
   "roleEn": "8-channel analog multiplexer"
  },
@@ -2742,6 +2790,7 @@
    "VCC"
   ],
   "note": "`AN` `BN` が共通、`A0`〜`A3` `B0`〜`B3` がチャネル。`E` は上に線",
+  "package": "dip16",
   "role": "4 チャネル アナログ マルチプレクサ ×2",
   "roleEn": "4-channel analog multiplexer ×2"
  },
@@ -2770,6 +2819,7 @@
    "VCC"
   ],
   "note": "`AN` `BN` `CN` が共通、`A0` `A1` …がチャネル。`E` は上に線",
+  "package": "dip16",
   "role": "2 チャネル アナログ マルチプレクサ ×3",
   "roleEn": "2-channel analog multiplexer ×3"
  },
@@ -2798,6 +2848,7 @@
    "VCC"
   ],
   "note": "`QD` が 16 分周 … `QN` が 16384 分周 (`Q14`)。`/CLKO` は `CLKO` の上に線",
+  "package": "dip16",
   "role": "14 段 2 進カウンタ (発振器付き)",
   "roleEn": "14-stage binary counter (with oscillator)"
  },
@@ -2824,6 +2875,7 @@
    "VCC"
   ],
   "note": "`Y` `Z` は双方向。`E` が制御 (H で導通)。端子図は D・PW の 14 ピンから (PDIP も同じ番号)",
+  "package": "dip14",
   "role": "アナログ スイッチ ×4",
   "roleEn": "analog switch ×4"
  },
@@ -2856,6 +2908,7 @@
    "VCC"
   ],
   "note": "`OE1` `OE2` は上に線",
+  "package": "dip20",
   "role": "8 ビット 3 ステート バッファ (入力が片側)",
   "roleEn": "8-bit 3-state buffer (inputs on one side)"
  },
@@ -2888,6 +2941,7 @@
    "VCC"
   ],
   "note": "`OE` は上に線。`LE` が H の間つながる",
+  "package": "dip20",
   "role": "8 ビット D ラッチ (3 ステート)",
   "roleEn": "8-bit D latch (3-state)"
  },
@@ -2920,6 +2974,7 @@
    "VCC"
   ],
   "note": "`OE` は上に線。並びは 74HC573 と同じ (`LE` が `CLK`)",
+  "package": "dip20",
   "role": "8 ビット D フリップフロップ (3 ステート)",
   "roleEn": "8-bit D flip-flop (3-state)"
  },
@@ -2947,6 +3002,8 @@
    "QA",
    "VCC"
   ],
+  "note": "`OE` `SRCLR` は上に線",
+  "package": "dip16",
   "role": "8 bit シフトレジスタ",
   "roleEn": "8-bit shift register"
  },
@@ -2972,6 +3029,8 @@
    "2CLR",
    "VCC"
   ],
+  "note": "`CLR` `PRE` は上に線",
+  "package": "dip14",
   "role": "D フリップフロップ ×2",
   "roleEn": "D flip-flop ×2"
  },
@@ -3000,6 +3059,7 @@
    "VCC"
   ],
   "note": "`LTIN` `EQIN` `GTIN` は印字の `(A < B) IN` `(A = B) IN` `(A > B) IN`、`GTOUT` `EQOUT` `LTOUT` は `(A > B) OUT` …",
+  "package": "dip16",
   "role": "4 ビット 比較器",
   "roleEn": "4-bit comparator"
  },
@@ -3025,6 +3085,7 @@
    "4B",
    "VCC"
   ],
+  "package": "dip14",
   "role": "2 入力 XOR ×4",
   "roleEn": "2-input XOR ×4"
  },
@@ -3051,6 +3112,7 @@
    "VCC"
   ],
   "note": "TTL。並びは `74HC00` と同じだが、電源は 5 V だけ・静止電流は mA で別の品",
+  "package": "dip14",
   "role": "2 入力 NAND ×4",
   "roleEn": "2-input NAND ×4"
  },
@@ -3070,7 +3132,8 @@
    "GND",
    "VOUT"
   ],
-  "note": "`sip3` (`ic3`) を黒い胴で描く。**出力は 3 番** (2 番は GND)。磁界が無いと VCC の半分を出す",
+  "note": "リニアホールセンサ。**出力は 3 番**。磁界が無いと `VCC` の半分を出す",
+  "package": "sip3",
   "role": "リニアホールセンサ (アナログ出力)",
   "roleEn": "linear Hall-effect sensor (analog output)"
  },
@@ -3090,7 +3153,8 @@
    "GND",
    "OUT"
   ],
-  "note": "`sip3` (`ic3`) を黒い胴で描く (実物は TO-92 より小さい UA)。OUT は開放コレクタで、プルアップが要る",
+  "note": "ホールスイッチ。黒い胴 (実物は TO-92 より小さい UA)。`OUT` は開放コレクタで、プルアップが要る",
+  "package": "sip3",
   "role": "ホールスイッチ (開放コレクタ)",
   "roleEn": "Hall-effect switch (open collector)"
  },
@@ -3113,7 +3177,8 @@
    "A1",
    "A2"
   ],
-  "note": "`sip8` を濃い青の帯で描く (基板のピンヘッダだけ)。SCL・SDA は基板に 10 kΩ のプルアップがある。アドレスは既定 0x18 (A0〜A2 で 0x18〜0x1F)",
+  "note": "Adafruit の MCP9808 ブレークアウト。濃い青の帯で描く。SCL・SDA は基板に 10 kΩ のプルアップ。既定のアドレスは 0x18",
+  "package": "sip8",
   "role": "I2C 温度センサのブレークアウト (MCP9808)",
   "roleEn": "I2C temperature sensor breakout (MCP9808)"
  },
@@ -3137,6 +3202,7 @@
    "VIN"
   ],
   "note": "`sip7` を濃い青の帯で描く (基板のピンヘッダだけ)。出力の印字は `0` `1` `2` (番号と割れないよう `CLK0`〜`CLK2` で呼ぶ)。VIN は 3〜5 V (基板に 3.3 V のレギュレータ)、SCL・SDA は基板でレベル変換 (10 kΩ のプルアップつき)。出力は 3 Vpp の方形波、アドレスは 0x60。紫の互換基板 (`CJMCU-5351`) も同じ印字",
+  "package": "sip7",
   "role": "I2C クロック発生器のブレークアウト (Si5351A)",
   "roleEn": "I2C clock generator breakout (Si5351A)"
  },
@@ -3168,7 +3234,8 @@
    "NC",
    "VIN"
   ],
-  "note": "`sip4` を銀の帯で描き、キットの基板とジャックを帯の脇へ描く (胴の寸法は目安)。1 番 `GND` (シルク −)・4 番 `VIN` (シルク +、中心ピン)。2・3 番は使わない (番号で呼ぶ)。**実物で確かめる: 秋月の図は線画だけで、2・3 番がどちらにつながるかは読み取れない。シルクのある 1 番 (−) と 4 番 (+) だけを使い、実物はテスタで確かめる**",
+  "note": "秋月の 2.1 mm DC ジャック DIP 化キット。1 列だけにヘッダを立てる。1 番 `GND` (シルク −)・4 番 `VIN` (シルク +、中心ピン)。2・3 番は使わない (番号で呼ぶ)。銀の帯で描き、キットの基板とジャックを帯の脇へ描く (胴の寸法は目安)。**実物で確かめる: 秋月の図は線画だけで、2・3 番がどちらにつながるかは読み取れない。シルクのある 1 番 (−) と 4 番 (+) だけを使い、実物はテスタで確かめる**",
+  "package": "sip4",
   "role": "2.1 mm DC ジャックの DIP 化キット",
   "roleEn": "2.1 mm DC jack DIP breakout kit"
  },
@@ -3200,7 +3267,8 @@
    "GND",
    "L"
   ],
-  "note": "`sip4` を銀の帯で描き、キットの基板とジャックを帯の脇へ描く (胴の寸法は目安)。シルクの `G` (スリーブ) は `GND` で、2 本あるので番号で呼ぶ。`R` は右・`L` は左。切替の端子は出ていない",
+  "note": "秋月の 3.5 mm ステレオミニジャック DIP 化キット。シルクの `G` (スリーブ) は `GND` で、2 本あるので番号で呼ぶ。切替の端子は出ていない。銀の帯で描き、キットの基板とジャックを帯の脇へ描く (胴の寸法は目安)",
+  "package": "sip4",
   "role": "3.5 mm ステレオミニジャックの DIP 化キット",
   "roleEn": "3.5 mm stereo mini jack DIP breakout kit"
  },
@@ -3235,7 +3303,8 @@
    "P7",
    "P8"
   ],
-  "note": "`sip8` を銀の帯で描き、キットの基板とジャックを帯の脇の基板の縁に近い側へ描く (胴の寸法は目安)。`Pn` は RJ45 の n 番。10BASE-T の端末 (MDI) は P1・P2 で送り P3・P6 で受ける。ヘッダとジャックの対応は導通で確かめる",
+  "note": "秋月の LAN コネクターDIP化キット。`Pn` は RJ45 の n 番。回路図では `dip8` の箱に名前を刷る。実体配線図はヘッダを銀の帯で描き、キットの基板とジャックの外形を添える (ブレッドボードは溝の側 (穴の上) に半透明で、ユニバーサル基板は帯の脇の基板の縁に近い側へ。胴の寸法は目安)。パルストランスは無い。10BASE-T の端末 (MDI) は `P1` `P2` で送り `P3` `P6` で受ける。ヘッダとジャックの対応は資料に無いので導通で確かめる",
+  "package": "sip8",
   "role": "RJ45 モジュラージャックの DIP 化キット",
   "roleEn": "RJ45 modular jack DIP breakout kit"
  },
@@ -3256,6 +3325,7 @@
    "VDD"
   ],
   "note": "秋月の 10 mm 角の基板 (`dip8` で置く)。**電源は 3.3 V** — `VDD` (コア) は 2.5〜3.3 V、`VDDO` (出力) は 1.8〜3.3 V で、5 V は掛けられない。レベル変換もプルアップも無いので SCL・SDA は 3.3 V に吊る。アドレスは 0x60",
+  "package": "dip8",
   "role": "クロック発生器のモジュール (Si5351A、DIP8 形)",
   "roleEn": "clock generator module (Si5351A, DIP-8 shape)"
  },
@@ -3298,6 +3368,7 @@
    "PC5"
   ],
   "note": "1 番 `PC6` は RESET 兼用。8 番と 22 番は GND (番号で指す)。PB6・PB7 は水晶 (XTAL1・XTAL2)",
+  "package": "dip28",
   "role": "AVR マイコン (28 ピン)",
   "roleEn": "AVR microcontroller (28-pin)"
  },
@@ -3319,6 +3390,7 @@
    "VCC"
   ],
   "note": "1 番 `PB5` は RESET 兼用。PB0=MOSI/SDA、PB1=MISO、PB2=SCK/SCL、PB3=XTAL1、PB4=XTAL2",
+  "package": "dip8",
   "role": "AVR マイコン (8 ピン)",
   "roleEn": "AVR microcontroller (8-pin)"
  },
@@ -3344,6 +3416,7 @@
    "H",
    "VDD"
   ],
+  "package": "dip14",
   "role": "2 入力 NOR ×4",
   "roleEn": "2-input NOR ×4"
  },
@@ -3369,6 +3442,7 @@
    "F",
    "VDD"
   ],
+  "package": "dip14",
   "role": "シュミット NOT ×6",
   "roleEn": "Schmitt NOT ×6"
  },
@@ -3394,6 +3468,7 @@
    "H",
    "VDD"
   ],
+  "package": "dip14",
   "role": "2 入力 NAND ×4",
   "roleEn": "2-input NAND ×4"
  },
@@ -3419,6 +3494,8 @@
    "Q2",
    "VDD"
   ],
+  "note": "`/Q` は Q の上に線",
+  "package": "dip14",
   "role": "D フリップフロップ ×2",
   "roleEn": "D flip-flop ×2"
  },
@@ -3446,6 +3523,7 @@
    "RESET",
    "VDD"
   ],
+  "package": "dip16",
   "role": "10 進カウンタ",
   "roleEn": "decade counter"
  },
@@ -3473,6 +3551,7 @@
    "Q11",
    "VDD"
   ],
+  "package": "dip16",
   "role": "12 段 2 進カウンタ",
   "roleEn": "12-stage binary counter"
  },
@@ -3498,6 +3577,7 @@
    "F",
    "VDD"
   ],
+  "package": "dip14",
   "role": "NOT ×6",
   "roleEn": "NOT ×6"
  },
@@ -3523,6 +3603,7 @@
    "H",
    "VDD"
   ],
+  "package": "dip14",
   "role": "2 入力 XOR ×4",
   "roleEn": "2-input XOR ×4"
  },
@@ -3548,6 +3629,7 @@
    "H",
    "VDD"
   ],
+  "package": "dip14",
   "role": "2 入力 OR ×4",
   "roleEn": "2-input OR ×4"
  },
@@ -3573,6 +3655,7 @@
    "H",
    "VDD"
   ],
+  "package": "dip14",
   "role": "2 入力 AND ×4",
   "roleEn": "2-input AND ×4"
  },
@@ -3600,6 +3683,8 @@
    "Of",
    "VDD"
   ],
+  "note": "印字の入力 `A`〜`D` と出力 `a`〜`g` は大文字小文字だけが違うので `IN` と `O` を付けた",
+  "package": "dip16",
   "role": "BCD → 7 セグ デコーダ",
   "roleEn": "BCD to 7-segment decoder"
  },
@@ -3627,6 +3712,7 @@
    "B2",
    "VCC"
   ],
+  "package": "dip16",
   "role": "4 bit 全加算器",
   "roleEn": "4-bit full adder"
  },
@@ -3645,7 +3731,8 @@
    "GND",
    "OUT"
   ],
-  "note": "`sip3` を暗い色の胴で描く。**実物の足は三角の配置で、一直線の図は目安** (ブレッドボードには挿しにくい)。入出力 1.5 kΩ",
+  "note": "村田のセラミックフィルタ 455 kHz。**実物の足は三角の配置で、一直線の図は目安**。入出力 1.5 kΩ",
+  "package": "sip3",
   "role": "セラミックフィルタ 455 kHz (4 素子)",
   "roleEn": "ceramic filter 455 kHz (4 elements)"
  },
@@ -3663,7 +3750,8 @@
    "NC",
    "GND"
   ],
-  "note": "`sip4` を青の胴で描く。3 番は NC (番号で呼ぶ)。DATA は 4.7 kΩ〜10 kΩ で VCC へ。4 本足の単体の並び (3 本足の基板 (秋月 AE-DHT11-BO など) は並びが違う)",
+  "note": "温湿度センサ。青の胴で描く。3 番は `NC` で、番号で呼ぶ。`DATA` は 4.7 kΩ〜10 kΩ で `VCC` へ。4 本足の単体の並びで、3 本足の基板 (秋月 AE-DHT11-BO など) は並びが違う",
+  "package": "sip4",
   "role": "温湿度センサ",
   "roleEn": "temperature and humidity sensor"
  },
@@ -3685,7 +3773,8 @@
    "AGND",
    "OUT"
   ],
-  "note": "`sip7` を紫の帯で描く (基板のピンヘッダだけ)。SPI (SDATA・SCLK・FSYNC)。印字に `DGND` と `AGND` がある版。**実物で確かめる: 製造元の図が無く、並びは個人の KiCad データ 5 つの一致による。CJMCU-9833 の名の基板は REF VCC GND DAT CLK FNC OUT の別の並びが多い。実物は基板の印字で確かめる**",
+  "note": "AD9833 の DDS モジュール。紫の帯で描く。印字に `DGND` `AGND` がある版。**実物で確かめる: 製造元の図が無く、並びは個人の KiCad データ 5 つの一致による。CJMCU-9833 の名の基板は REF VCC GND DAT CLK FNC OUT の別の並びが多い。実物は基板の印字で確かめる**",
+  "package": "sip7",
   "role": "DDS の信号発生モジュール (AD9833)",
   "roleEn": "DDS signal generator module (AD9833)"
  },
@@ -3704,7 +3793,8 @@
    "ECHO",
    "GND"
   ],
-  "note": "`sip4` を青の帯で描く (基板のピンヘッダだけ)。センサの筒の面から見て左から VCC TRIG ECHO GND (裏から見ると逆)。Echo は 5 V 出力",
+  "note": "超音波距離センサのモジュール。青の帯で描く。センサの筒の面から見て左から並ぶ (裏から見ると逆)。`ECHO` は 5 V 出力",
+  "package": "sip4",
   "role": "超音波距離センサのモジュール",
   "roleEn": "ultrasonic distance sensor module"
  },
@@ -3722,7 +3812,8 @@
    "OUT",
    "GND"
   ],
-  "note": "`sip3` を緑の帯で描く (基板のピンヘッダだけ)。電源は 4.5〜20 V、OUT は 3.3 V の H。見る向きで左右が逆になるので、基板の印字で確かめる",
+  "note": "人感 (焦電) センサのモジュール。緑の帯で描く (基板のピンヘッダだけ)。電源は 4.5〜20 V、`OUT` は 3.3 V の H。見る向きで左右が逆になるので、基板の印字で確かめる",
+  "package": "sip3",
   "role": "人感 (焦電) センサのモジュール",
   "roleEn": "PIR motion sensor module"
  },
@@ -3742,7 +3833,8 @@
    "VCC",
    "GND"
   ],
-  "note": "`sip5` を緑の帯で描く (基板のピンヘッダだけ)。印字の `+` は `VCC`。CLK=A 相、DT=B 相、SW=押しボタン。部品面を上にしてピンを手前に向けると、左から GND + SW DT CLK (1 番の CLK が右端)",
+  "note": "ロータリーエンコーダのモジュール。基板のピンヘッダだけを緑の帯で描く。印字の `+` は `VCC`。CLK=A 相、DT=B 相、SW=押しボタン。部品面を上にしてピンを手前に向けると、左から `GND` `VCC` `SW` `DT` `CLK`",
+  "package": "sip5",
   "role": "ロータリーエンコーダのモジュール",
   "roleEn": "rotary encoder module"
  },
@@ -3771,6 +3863,7 @@
    "4A",
    "VCC1"
   ],
+  "package": "dip16",
   "role": "ハーフ H ブリッジ ×4",
   "roleEn": "half H-bridge ×4"
  },
@@ -3800,6 +3893,7 @@
    "4IN-",
    "4OUT"
   ],
+  "package": "dip14",
   "role": "オペアンプ ×4",
   "roleEn": "op-amp ×4"
  },
@@ -3819,7 +3913,8 @@
    "VOUT",
    "GND"
   ],
-  "note": "`sip3` (`ic3`) を黒い TO-92 の胴で描く。印字の `+VS` は `VS`。TO-92 の並び (TO-220 と SO8 は違う)",
+  "note": "温度センサ 10 mV/℃。黒い TO-92 の胴。印字の `+VS` は `VS`。TO-220 と SO8 は並びが違う",
+  "package": "sip3",
   "role": "温度センサ (10 mV/℃)",
   "roleEn": "temperature sensor (10 mV/°C)"
  },
@@ -3847,6 +3942,7 @@
    "OUT2",
    "V+"
   ],
+  "package": "dip8",
   "role": "オペアンプ ×2",
   "roleEn": "op-amp ×2"
  },
@@ -3871,6 +3967,7 @@
    "GAIN8"
   ],
   "note": "印字は 1・8 番とも `GAIN` (番号を付けて分けた)。`BYPASS` は C で GND へ",
+  "package": "dip8",
   "role": "低電圧のオーディオ パワー アンプ",
   "roleEn": "low-voltage audio power amplifier"
  },
@@ -3898,6 +3995,7 @@
    "2OUT",
    "VCC"
   ],
+  "package": "dip8",
   "role": "コンパレータ ×2",
   "roleEn": "comparator ×2"
  },
@@ -3920,6 +4018,7 @@
    "NC"
   ],
   "note": "1・5 番はオフセット調整。8 番は NC",
+  "package": "dip8",
   "role": "オペアンプ",
   "roleEn": "op-amp"
  },
@@ -3940,7 +4039,8 @@
    "A0",
    "VS"
   ],
-  "note": "印字の `+VS` は `VS`、`O.S.` は `OS`。A2〜A0 でアドレスを決める",
+  "note": "I2C 温度センサ。印字の `+VS` は `VS`、`O.S.` は `OS`",
+  "package": "dip8",
   "role": "I2C 温度センサ",
   "roleEn": "I2C temperature sensor"
  },
@@ -3966,6 +4066,7 @@
    "VREF",
    "VDD"
   ],
+  "package": "dip16",
   "role": "10 bit A/D 変換 8 ch",
   "roleEn": "10-bit ADC, 8 ch"
  },
@@ -3988,6 +4089,7 @@
    "VOUTB",
    "VDD"
   ],
+  "package": "dip8",
   "role": "オペアンプ ×2 (CMOS・レール ツー レール)",
   "roleEn": "op-amp ×2 (CMOS, rail-to-rail)"
  },
@@ -4005,7 +4107,8 @@
    "A0",
    "VDD"
   ],
-  "note": "チップの並び。ブレークアウト基板のヘッダは基板ごとに違うので `pins:` で書く。アドレスは 0x18〜0x1F",
+  "note": "I2C 温度センサ。チップの並び。ブレークアウト基板のヘッダは基板ごとに違うので `pins:` で書く",
+  "package": "dip8",
   "role": "I2C 温度センサ (±0.5 ℃)",
   "roleEn": "I2C temperature sensor (±0.5 °C)"
  },
@@ -4027,6 +4130,7 @@
    "2OUT",
    "VCC+"
   ],
+  "package": "dip8",
   "role": "オペアンプ ×2 (低雑音・オーディオ)",
   "roleEn": "op-amp ×2 (low noise, audio)"
  },
@@ -4049,6 +4153,7 @@
    "DISCH",
    "VCC"
   ],
+  "package": "dip8",
   "role": "タイマー",
   "roleEn": "timer"
  },
@@ -4067,6 +4172,7 @@
    "BOUT",
    "V+"
   ],
+  "package": "dip8",
   "role": "オペアンプ ×2 (大出力電流)",
   "roleEn": "op-amp ×2 (high output current)"
  },
@@ -4086,7 +4192,8 @@
    "K",
    "R"
   ],
-  "note": "`sip4` を乳白の胴で描く。`G` `B` `R` が各色のアノード、3 番 `K` が共通カソード (いちばん長い足)。足を広げて隣の 4 穴に挿す。色ごとに抵抗を入れる (Vf は赤 2.0 V、緑・青 3.6 V)",
+  "note": "フルカラー LED 5 mm、カソードコモン。`G` `B` `R` が各色のアノード、3 番 `K` が共通カソード (いちばん長い足)。足は格子に乗らないので広げて隣の 4 穴に挿す。乳白の胴で描く",
+  "package": "sip4",
   "role": "フルカラー LED 5 mm (カソードコモン)",
   "roleEn": "RGB LED 5 mm (common cathode)"
  },
@@ -4105,7 +4212,8 @@
    "A",
    "R"
   ],
-  "note": "`sip4` を乳白の胴で描く。`G` `B` `R` が各色のカソード、3 番 `A` が共通アノード (いちばん長い足)。足を広げて隣の 4 穴に挿す。色ごとに抵抗を入れる (Vf は赤 2.1 V、緑・青 3.1 V)",
+  "note": "フルカラー LED 5 mm、アノードコモン。並びは `OSTA5131A` と同じで極性が逆。3 番 `A` が共通アノード (いちばん長い足)。乳白の胴で描く",
+  "package": "sip4",
   "role": "フルカラー LED 5 mm (アノードコモン)",
   "roleEn": "RGB LED 5 mm (common anode)"
  },
@@ -4125,7 +4233,8 @@
    "RA0",
    "VSS"
   ],
-  "note": "4 番 `RA3` は MCLR 兼用の入力専用。RA5=OSC1、RA4=OSC2、RA0=ICSPDAT、RA1=ICSPCLK",
+  "note": "PIC マイコン。4 番 `RA3` は MCLR 兼用の入力専用。RA5=OSC1、RA4=OSC2、RA0=ICSPDAT、RA1=ICSPCLK",
+  "package": "dip8",
   "role": "PIC マイコン (8 ピン)",
   "roleEn": "PIC microcontroller (8-pin)"
  },
@@ -4147,7 +4256,8 @@
    "GP0",
    "VSS"
   ],
-  "note": "4 番 `GP3` は MCLR 兼用の入力専用。GP5=OSC1、GP4=OSC2、GP0=ICSPDAT、GP1=ICSPCLK",
+  "note": "PIC マイコン。4 番 `GP3` は MCLR 兼用の入力専用。GP5=OSC1、GP4=OSC2、GP0=ICSPDAT、GP1=ICSPCLK",
+  "package": "dip8",
   "role": "PIC マイコン (8 ピン)",
   "roleEn": "PIC microcontroller (8-pin)"
  },
@@ -4187,7 +4297,8 @@
    "OSC1",
    "MCLR"
   ],
-  "note": "電源は 2 番 `VDD`・4 番 `VSS` (ほかの 28 ピンと違う)。3・5 番は NC (番号で呼ぶ)。`T0CKI` は使わなくても VSS か VDD へ。28 番 `MCLR` は専用。600 mil (-I/P) と 300 mil (-I/SP) がある",
+  "note": "PIC マイコン。**電源は 2 番 `VDD`・4 番 `VSS`** (ほかの 28 ピンと違う)。3・5 番は `NC`。`T0CKI` は使わなくても `VSS` か `VDD` へ。600 mil (-I/P) と 300 mil (-I/SP) がある",
+  "package": "dip28",
   "role": "PIC マイコン (28 ピン)",
   "roleEn": "PIC microcontroller (28-pin)"
  },
@@ -4226,7 +4337,8 @@
    "RA0",
    "RA1"
   ],
-  "note": "4 番 `RA5` は MCLR 兼用。RA7=OSC1、RA6=OSC2、RB6=ICSPCLK (PGC)、RB7=ICSPDAT (PGD)",
+  "note": "PIC マイコン。628A・88・1827 は同じ並び。4 番 `RA5` は MCLR 兼用。RA7=OSC1、RA6=OSC2、RB6=ICSPCLK、RB7=ICSPDAT",
+  "package": "dip18",
   "role": "PIC マイコン (18 ピン)",
   "roleEn": "PIC microcontroller (18-pin)"
  },
@@ -4256,7 +4368,8 @@
    "RA0",
    "RA1"
   ],
-  "note": "4 番 `MCLR`、15 番 `OSC2`・16 番 `OSC1` は専用ピン。RB6=書き込みのクロック、RB7=データ。`RA4` はオープンドレイン",
+  "note": "PIC マイコン。4 番 `MCLR`、15 番 `OSC2`・16 番 `OSC1` は専用ピン。`RA4` はオープンドレイン",
+  "package": "dip18",
   "role": "PIC マイコン (18 ピン)",
   "roleEn": "PIC microcontroller (18-pin)"
  },
@@ -4305,7 +4418,8 @@
    "RB6",
    "RB7"
   ],
-  "note": "1 番 `RE3` は MCLR 兼用の入力専用。8 番と 19 番は VSS (番号で指す)。RA7=OSC1、RA6=OSC2、RB6=ICSPCLK、RB7=ICSPDAT",
+  "note": "PIC マイコン。886・1938・18857 は同じ並び。1 番 `RE3` は MCLR 兼用の入力専用。8 番と 19 番は `VSS` (番号で指す)。RA7=OSC1、RA6=OSC2、RB6=ICSPCLK、RB7=ICSPDAT",
+  "package": "dip28",
   "role": "PIC マイコン (28 ピン)",
   "roleEn": "PIC microcontroller (28-pin)"
  },
@@ -4336,6 +4450,7 @@
    "VCC"
   ],
   "note": "`IN_A` `IN_B` が RF の入力、`OSC_B` が発振のベース (外の LO の入口)、`OSC_E` が発振のエミッタ",
+  "package": "dip8",
   "role": "ミキサ + 発振器 (ダブルバランスド)",
   "roleEn": "mixer + oscillator (double balanced)"
  },
@@ -4356,7 +4471,8 @@
    "GND",
    "OUT"
   ],
-  "note": "`sip3` を暗い色の胴で描く。入出力 330 Ω",
+  "note": "村田のセラミックフィルタ 10.7 MHz。足は一直線に 2.5 mm 間隔。入出力 330 Ω",
+  "package": "sip3",
   "role": "セラミックフィルタ 10.7 MHz",
   "roleEn": "ceramic filter 10.7 MHz"
  },
@@ -4375,7 +4491,8 @@
    "GND",
    "OUT"
   ],
-  "note": "`sip3` を橙の胴で描く",
+  "note": "村田の 455 kHz セラミックフィルタ。実体配線図は橙の胴で描く。回路図の記号は `ceramic-filter`",
+  "package": "sip3",
   "role": "セラミックフィルタ 455 kHz",
   "roleEn": "ceramic filter 455 kHz"
  },
@@ -4394,7 +4511,8 @@
    "VCC",
    "SIG"
   ],
-  "note": "`sip3` を青の胴で描く。コネクタの線は茶 (GND)・赤 (VCC)・橙 (SIG)",
+  "note": "RC サーボ。青の胴で描く。コネクタの線は茶 (GND)・赤 (VCC)・橙 (SIG)",
+  "package": "sip3",
   "role": "RC サーボ",
   "roleEn": "RC servo"
  },
@@ -4413,7 +4531,8 @@
    "IN",
    "OUT"
   ],
-  "note": "`sip3` (`ic3`) を黒い TO-92 の胴で描く。OUT は抵抗を通して電源へ (電源のピンは無い)。**東芝の原本の資料は無く、互換品 (UTC 7642) の資料による**",
+  "note": "AM ラジオ IC。黒い TO-92 の胴。`OUT` は抵抗を通して電源へ。東芝の原本の資料は無く、互換品 (UTC 7642) の資料による",
+  "package": "sip3",
   "role": "AM ラジオ IC (ストレート)",
   "roleEn": "AM radio IC (TRF)"
  },
@@ -4435,6 +4554,7 @@
    "VCC+",
    "NC"
   ],
+  "package": "dip8",
   "role": "オペアンプ",
   "roleEn": "op-amp"
  },
@@ -4460,6 +4580,7 @@
    "2OUT",
    "VCC+"
   ],
+  "package": "dip8",
   "role": "オペアンプ ×2",
   "roleEn": "op-amp ×2"
  },
@@ -4479,6 +4600,7 @@
    "DISCH",
    "VDD"
   ],
+  "package": "dip8",
   "role": "タイマー (CMOS)",
   "roleEn": "timer (CMOS)"
  },
@@ -4507,7 +4629,8 @@
    "2C",
    "1C"
   ],
-  "note": "`COM` は負荷の電源側へつなぐ (誘導負荷のクランプ)。出力は吸い込み (シンク) だけ",
+  "note": "7 回路のダーリントン (シンクドライバ)。B が入力、C が出力、`GND` はデータシートの `E`。`COM` は負荷の電源側へ",
+  "package": "dip16",
   "role": "7 回路のダーリントン (シンクドライバ)",
   "roleEn": "7-channel Darlington (sink driver)"
  }

@@ -1,0 +1,7 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [74HC245, SN74HC245, SN74HC245N, 74HC245N, CD74HC245, CD74HC245E]
+package: dip20
+role: 8 ビット バス トランシーバ
+role-en: 8-bit bus transceiver
+pins: [DIR, A1, A2, A3, A4, A5, A6, A7, A8, GND, B8, B7, B6, B5, B4, B3, B2, B1, OE, VCC]
+source: SN74HC245 SCLS131F、Table 5-1 (N)

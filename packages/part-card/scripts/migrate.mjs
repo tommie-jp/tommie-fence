@@ -80,13 +80,17 @@ function headSources(known) {
     if (match === null || match[1] === '行' || match[1].startsWith('---')) continue;
     const tokens = match[1].split(/ \/ |・/).map((token) => token.trim()).filter(Boolean);
     const [first] = tokens;
+    // 略の頭は系列の名前 (`74HC14` → `74HC`、`PIC16F628A` → `PIC`)。長い順に切ると `74HC1` + `74` が
+    // 74HC174 に当たってしまうので、系列の名前の 2 通りだけを試す。
+    const prefixes = [first.replace(/\d+$/, ''), /^[A-Za-z]*/.exec(first)[0]];
     for (const token of tokens) {
-      let model = known.has(token.toUpperCase()) ? token : null;
-      for (let cut = first.length; model === null && cut > 0; cut -= 1) {
-        const tried = first.slice(0, cut) + token;
-        if (known.has(tried.toUpperCase())) model = tried;
-      }
-      if (model !== null) out.set(known.get(model.toUpperCase()), match[2]);
+      const candidates = [token, ...prefixes.map((prefix) => prefix + token)];
+      const model = candidates.find((tried) => known.has(tried.toUpperCase()));
+      if (model === undefined) continue;
+      const head = known.get(model.toUpperCase());
+      // 代表の綴りそのものの行が勝つ。別名で当たった行 (TL072 の別名 TL082) は、まだ無いときだけ。
+      const exact = model.toUpperCase() === head.toUpperCase();
+      if (exact || !out.has(head)) out.set(head, match[2]);
     }
   }
   return out;

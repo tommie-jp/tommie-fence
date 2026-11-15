@@ -98,39 +98,39 @@ parts:
   U1:
       type: ic3
       at: 2,2
-      model: SFU455B
+      model: A1324
   U2:
       type: ic3
       at: 4.25,2
-      model: SG90
+      model: A3144
   U3:
       type: ic3
       at: 6.5,2
-      model: HC-SR501
+      model: CFULA455
   U4:
       type: ic3
       at: 8.75,2
-      model: TA7642
+      model: HC-SR501
   U5:
       type: ic3
       at: 11.25,2
-      model: A3144
+      model: LM35
   U6:
       type: ic3
       at: 13.5,2
-      model: A1324
+      model: SFELF10M7
   U7:
       type: ic3
       at: 2,4
-      model: LM35
+      model: SFU455B
   U8:
       type: ic3
       at: 4.25,4
-      model: SFELF10M7
+      model: SG90
   U9:
       type: ic3
       at: 6.5,4
-      model: CFULA455
+      model: TA7642
 ```
 
 ![図02 ギャラリー ic3 の型番](out/23-gallery-modules-2.png)
@@ -146,83 +146,83 @@ parts:
   M1:
       type: device
       at: 2,2.5
-      model: SFU455B
+      model: A1324
   M2:
       type: device
-      at: 4,2.5
-      model: KY-040
+      at: 3.75,2.5
+      model: A3144
   M3:
       type: device
       at: 6,2.5
-      model: HC-SR04
+      model: ADAFRUIT-1782
   M4:
       type: device
-      at: 7.75,2.5
-      model: SG90
+      at: 8.5,2.5
+      model: ADAFRUIT-2045
   M5:
       type: device
-      at: 9.75,2.5
-      model: DHT11
+      at: 11.25,2.5
+      model: AE-DC-POWER-JACK-DIP
   M6:
       type: device
-      at: 11.75,2.5
-      model: HC-SR501
+      at: 14.25,2.5
+      model: AE-PHONE-JACK-DIP
   M7:
       type: device
-      at: 13.75,2.5
-      model: GY-9833
+      at: 2.25,5.5
+      model: AE-RJ-45-LAN-DIP-A
   M8:
       type: device
-      at: 2.25,5
-      model: ADAFRUIT-1782
+      at: 4.75,5.5
+      model: CFULA455
   M9:
       type: device
-      at: 4.75,5
-      model: ADAFRUIT-2045
+      at: 6.75,5.5
+      model: DHT11
   M10:
       type: device
-      at: 7,5
-      model: TA7642
+      at: 8.75,5.5
+      model: GY-9833
   M11:
       type: device
-      at: 9,5
-      model: A3144
+      at: 10.75,5.5
+      model: HC-SR04
   M12:
       type: device
-      at: 10.75,5
-      model: A1324
+      at: 13,5.5
+      model: HC-SR501
   M13:
       type: device
-      at: 12.75,5
-      model: LM35
+      at: 15,5.5
+      model: KY-040
   M14:
       type: device
-      at: 14.75,5
-      model: SFELF10M7
+      at: 1.75,8
+      model: LM35
   M15:
       type: device
-      at: 2,8
-      model: CFULA455
+      at: 3.75,8
+      model: OSTA5131A
   M16:
       type: device
-      at: 4.25,8
-      model: AE-RJ-45-LAN-DIP-A
+      at: 6,8
+      model: OSTAMA5B31A
   M17:
       type: device
-      at: 7.25,8
-      model: AE-DC-POWER-JACK-DIP
+      at: 8,8
+      model: SFELF10M7
   M18:
       type: device
-      at: 10,8
-      model: AE-PHONE-JACK-DIP
+      at: 10.25,8
+      model: SFU455B
   M19:
       type: device
-      at: 12.5,8
-      model: OSTA5131A
+      at: 12,8
+      model: SG90
   M20:
       type: device
-      at: 14.5,8
-      model: OSTAMA5B31A
+      at: 14,8
+      model: TA7642
 ```
 
 ![図03 ギャラリー device の型番 (1 列)](out/23-gallery-modules-3.png)

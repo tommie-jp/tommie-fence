@@ -1,0 +1,6 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+models: [CD4069UB, CD4069, CD4069UBE]
+package: dip14
+role: NOT ×6
+pins: [A, G, B, H, C, I, VSS, J, D, K, E, L, F, VDD]
+source: SCHS054E、Pin Functions

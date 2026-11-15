@@ -1,0 +1,13 @@
+# 同梱の部品カード (52 の docs/160 で TS の表から移した)。
+# 模型用サーボ。コネクタは茶 (GND)・赤 (電源 5 V)・橙 (信号) の順 (JR 形)。2026-10-22 に秋月 108761 の付属資料
+# (SG90_a.pdf: Orange PWM・Red Vcc・Brown Ground) と秋月 113227 (MG90S) の本文で確かめた。SG92R は販売店の記述だけ。
+models: [SG90, SG92R, MG90S]
+package: sip3
+role: RC サーボ
+role-en: RC servo
+pins: [GND, VCC, SIG]
+look:
+  body: "#3a6ea5"
+  edge: "#254a73"
+note: RC サーボ。青の胴で描く。コネクタの線は茶 (GND)・赤 (VCC)・橙 (SIG)
+source: "模型用サーボ。コネクタは茶 (GND)・赤 (電源 5 V)・橙 (信号) の順 (JR 形)。2026-10-22 に秋月 108761 の付属資料 (SG90_a.pdf: Orange PWM・Red Vcc・Brown Ground) と秋月 113227 (MG90S) の本文で確かめた。SG92R は販売店の記述だけ。"
