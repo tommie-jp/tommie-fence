@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.67.0] - 2026-11-15
+
 ### Added
 
 - `model: RPI-DEBUG-PROBE` (Raspberry Pi Debug Probe) を帯に置くと、箱ではなく実物に寄せた姿で描く。ピンは口の中の位置に出し、2 つの GND (`UGND` `DGND`) には GND と刷り、**色を書かない線は付属のケーブルの色** (橙 = TX・SC、黒 = GND、黄 = RX・SD) にする

@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.43.0] - 2026-11-15
+
 ### Added
 
 - Raspberry Pi Debug Probe をモジュールの表に足した (`RPI-DEBUG-PROBE`、別名 `RASPBERRY-PI-DEBUG-PROBE`)。ピンは `TX` `UGND` `RX` `SC` `DGND` `SD` で、表に刷る字 (`silk`: 2 つの GND は GND)・色を書かない線の色 (`wireColors`: 付属のケーブルの橙・黒・黄)・姿 (`look`) を持てるようにした (`deviceSilk` `deviceWireColor` `deviceLookOf`)
