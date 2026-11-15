@@ -27,7 +27,14 @@ export function scaleSpecsOf(doc: FenceDocument): readonly ScaleSpec[] {
 
 /** 線の点 (理想と実測をつないだもの) から尺度を決める。 */
 export function scaleOf(traces: readonly Trace[], spec: ScaleSpec | undefined): Scale {
-  const joined = Float64Array.from(traces.flatMap((trace) => [...trace.samples]));
+  // 点の列をそのままつなぐ。前は 8192 点ずつを普通の配列に開いてつなぎ、数の配列に戻していた
+  // (オシロの画面の時間の 14 % と、その分の GC。52 の docs/162)。値は同じ。
+  const joined = new Float64Array(traces.reduce((total, trace) => total + trace.samples.length, 0));
+  let offset = 0;
+  for (const trace of traces) {
+    joined.set(trace.samples, offset);
+    offset += trace.samples.length;
+  }
   const auto = autoRange(joined, spec?.range ?? null);
   return { perDiv: auto.perDiv, position: spec?.position ?? auto.position };
 }
