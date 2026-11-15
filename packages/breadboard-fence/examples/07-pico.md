@@ -140,6 +140,9 @@ Raspberry Pi Debug Probe は 2 本のケーブルで Pico につなぐ。**U (UA
 (SWCLK・GND・SWDIO) へ。パッドは**穴に挿さらない**ので、ボード外の機器のピンと同じく
 線の端としてだけ書く (`MCU.SWCLK`)。
 
+Probe は **`model: RPI-DEBUG-PROBE`** で置くと、ピンの名前が表から出て、箱ではなく実物に寄せた姿
+(3 ピンの口 `U` `D` とケース) で描かれる。**線の色を書かなければ付属のケーブルの色** (橙・黒・黄) になる。
+
 ```bread
 # ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
 title: 図02 Debug Probe を UART と SWD につなぐ
@@ -148,18 +151,18 @@ parts:
   MCU: pico2 @ g15
   PROBE:
     type: device
-    at: bottom
+    model: RPI-DEBUG-PROBE
     label: Debug Probe
-    pins: [RX, TX, UGND, SC, DGND, SD]
+    at: top
 wires:
-  # U (UART): Probe の TX → Pico の RX (GP1)、Probe の RX ← Pico の TX (GP0)
-  - PROBE.TX -- j16 orange
-  - PROBE.RX -- j15 yellow
-  - PROBE.UGND -- j17 black
+  # U (UART): Probe の TX → Pico の RX (GP1)、Probe の RX ← Pico の TX (GP0)。色は書かない (橙・黄・黒)
+  - PROBE.TX -- j16
+  - PROBE.RX -- j15
+  - PROBE.UGND -- j17
   # D (SWD): USB と反対の端の 3 つのパッド
-  - PROBE.SC -- MCU.SWCLK orange
-  - PROBE.DGND -- MCU.SWGND black
-  - PROBE.SD -- MCU.SWDIO yellow
+  - PROBE.SC -- MCU.SWCLK
+  - PROBE.DGND -- MCU.SWGND
+  - PROBE.SD -- MCU.SWDIO
 ```
 
 ![図02 Debug Probe を UART と SWD につなぐ](out/07-pico-2.svg)
@@ -170,12 +173,52 @@ wires:
 - 並びは公式のピンアウト図 (USB が上) で**左から SWCLK・GND・SWDIO**。図は USB が左なので、
   右の端を**下から SWCLK・SWGND・SWDIO** と読む (SWCLK が 1〜20 番の列の側)。
   `r180` で回すと左の端に移り、上から SWCLK・SWGND・SWDIO になる
-- パッドは穴の行と行の間の高さに描き、線は板の外から横に入る。どの穴にも挿さっていない
+- パッドは穴の行と行の間の高さに描き、線は基板の外から横に入る。どの穴にも挿さっていない
   ことが図で分かるようにするため
 - **Pico W / Pico 2 W のパッドは端ではなく中ほど** (アンテナが端にあるので、USB と反対の端から
-  19.8 mm)。図でも板の中ほど (13 番と 14 番の間の高さ) に描く
+  19.8 mm)。図でもボードの中ほど (13 番と 14 番の間の高さ) に描く
 - **UART は TX と RX を入れ違いに**つなぐ (Probe の TX → Pico の RX = GP1)。
-  色は Debug Probe のケーブルの色 (U は TX 橙・RX 黄・GND 黒、D は SC 橙・GND 黒・SD 黄)
+  色は書かなくても Debug Probe のケーブルの色になる (U は TX 橙・RX 黄・GND 黒、D は SC 橙・GND 黒・SD 黄)
+- Probe は**上の帯**に置く。上の帯では公式の図と同じ向き (U が左・D が右) で、D の線が SWD のパッドへ
+  交わらずに入る。下の帯に置くと 180 度回した姿になり、線が交わる
 - ネットリストでは `UGND` (GND3 と同じネット) と `DGND` (SWGND と同じネット) が別のネットに出る。
   Pico の中ではどちらも GND につながっているが、ボードの中の導通はネットリストに入れていない
   (40 ピンの 7 本の GND も 1 本ずつ別に出る)
+
+## USB ケーブルを挿す
+
+USB ケーブルは**部品**として書く (`type: usb-cable`)。`from:` に挿す口を書くと、口から外へ伸びた
+ケーブルを描き、両端の差し込みに種類を刷る。**手前の差し込みは口で決まる** (Pico も Debug Probe も
+micro-B)。向こうの端 (パソコンの側) は書かなければ USB-C、`plug: usb-a` で USB-A。
+
+```bread
+# ブレッドボードの実体配線図 (tommie-fence の bread フェンス)
+title: 図03 Pico 2 と Debug Probe に USB ケーブルを挿す
+board: full
+parts:
+  MCU: pico2 @ g15
+  PROBE:
+    type: device
+    model: RPI-DEBUG-PROBE
+    label: Debug Probe
+    at: top
+    pins: [SC, DGND, SD]
+  W1:
+    type: usb-cable
+    from: MCU.USB
+  W2:
+    type: usb-cable
+    from: PROBE.USB
+    plug: usb-a
+wires:
+  - PROBE.SC -- MCU.SWCLK
+  - PROBE.DGND -- MCU.SWGND
+  - PROBE.SD -- MCU.SWDIO
+```
+
+![図03 Pico 2 と Debug Probe に USB ケーブルを挿す](out/07-pico-3.svg)
+
+- Pico の USB の口の脇の `micro-B` は、ケーブルを描かなくても刷る。Type-C のケーブルしか無いと挿さらない
+- 部品表には `W1 usb-cable USB-C – micro-B` のように両端の種類が出る。買う物がそのまま読める
+- Probe は図02 と同じく上の帯に置く。D の口が右に来て、SWD のパッドへの線が交わらない。
+  下の帯に置くと 180 度回した姿 (U が右・D が左) になり、線が交わる

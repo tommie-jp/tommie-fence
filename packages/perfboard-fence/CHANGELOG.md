@@ -5,6 +5,13 @@
 
 ## [Unreleased]
 
+### Added
+
+- `model: RPI-DEBUG-PROBE` (Raspberry Pi Debug Probe) を帯に並べると、箱ではなく実物に寄せた姿で描く (番地で置いた機器は箱のまま)。2 つの GND (`UGND` `DGND`) には GND と刷り、**色を書かない線は付属のケーブルの色** (橙・黒・黄) にする
+- USB ケーブルを部品として書けるようにした (`type: usb-cable`、`from: MCU.USB`、`plug:` の既定は `usb-c`)。口から基板の外 (Debug Probe なら帯の外) へ伸ばし、両端の差し込みに種類を刷り、部品表に両端の種類を出す
+- Pico シリーズと Tang Nano 9K の USB の口の脇に、口の種類 (`micro-B` `USB-C`) を刷る
+- 例: `examples/07-device.md` に図03 (Debug Probe)、`examples/09-usb.md` に図03 (USB ケーブル) を足した
+
 ## [0.64.1] - 2026-11-15
 
 ### Fixed

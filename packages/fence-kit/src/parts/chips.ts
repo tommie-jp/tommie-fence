@@ -2,6 +2,8 @@ import { element } from '../markup.ts';
 import { BOARD_HALO_OPACITY, BOARD_INK_OPACITY, num, svgText } from '../svg.ts';
 import { textWidth } from '../textFit.ts';
 import type { BoardPart } from './boards.ts';
+import { USB_STAMP } from './deviceLooks.ts';
+import type { UsbPort } from './deviceLooks.ts';
 
 /**
  * DIP・SIP・マイコンボードの姿。**実物のパッケージの話で盤面に依らない**ので、
@@ -751,6 +753,7 @@ export function boardChip(options: BoardChipOptions): string {
     x: num(box.x), y: num(box.y), width: num(box.width), height: num(box.height), rx: 5,
     fill: ink.body, stroke: CHIP_EDGE,
   });
+  const usbStamp = definition === null ? '' : boardUsbStamp(definition, box, centre, alongX, nearStart, pitch, scale, ink);
 
   const chipSide = CHIP_SIDE * pitch;
   const chip = element('rect', {
@@ -807,7 +810,49 @@ export function boardChip(options: BoardChipOptions): string {
   const pads = drawPads(placedPads, ink)
     + (options.padNames === false ? '' : boardPadNames(placedPads, points, pinOne, box, fontSize, ink));
   return `${usb}${hdmi(definition, box, centre, alongX, nearStart, pitch)}${shell}${antenna(definition, box, centre, alongX, nearStart, ink.pin)}`
-    + `${chip}${chipName}${stubs}${legends}${pads}`;
+    + `${chip}${chipName}${stubs}${legends}${pads}${usbStamp}`;
+}
+
+/** 種類の字を USB の端から内へ置く距離 (ピッチに対する比)。 */
+const USB_STAMP_INSET = 0.95;
+const USB_STAMP_FONT = 6.5;
+
+/**
+ * USB の口の種類 (`micro-B`) を**基板の USB の端の内側**に、端の辺に沿って刷る。口そのものは
+ * 基板から 8 px しか出ていないので字が入らない (52 の docs/157)。
+ */
+function boardUsbStamp(
+  definition: BoardPart, box: ChipBox, centre: ChipPoint, alongX: boolean, nearStart: boolean, pitch: number, scale: number, ink: ChipInk,
+): string {
+  const inset = USB_STAMP_INSET * pitch;
+  const size = USB_STAMP_FONT * scale;
+  const x = alongX ? (nearStart ? box.x + inset : box.x + box.width - inset) : centre.x;
+  const y = alongX ? centre.y : (nearStart ? box.y + inset : box.y + box.height - inset);
+  const text = svgText(0, size * 0.35, USB_STAMP[definition.usb], { 'font-size': num(size), fill: ink.chipText });
+  return element('g', { class: 'cf-usb-kind', transform: `translate(${num(x)} ${num(y)})${alongX ? ' rotate(-90)' : ''}` }, text);
+}
+
+/**
+ * マイコンボードの USB の口 (差し込みが入る縁の真ん中と、ケーブルが出ていく向き)。
+ * **`boardChip` と同じ決め方** — USB は 1 番ピンの側の端。
+ */
+export function boardUsbPort(
+  points: readonly ChipPoint[], pitch: number, definition: BoardPart, pinOne = 0,
+): UsbPort | null {
+  const first = points[pinOne] ?? points[0];
+  if (!first) return null;
+  const box = boardBox(points, pitch, definition);
+  const centre = centreOf(box);
+  const alongX = chipAlongX(points);
+  const nearStart = alongX ? first.x < centre.x : first.y < centre.y;
+  if (alongX) {
+    return nearStart
+      ? { x: box.x - USB_OVERHANG, y: centre.y, dir: 'left', kind: definition.usb }
+      : { x: box.x + box.width + USB_OVERHANG, y: centre.y, dir: 'right', kind: definition.usb };
+  }
+  return nearStart
+    ? { x: centre.x, y: box.y - USB_OVERHANG, dir: 'up', kind: definition.usb }
+    : { x: centre.x, y: box.y + box.height + USB_OVERHANG, dir: 'down', kind: definition.usb };
 }
 
 /** デバッグ用のパッド 1 つ (名前と、画布の上の中心)。 */

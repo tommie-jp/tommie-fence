@@ -1,6 +1,7 @@
 import type { Lang } from '../lang.ts';
 import { VERIFY_NOTES } from './discretes.ts';
 import { lookupPinoutNames, lookupRole } from './pinouts.ts';
+import type { DeviceLookName } from './deviceLooks.ts';
 
 /**
  * 基板の外に置くモジュール (`type: device`) のピンの名前の表 (52 の docs/139)。
@@ -28,6 +29,15 @@ export type ModuleRow = {
   readonly note?: string;
   /** 確かめた資料。 */
   readonly source: string;
+  /**
+   * 図に刷る字 (配線の名前と違う物だけ)。**1 つの機器の中で名前が重なる** (Debug Probe の 2 つの GND) とき、
+   * 配線の名前は分け (`UGND` `DGND`)、刷る字は実物どおりにする (コネクタの表の `silk` と同じ仕組み)。
+   */
+  readonly silk?: Readonly<Record<string, string>>;
+  /** 色を書かない線の色 (配線の色の名前)。**付属のケーブルの色が決まっている物**だけが持つ。 */
+  readonly wireColors?: Readonly<Record<string, string>>;
+  /** 箱の代わりに描く姿 (`deviceLooks.ts`)。無ければ箱。 */
+  readonly look?: DeviceLookName;
 };
 
 const ROWS: readonly ModuleRow[] = [
@@ -94,6 +104,23 @@ const ROWS: readonly ModuleRow[] = [
     note: '2 列 × 8 本、列の間は 0.4 インチ = 10.16 mm (ブレッドボードの溝 0.3 インチより広い)。右の列の GND は `GND2` (基板の中で GND とつながる)。`SLP` (nSLEEP) は H で動く。`VIN` が電源の入力で、`VMM` は逆接保護を通した後',
     source: 'Pololu 2130 の製品ページ (https://www.pololu.com/product/2130) の上面のピン配置の図 0J3866。列の間は Pololu の寸法図 drv8833-dual-motor-driver-carrier-dimensions.pdf (https://www.pololu.com/file/0J1615/、2018-10-26) の Connector callouts',
   },
+  {
+    // **型番に作り手 (`RPI-`) を付ける。** ほかのマイコン用のデバッグ機器 (ST-LINK・J-Link) を
+    // 後から足したとき、裸の `DEBUG-PROBE` ではどれか分からない (52 の docs/157)。
+    models: ['RPI-DEBUG-PROBE', 'RASPBERRY-PI-DEBUG-PROBE'],
+    names: ['TX', 'UGND', 'RX', 'SC', 'DGND', 'SD'],
+    role: 'デバッグプローブ (Raspberry Pi、SWD と UART)', roleEn: 'debug probe (Raspberry Pi, SWD and UART)',
+    product: 'Raspberry Pi Debug Probe (ケースと 3 種のケーブルつき。USB の口は micro-B)',
+    view: 'USB を上、3 ピンの口を下にして上から見て: 左の口 U (左から TX・GND・RX)、右の口 D (左から SC・GND・SD)',
+    note: '名前は **Probe の側から見た名前** (`TX` は Probe から出る) なので、U の `TX` を相手の RX (Pico の GP1) へ、`RX` を相手の TX (GP0) へ。'
+      + 'D の `SC` `GND` `SD` は Pico の SWCLK・GND・SWDIO へ。GND は 2 つあるので `UGND` `DGND` と呼び、図には GND と刷る。'
+      + '**線の色を書かなければ付属のケーブルの色** (橙 = TX・SC、黒 = GND、黄 = RX・SD)。I/O は 3.3 V',
+    source: 'Raspberry Pi の Debug Probe の文書 (https://www.raspberrypi.com/documentation/microcontrollers/debug-probe.html) のケーブルの色 (orange TX/SC・black GND・yellow RX/SD)、'
+      + '3 ピンのデバッグコネクタの仕様 RP-003139-SP (1 番 SC/TX・2 番 GND・3 番 SD/RX。JST SH 1.0 mm)、寸法図 RP-008192-DS (32 × 22 mm、USB と 3 ピンの口は反対の短辺)。2026-11-15',
+    silk: { UGND: 'GND', DGND: 'GND' },
+    wireColors: { TX: 'orange', UGND: 'black', RX: 'yellow', SC: 'orange', DGND: 'black', SD: 'yellow' },
+    look: 'rpi-debug-probe',
+  },
 ];
 
 const BY_MODEL: ReadonlyMap<string, ModuleRow> = new Map(
@@ -116,6 +143,23 @@ export function deviceRole(model: string, lang: Lang = 'ja'): string | null {
   const row = lookupModule(model);
   if (row !== null) return lang === 'en' ? row.roleEn : row.role;
   return lookupRole(model, lang);
+}
+
+/** 機器のピンに刷る字。表に `silk` が無ければ配線の名前のまま。 */
+export function deviceSilk(model: string | null, pin: string): string {
+  const silk = model === null ? undefined : lookupModule(model)?.silk;
+  return silk !== undefined && Object.hasOwn(silk, pin) ? silk[pin] ?? pin : pin;
+}
+
+/** 色を書かない線の色 (配線の色の名前)。表に無ければ null。 */
+export function deviceWireColor(model: string | null, pin: string): string | null {
+  const colors = model === null ? undefined : lookupModule(model)?.wireColors;
+  return colors !== undefined && Object.hasOwn(colors, pin) ? colors[pin] ?? null : null;
+}
+
+/** 箱の代わりに描く姿。無ければ null (箱で描く)。 */
+export function deviceLookOf(model: string | null): DeviceLookName | null {
+  return model === null ? null : lookupModule(model)?.look ?? null;
 }
 
 export type DeviceModelPins =

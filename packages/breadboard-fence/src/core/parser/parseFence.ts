@@ -7,7 +7,7 @@ import {
   BOARD_SIZES, COLUMN_NUMBERS, DEFAULT_BOARD, DEFAULT_PARTS_LIST, LETTER_CASES, PARTS_LIST_MODES,
 } from '../types.ts';
 import type {
-  BoardSpec, FenceDocument, FenceError, NoteSpec, PartSpec, PartsListMode, Result, StyleSpec, WireSpec,
+  BoardSpec, CableSpec, FenceDocument, FenceError, NoteSpec, PartSpec, PartsListMode, Result, StyleSpec, WireSpec,
 } from '../types.ts';
 import { splitPartType } from '../parts/variants.ts';
 import { partValueProblem, readPlateColor, rememberRecent, resolveLang } from 'fence-kit';
@@ -19,6 +19,7 @@ import {
 } from './points.ts';
 import type { PointDef } from './points.ts';
 import { validateExpandedPart } from './schema.ts';
+import { CABLE_TYPE, validateCable } from './cable.ts';
 import { EMPTY_STYLE, mergeStyle, validateStyle } from './style.ts';
 
 /** 列挙にある値ならその型で返す。列挙は types.ts の as const 配列なので、二重定義にならない。 */
@@ -79,6 +80,7 @@ function readFence(source: string): ParseResult {
   const parts: PartSpec[] = [];
   const wires: WireSpec[] = [];
   const notes: NoteSpec[] = [];
+  const cables: CableSpec[] = [];
   let board: BoardSpec = DEFAULT_BOARD;
   // レールを自分で書いたか。書いていれば、あとから size を書かれても既定で潰さない。
   let boardRailsWritten = false;
@@ -105,6 +107,7 @@ function readFence(source: string): ParseResult {
       parts: resolveParts(parts, points),
       wires: resolveWires(wires, points),
       notes: resolveNoteTargets(notes, points),
+      cables,
     };
   };
 
@@ -169,7 +172,7 @@ function readFence(source: string): ParseResult {
       if (resolved.error !== null) errors.push(fenceError(resolved.error, line));
       else lang = resolved.lang;
     } else if (key === 'parts') {
-      collectParts(pair.value as ParsedNode | null, { parts, errors, lineOf, isPoint });
+      collectParts(pair.value as ParsedNode | null, { parts, cables, errors, lineOf, isPoint });
     } else if (key === 'wires') {
       collectWires(pair.value as ParsedNode | null, { wires, errors, lineOf });
     } else if (key === 'notes') {
@@ -410,9 +413,11 @@ function styleKeyLines(node: ParsedNode | null, lineOf: LineOf): Map<string, num
 
 function collectParts(
   node: ParsedNode | null,
-  context: { parts: PartSpec[]; errors: FenceError[]; lineOf: LineOf; isPoint: (token: string) => boolean },
+  context: {
+    parts: PartSpec[]; cables: CableSpec[]; errors: FenceError[]; lineOf: LineOf; isPoint: (token: string) => boolean;
+  },
 ): void {
-  const { parts, errors, lineOf, isPoint } = context;
+  const { parts, cables, errors, lineOf, isPoint } = context;
   if (!isMap(node)) {
     errors.push(fenceError('parts は「ID: 内容」のマップで書きます', lineOf(node)));
     return;
@@ -420,7 +425,7 @@ function collectParts(
 
   // parts: が 2 回書かれることがある (uniqueKeys: false) ので、
   // これまでに読めた部品も含めて重複を見る。
-  const seen = new Set(parts.map((part) => part.id));
+  const seen = new Set([...parts, ...cables].map((part) => part.id));
   for (const pair of node.items) {
     const id = scalarText(pair.key);
     const line = lineOf(pair.key) ?? 1;
@@ -462,6 +467,14 @@ function collectParts(
     }
 
     if (isMap(pair.value)) {
+      // **USB ケーブルは基板にも帯にも置かない部品**なので、部品とは別の列に集める。
+      const raw = pair.value.toJSON() as Record<string, unknown>;
+      if (raw.type === CABLE_TYPE) {
+        const cable = validateCable(id, raw, line);
+        if (cable.ok) cables.push(cable.value);
+        else errors.push(fenceError(`部品 ${safeToken(id)}: ${cable.message}`, line, cable.token));
+        continue;
+      }
       const expanded = expandPart(id, pair.value.toJSON() as unknown, line);
       if (expanded.ok) {
         parts.push(expanded.value);
@@ -481,7 +494,7 @@ function expandPart(id: string, raw: unknown, line: number) {
     return { ok: false as const, error: fenceError(`部品 ${safeToken(id)}: ${validated.message}`, line) };
   }
 
-  const { at, label, value, pins, holes, turn, color } = validated.value;
+  const { at, label, value, pins, holes, turn, color, model } = validated.value;
   const { type, variant, problem } = splitPartType(validated.value.type);
   if (problem) return { ok: false as const, error: fenceError(`部品 ${safeToken(id)}: ${problem}`, line) };
   // 基板の色は 1 行の記法と同じ読み方 (`readPlateColor`)。型番は値かラベルに書かれている。
@@ -503,7 +516,7 @@ function expandPart(id: string, raw: unknown, line: number) {
     value: {
       id, type, written: validated.value.type, variant,
       // マップ形式は `@` を書かない (項目で書く形なので)。
-      holes: holes.map(parseHoleToken), turn, value, label, at, pins, color,
+      holes: holes.map(parseHoleToken), turn, value, label, at, pins, color, model,
       anchored: false, labelTagged: false, block: true, line,
     } satisfies PartSpec,
     // 「描けたが使われなかった指定」はお知らせ。部品そのものは今までどおり描く。

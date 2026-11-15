@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- 機器の `model:` に `RPI-DEBUG-PROBE` (Raspberry Pi Debug Probe。ピンは `TX` `UGND` `RX` `SC` `DGND` `SD`) を書けるようにした (表は fence-kit と共有。回路図では箱で描く)
+
 ## [0.50.0] - 2026-11-14
 
 ### Added

@@ -103,3 +103,30 @@ style:
 
 `J5` は Type-C の 4 本 (`GND D+ D- VBUS`) を縦に書いた形。
 ピンの名前は変換基板に刷る。
+
+## USB ケーブルを挿す
+
+USB ケーブルは**部品**として書く (`type: usb-cable`)。`from:` に挿す口を書くと、口から基板の外へ伸びた
+ケーブルを描き、両端の差し込みに種類を刷る。**手前の差し込みは口で決まる** (Pico は micro-B)。
+向こうの端は書かなければ USB-C、`plug: usb-a` で USB-A。上の `usb-c` `usb-a` (基板に載せる受け口) とは別の物。
+
+```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
+title: 図03 Pico 2 に USB ケーブルを挿す
+board: 30x20
+style:
+  check: off   # Pico の使わない 37 本を並べないため
+parts:
+  MCU: pico2 e5
+  W1:
+    type: usb-cable
+    from: MCU.USB
+    plug: usb-a
+notes:
+  - parts
+```
+
+![図03 Pico 2 に USB ケーブルを挿す](out/09-usb-3.svg)
+
+- 部品表には `W1 usb-cable USB-A – micro-B` と両端の種類が出る
+- Pico の口の脇の `micro-B` は、ケーブルを描かなくても刷る

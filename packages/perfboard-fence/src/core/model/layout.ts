@@ -75,6 +75,9 @@ export type LayoutOptions = {
    */
   readonly partsLeft?: number;
   readonly partsRight?: number;
+  /** 上の帯の上と下の帯の下に足す余白 (機器の口から帯の外へ出る USB ケーブルのぶん。52 の docs/157)。 */
+  readonly marginTop?: number;
+  readonly marginBottom?: number;
 };
 
 /** 基板の外の機器を並べる帯。 */
@@ -127,7 +130,9 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
   const partsLeft = Math.max(0, options.partsLeft ?? 0);
   const partsRight = Math.max(0, options.partsRight ?? 0);
   const boardX = OUTER_MARGIN + LABEL_GUTTER + partsLeft;
-  const boardY = OUTER_MARGIN + LABEL_GUTTER + titleBand + topBand + deviceAbove;
+  const marginTop = Math.max(0, options.marginTop ?? 0);
+  const marginBottom = Math.max(0, options.marginBottom ?? 0);
+  const boardY = OUTER_MARGIN + LABEL_GUTTER + titleBand + marginTop + topBand + deviceAbove;
 
   // **銅箔を並べる辺は、縁を 1 ピッチぶん広げる。** 銅箔は穴ではないので、
   // 穴と同じ間隔だけ離して置く — 詰めると穴の列の続きに見えて、挿せると読める。
@@ -158,9 +163,9 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
   // **基板 2 枚を続けて置く** — 間に写しが挟まると、表と裏が別の図に見える。
   // **部品表は書き出しより上**。写しは「同じ図をもう一度出す」ためのもので
   // 図そのものの続きではないので、いちばん下に置く。
-  const backTop = boardY + boardHeight + labelBottom + bottomBand + deviceBelow + BACK_GAP;
+  const backTop = boardY + boardHeight + labelBottom + bottomBand + deviceBelow + marginBottom + BACK_GAP;
   const backBand = back === null ? 0 : BACK_GAP + back.height;
-  const belowBoard = boardY + boardHeight + labelBottom + bottomBand + deviceBelow + backBand;
+  const belowBoard = boardY + boardHeight + labelBottom + bottomBand + deviceBelow + marginBottom + backBand;
   const legendTop = belowBoard + SOURCE_GAP;
   const legendBand = legend === null ? 0 : SOURCE_GAP + legend.height;
   const listTop = belowBoard + legendBand + SOURCE_GAP;

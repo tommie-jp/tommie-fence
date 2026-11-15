@@ -1,4 +1,4 @@
-import { applyExpectations, element, hasSheets, normalizeNewlines, num, renderSheets, resolveLang, splitSheets } from 'fence-kit';
+import { applyExpectations, deviceWireColor, element, hasSheets, normalizeNewlines, num, renderSheets, resolveLang, splitSheets } from 'fence-kit';
 import { perfboardScene } from './render/scene.ts';
 import { attachSourceText } from './errors.ts';
 import { createLayout } from './model/layout.ts';
@@ -23,6 +23,7 @@ import { renderSourceListing, sourceBandSize, sourceListing } from './render/sou
 import { backSideLayout, renderBackSide } from './render/backSide.ts';
 import { deviceOverhang, layoutDevices, renderDevices } from './render/devices.ts';
 import { netlistOf, resolveWires } from './wiring/wiring.ts';
+import { cableMargins, cableOverhang, cableRows, planCables, renderCables } from './render/usbCable.ts';
 import { unnamedDipNotices } from './parts/pinout.ts';
 import { toroidNotices } from './parts/toroidNotices.ts';
 import { checkErc } from './erc/erc.ts';
@@ -206,7 +207,9 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
   // 部品表も基板の外に出すので、**図を組む前に測る** (書き出しと同じ理由)。
   // 基板に載せる前の部品から作る — 載せられなかった部品も、揃えるものには変わりない。
   const listNotes = parsed.doc.notes.filter((note) => note.kind === 'parts');
-  const listed = listNotes.length > 0 ? partsListing(parsed.doc.parts, devices, boardRow(board, parsed.doc.boardName, lang), lang) : [];
+  const listed = listNotes.length > 0 ? partsListing(
+    parsed.doc.parts, devices, boardRow(board, parsed.doc.boardName, lang), lang, cableRows(parsed.doc.cables, parsed.doc.parts, devices),
+  ) : [];
   // **白黒の図では色を網と線の型に移す** (`render/hatch.ts`)。移した先が何色かは
   // 図の中では言えないので、使った色の凡例を基板のすぐ下に出す。
   // 色つきのテーマでは見たままなので、帯そのものを出さない。
@@ -244,7 +247,17 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
   const devicesJut = deviceOverhang(devices, bare, board);
   // 1 列のヘッダに載ったモジュール (キットの基板とジャック) は左右にも張り出す。
   const connectorsJut = connectorOverhang(placement.parts, bare);
-  const modulesJut = moduleOverhang(placement.parts, bare);
+  // USB ケーブルも基板の縁の外へ出る (マイコンボードの口から)。モジュールと同じく上下左右に測る。
+  const cablesJut = cableOverhang(planCables(parsed.doc.cables, placement.parts, devices, null, bare, null), bare);
+  const modulesJut = (() => {
+    const modules = moduleOverhang(placement.parts, bare);
+    return {
+      above: Math.max(modules.above, cablesJut.above), below: Math.max(modules.below, cablesJut.below),
+      left: Math.max(modules.left, cablesJut.left), right: Math.max(modules.right, cablesJut.right),
+    };
+  })();
+  // 機器の口 (Debug Probe) から帯の外へ出るケーブルのぶん、画布の上下を空ける。
+  const cableRoom = cableMargins(parsed.doc.cables, devices);
   const partsJut = {
     above: Math.max(connectorsJut.above, modulesJut.above),
     below: Math.max(connectorsJut.below, modulesJut.below),
@@ -275,8 +288,12 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
     partsBelow: partsJut.below,
     partsLeft: modulesJut.left,
     partsRight: modulesJut.right,
+    marginTop: cableRoom.top,
+    marginBottom: cableRoom.bottom,
   });
   const placedDevices = layoutDevices(devices, layout, board);
+  const cableErrors: FenceError[] = [];
+  const cables = planCables(parsed.doc.cables, placement.parts, devices, placedDevices.placed, layout, cableErrors);
   const devicePins = new Map(devices.map((device) => [device.id, new Set(device.pins)]));
 
   const pointErrors: FenceError[] = [];
@@ -307,13 +324,21 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
     noteErrors.push(notice('部品表 (parts) は 1 つだけ描きます (後のものは描いていません)', extra.line));
   }
 
-  const wiring = resolveWires(parsed.doc.wires, points, board, devicePins);
+  const resolvedWiring = resolveWires(parsed.doc.wires, points, board, devicePins);
+  // 色を書かない機器の線は、表の色 (Debug Probe の付属のケーブルの色。52 の docs/157)。
+  const models = new Map(devices.map((device) => [device.id, device.model ?? null]));
+  const wiring = {
+    ...resolvedWiring,
+    deviceWires: resolvedWiring.deviceWires.map((wire) => (wire.color !== null ? wire : {
+      ...wire, color: deviceWireColor(models.get(wire.device) ?? null, wire.pin),
+    })),
+  };
   const netlist = netlistOf(placement.parts, wiring.wires, named, devices, wiring.deviceLinks);
 
   // **読めなかったところがあるうちは ERC を掛けない。** 落ちた配線を勘定に
   // 入れないまま「つながっていません」と言うと、**書いた配線について書き忘れを
   // 指摘する**ことになる。掛けなかったことは黙らずに言う。
-  const hardErrors = [...parsed.errors, ...pointErrors, ...placement.errors, ...wiring.errors]
+  const hardErrors = [...parsed.errors, ...pointErrors, ...placement.errors, ...wiring.errors, ...cableErrors]
     .filter((error) => error.notice !== true);
   // **`erc: off` は「伏せる」ではなく「見ない」。** 書いた人が外したのだから、
   // 外したことをこちらから言い足さない (`debug: off` との違いは文法の説明に書く)。
@@ -447,6 +472,8 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
           return from === undefined ? [] : [wireObstacle(from, layout.point(wire.hole))];
         }),
       ], (owner, box) => { captionLog.push({ owner, box }); })
+      // USB ケーブルは部品の上に載せる (口に挿した差し込みが基板の上に寝ている)。
+      + renderCables(cables, THEME.metrics.textSize / 9)
       // ピンへ来る線は胴の上にも重ね、ピンの真ん中まで線を見せる (USB-C のパッドも同じ)。
       + renderLeadWires(placement.parts, wiring.wires, layout, PLATE, hops.slice(0, wiring.wires.length))
       // 半田付けした穴を部品と配線の上にもう一度。半田面と同じく、部品面の図でも
@@ -516,7 +543,7 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
   // **行順に並べる。** 段ごとに集めた順のままだと、帯の打ち切り (8 件) で
   // 後ろの段の報告から先に消え、行を追って直せなくなる。
   const collected = [
-    ...parsed.errors, ...pointErrors, ...placement.errors, ...unnamedDipNotices(placement.parts), ...toroidNotices(placement.parts), ...wiring.errors, ...noteErrors,
+    ...parsed.errors, ...pointErrors, ...placement.errors, ...unnamedDipNotices(placement.parts), ...toroidNotices(placement.parts), ...wiring.errors, ...cableErrors, ...noteErrors,
     ...placedDevices.notices, ...fit, ...notChecked,
     ...(language.error === null ? [] : [fenceError(language.error, null)]),
   ];

@@ -104,6 +104,9 @@ parts:
   M7:
       type: device
       model: DRV8833-POLOLU
+  M8:
+      type: device
+      model: RPI-DEBUG-PROBE
 ```
 
 ![図06 ボード外の機器](out/21-gallery-boards-6.svg)

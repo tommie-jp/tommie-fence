@@ -32,6 +32,9 @@ export type LayoutOptions = {
   readonly overhangBottom?: number;
   readonly overhangLeft?: number;
   readonly overhangRight?: number;
+  /** 画布の上端と下端に足す余白 (機器の口から帯の外へ出る USB ケーブルのぶん。52 の docs/157)。 */
+  readonly marginTop?: number;
+  readonly marginBottom?: number;
 };
 
 export type Layout = {
@@ -67,7 +70,7 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
   const [top, bottom, left, right] = [
     options.overhangTop, options.overhangBottom, options.overhangLeft, options.overhangRight,
   ].map((value) => Math.max(0, value ?? 0)) as [number, number, number, number];
-  let y = OUTER_MARGIN;
+  let y = OUTER_MARGIN + Math.max(0, options.marginTop ?? 0);
   const topBand: Rect | null = options.deviceTop
     ? { x: OUTER_MARGIN, y, width: 0, height: DEVICE_HEIGHT }
     : null;
@@ -131,7 +134,7 @@ export function createLayout(board: Board, options: LayoutOptions = {}): Layout 
 
   const boardX = OUTER_MARGIN + left;
   const width = boardWidth + OUTER_MARGIN * 2 + left + right;
-  const height = y + OUTER_MARGIN;
+  const height = y + OUTER_MARGIN + Math.max(0, options.marginBottom ?? 0);
   const bandWidth = boardWidth;
 
   const colX = (col: number): number => boardX + BOARD_PAD_X + (col - 1) * PITCH;

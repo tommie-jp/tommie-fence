@@ -22,13 +22,14 @@ describe('validateExpandedPart', () => {
       turn: NO_TURN,
       holes: [],
       color: null,
+      model: null,
     });
   });
 
   test('takes the pins and the label of a device from model:', () => {
     const result = validateExpandedPart({ type: 'device', at: 'bottom', model: '28byj-48' });
 
-    expect(result.ok && result.value).toMatchObject({ label: '28BYJ-48', pins: ['BLUE', 'PINK', 'YELLOW', 'ORANGE', 'RED'] });
+    expect(result.ok && result.value).toMatchObject({ label: '28BYJ-48', pins: ['BLUE', 'PINK', 'YELLOW', 'ORANGE', 'RED'], model: '28BYJ-48' });
   });
 
   test('keeps the written pins of a model and refuses a stranger', () => {

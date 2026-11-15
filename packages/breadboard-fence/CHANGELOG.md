@@ -5,6 +5,13 @@
 
 ## [Unreleased]
 
+### Added
+
+- `model: RPI-DEBUG-PROBE` (Raspberry Pi Debug Probe) を帯に置くと、箱ではなく実物に寄せた姿で描く。ピンは口の中の位置に出し、2 つの GND (`UGND` `DGND`) には GND と刷り、**色を書かない線は付属のケーブルの色** (橙 = TX・SC、黒 = GND、黄 = RX・SD) にする
+- USB ケーブルを部品として書けるようにした (`type: usb-cable`、`from: MCU.USB`、`plug: usb-c | usb-a | micro-b`、既定は `usb-c`)。口から基板の外 (Debug Probe なら帯の外) へ伸ばし、両端の差し込みに種類を刷り、部品表に `USB-C – micro-B` のように出す。ネットリストには入れない
+- Pico シリーズと Tang Nano 9K の USB の口の脇に、口の種類 (`micro-B` `USB-C`) を刷る
+- 例: `examples/07-pico.md` の図02 を `model: RPI-DEBUG-PROBE` に書き換え、図03 (USB ケーブル) を足した
+
 ### Fixed
 
 - Pico の SWD のパッドへ入る線が、パッドの名前の下を通らないようにした。並びを「パッド → 降りる線 → 名前」に替え、線はパッドのすぐ外の半列を降り、名前はいちばん外の線よりさらに外に置く (前は名前の外を降りて、名前の下を横に入っていた)

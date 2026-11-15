@@ -1,3 +1,5 @@
+import type { UsbKind } from './deviceLooks.ts';
+
 /**
  * 基板に挿すマイコンボード。ピン名は**実物のピンアウトの印字そのまま**にする。
  * 図に出る名前と配線に書く名前が同じでなければ、図と回路を突き合わせられないため。
@@ -28,6 +30,8 @@ export type BoardPart = {
    * 無ければ持たない (Tang Nano 9K)。
    */
   readonly debug?: BoardDebug;
+  /** USB の口の種類。**図の口の隣に刷る** (Pico は micro-B。Type-C のケーブルしか無いとつまずく所。52 の docs/157)。 */
+  readonly usb: UsbKind;
 };
 
 /**
@@ -53,7 +57,7 @@ const PICO_PINS: readonly string[] = [
 ];
 
 /** Pico の外形。列の間 0.7 インチ、縁は端のピンから 0.55 ピッチ。 */
-const PICO_SHAPE = { hdmi: false, rowSpan: 7, reach: 0.55 } as const;
+const PICO_SHAPE = { hdmi: false, rowSpan: 7, reach: 0.55, usb: 'micro-b' } as const;
 
 /**
  * Pico シリーズの SWD のパッド (3 ピン、0.1 インチ)。公式のピンアウト図 (USB が上) で
@@ -93,7 +97,7 @@ const BOARD_PARTS: Record<string, BoardPart> = {
   pico2: { name: 'Pico 2', chip: 'RP2350', wireless: false, ...PICO_SHAPE, pins: PICO_PINS, debug: PICO_DEBUG },
   'pico2-w': { name: 'Pico 2 W', chip: 'RP2350', wireless: true, ...PICO_SHAPE, pins: PICO_PINS, debug: PICO_W_DEBUG },
   'tang-nano-9k': {
-    name: 'Tang Nano 9K', chip: 'GW1NR-9', wireless: false, hdmi: true, rowSpan: 9, reach: 2.28, mark: 'GW1NR', pins: TANG_NANO_9K_PINS,
+    name: 'Tang Nano 9K', chip: 'GW1NR-9', wireless: false, hdmi: true, rowSpan: 9, reach: 2.28, usb: 'usb-c', mark: 'GW1NR', pins: TANG_NANO_9K_PINS,
   },
 };
 

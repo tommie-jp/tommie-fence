@@ -19,7 +19,7 @@ export function boardBodyRect(part: PlacedPart, layout: Layout): Rect {
  * 1 番ピンの点の添字。**`pins[0]` は 1 番ピンとは限らない** — 升の並びは固定で、回すと
  * 名前のほうが巡る (`placement/place.ts` の spun)。だから名前で引く。
  */
-function pinOneOf(part: PlacedPart): number {
+export function pinOneOf(part: PlacedPart): number {
   const first = lookupBoardPart(part.type)?.pins[0];
   const index = part.pins.findIndex((pin) => pin.name === first);
   return index < 0 ? 0 : index;

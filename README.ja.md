@@ -152,3 +152,5 @@ make help             # 目標の一覧
 ## ライセンス
 
 MIT
+
+Raspberry Pi は Raspberry Pi Ltd の商標です。図の Debug Probe と Pico は機能の描写で、ロゴは描いていません。

@@ -5,6 +5,13 @@
 
 ## [Unreleased]
 
+### Added
+
+- Raspberry Pi Debug Probe をモジュールの表に足した (`RPI-DEBUG-PROBE`、別名 `RASPBERRY-PI-DEBUG-PROBE`)。ピンは `TX` `UGND` `RX` `SC` `DGND` `SD` で、表に刷る字 (`silk`: 2 つの GND は GND)・色を書かない線の色 (`wireColors`: 付属のケーブルの橙・黒・黄)・姿 (`look`) を持てるようにした (`deviceSilk` `deviceWireColor` `deviceLookOf`)
+- 機器の姿 (`deviceLooks.ts`): Debug Probe を箱ではなく実物に寄せた姿 (ケース・緑の基板・3 ピンの口 `U` `D`・LED・micro-B の口) で描く `drawDeviceLook`、ピンの位置 `lookPinX`、USB の口 `lookUsbPort`。ロゴは描かない
+- USB ケーブル (`usbCable.ts`): 口から外へまっすぐ伸ばし、両端の差し込みに種類 (`micro-B` `USB-C` `USB-A`) を刷る `drawUsbCable`、マップを読む `readUsbCable` (bread と perf で同じ決まり)
+- マイコンボードの表に USB の口の種類 (`usb`: Pico は `micro-b`、Tang Nano 9K は `usb-c`) を足し、`boardChip` が口の脇に種類を刷るようにした。口の位置と向きは `boardUsbPort`
+
 ### Fixed
 
 - `boardPadNames` に、パッドから名前の書き出しまでの間 (`gap`) を渡せるようにした。パッドへ線が入る図で、名前を線より外に置くため

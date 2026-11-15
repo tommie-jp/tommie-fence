@@ -1,3 +1,4 @@
+import type { UsbKind } from 'fence-kit';
 import type { PartRatings } from 'fence-kit';
 import type { Lang } from 'fence-kit';
 import type { Turn } from './parts/orient.ts';
@@ -156,6 +157,8 @@ export type PartSpec = {
   readonly pins: readonly string[] | null;
   /** 部品の基板の色 (書かれたままの綴り。`blue`)。基板のある部品だけが持つ。 */
   readonly color?: string | null;
+  /** 機器の型番 (`model:`、表の代表の綴り)。機器だけが持つ。 */
+  readonly model?: string | null;
   /** 名札の置き場所 (`cap=above`)。書かなければ null で、今までどおり自動で胴の下に置く。 */
   readonly caption?: CaptionSpec | null;
   /** 胴を半穴ずらす向き (`shift=down`)。2 ピンの部品だけ。 */
@@ -303,6 +306,17 @@ export type StyleSpec = {
   readonly line: number | null;
 };
 
+/** USB ケーブル (`type: usb-cable`。52 の docs/157)。部品の ID の名前空間を共有するが、基板にも帯にも置かない。 */
+export type CableSpec = {
+  readonly id: string;
+  /** 挿す口を持つ部品 (`MCU.USB` の `MCU`)。 */
+  readonly partId: string;
+  /** 向こうの端の差し込みの種類。 */
+  readonly far: UsbKind;
+  readonly label: string | null;
+  readonly line: number;
+};
+
 export type FenceDocument = {
   /** 図の左上に載せる 1 行の題。書かなければ null。 */
   readonly title: string | null;
@@ -316,6 +330,8 @@ export type FenceDocument = {
   readonly parts: readonly PartSpec[];
   readonly wires: readonly WireSpec[];
   readonly notes: readonly NoteSpec[];
+  /** USB ケーブル。書いていなければ空。 */
+  readonly cables: readonly CableSpec[];
 };
 
 export type PartKind =
@@ -359,6 +375,8 @@ export type PlacedPart = {
   readonly at: 'top' | 'bottom' | null;
   /** 部品の基板の色 (書かれたままの綴り)。描くときに `partPlateColor` で色に直す。 */
   readonly color?: string | null;
+  /** 機器の型番 (表の代表の綴り)。姿・刷る字・線の既定の色を引く。 */
+  readonly model?: string | null;
   /** 書いて決めた名札の置き場所。無ければ自動 (`render/captions.ts`)。 */
   readonly caption?: CaptionSpec | null;
   /** 胴を半穴ずらす向き (2 ピンだけ)。 */

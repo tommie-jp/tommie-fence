@@ -210,3 +210,36 @@ NE555 は `r180` で切り欠きを右に向けて挿している (`dip8 h11 r18
 (1.44 / ((10k + 2×68k) × 10n) ≒ 1 kHz)。**信号源は 4 番ピン (RESET) を開け閉め
 する** — H の間だけ発振してスピーカーが鳴り、L で止まる。`C2` は 5 番ピン
 (CONT) の安定用、`R3` は 555 の出力電流を 8Ω に対して抑えるための直列抵抗。
+
+## Debug Probe をつなぐ
+
+Raspberry Pi Debug Probe は `model: RPI-DEBUG-PROBE` で置く。帯に並べると**箱ではなく実物に寄せた姿**
+(3 ピンの口 `U` `D`・ケース・LED) で描き、**線の色を書かなければ付属のケーブルの色** (橙・黒・黄) になる。
+
+```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
+title: 図03 Debug Probe を Pico 2 の UART につなぐ
+board: 30x20
+style:
+  check: off   # Pico の使わない 37 本を並べないため
+parts:
+  MCU: pico2 e5
+  PROBE:
+    type: device
+    model: RPI-DEBUG-PROBE
+    label: Debug Probe
+    at: bottom
+    pins: [TX, UGND, RX]
+wires:
+  - PROBE.TX -- m6      # 色は書かない (橙)。Probe の TX → Pico の RX (GP1)
+  - PROBE.RX -- m5      # 黄。Probe の RX ← Pico の TX (GP0)
+  - PROBE.UGND -- m7    # 黒
+  - l5 -- m5
+  - l6 -- m6
+  - l7 -- m7
+```
+
+![図03 Debug Probe を Pico 2 の UART につなぐ](out/07-device-3.svg)
+
+- 名前は **Probe の側から見た名前** (`TX` は Probe から出る)。GND は U の口が `UGND`、D の口が `DGND` で、図には GND と刷る
+- 下の帯では 180 度回した姿 (U が右・D が左)。番地で置いた機器 (`at: e1` など) は箱のまま

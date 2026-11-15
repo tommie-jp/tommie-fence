@@ -83,6 +83,7 @@ export function partsListing(
   devices: readonly DeviceSpec[],
   board: PartsRow | null = null,
   lang: Lang = 'ja',
+  extra: readonly PartsRow[] = [],
 ): readonly PartsRow[] {
   const rows: PartsRow[] = [
     ...parts.map((part): PartsRow => {
@@ -93,6 +94,8 @@ export function partsListing(
     }),
     // 機器は種類が 1 つしかないので、名札を値の欄に出す (`電池 3V`)。
     ...devices.map((device): PartsRow => [device.id, 'device', device.label, '']),
+    // USB ケーブルなど、基板にも帯にも置かない物 (呼ぶ側が行を作る)。
+    ...extra,
   ];
   // 表から部品を探すので名前の順に並べる (数字は数として: R2 の次は R10。機器も同じ並びに入る)。
   const sorted = [...rows].sort((a, b) => a[0].localeCompare(b[0], 'en', { numeric: true }));

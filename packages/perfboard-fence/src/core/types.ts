@@ -1,3 +1,4 @@
+import type { UsbKind } from 'fence-kit';
 import type { PartRatings } from 'fence-kit';
 import type { Lang } from 'fence-kit';
 import { THEME_NAMES } from './limits.ts';
@@ -171,6 +172,8 @@ export type DeviceSpec = {
   readonly where: string | null;
   readonly label: string;
   readonly pins: readonly string[];
+  /** 機器の型番 (`model:`、表の代表の綴り)。姿・刷る字・線の既定の色を表から引く。書かなければ null。 */
+  readonly model?: string | null;
   /** 書かれていた行。ERC のお知らせを書いた場所に返すために持つ。 */
   readonly line: number | null;
 };
@@ -339,4 +342,17 @@ export type FenceDocument = {
   readonly style: StyleSpec;
   readonly notes: readonly NoteSpec[];
   readonly devices: readonly DeviceSpec[];
+  /** USB ケーブル (`type: usb-cable`。52 の docs/157)。書いていなければ空。 */
+  readonly cables: readonly CableSpec[];
+};
+
+/** USB ケーブル。部品の ID の名前空間を共有するが、基板にも帯にも置かない。 */
+export type CableSpec = {
+  readonly id: string;
+  /** 挿す口を持つ部品 (`MCU.USB` の `MCU`)。 */
+  readonly partId: string;
+  /** 向こうの端の差し込みの種類。 */
+  readonly far: UsbKind;
+  readonly label: string | null;
+  readonly line: number | null;
 };

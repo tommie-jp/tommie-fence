@@ -99,6 +99,7 @@ export function parseDevice(id: string, entries: Record<string, unknown>): Parse
       where,
       label: clampText(label, LIMITS.labelLength),
       pins: names,
+      model: fromModel === null || !fromModel.ok ? null : fromModel.model,
       line: null,
     },
   };

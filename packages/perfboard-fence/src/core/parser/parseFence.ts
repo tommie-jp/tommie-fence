@@ -4,9 +4,9 @@ import { fenceError, notice, safeToken } from '../errors.ts';
 import { DEFAULT_BOARD, DEFAULT_BOARD_SIZE, MATERIALS, parseMaterial, parseThickness, resolveBoard, resolveGrid, resolveSilk, SILK_WORDS } from '../model/board.ts';
 import { isLandColor, isPlateColor, landNames, plateNames } from '../render/finish.ts';
 import { boardNames } from '../model/catalog.ts';
-import { LIMITS } from '../limits.ts';
+import { LIMITS, clampText } from '../limits.ts';
 import { parsePartLine } from './parts.ts';
-import { rememberRecent, resolveLang } from 'fence-kit';
+import { USB_CABLE_TYPE, readUsbCable, rememberRecent, resolveLang } from 'fence-kit';
 import type { Lang } from 'fence-kit';
 import { parseWireLine } from './wires.ts';
 import { EMPTY_STYLE, parseStyle } from './style.ts';
@@ -18,6 +18,7 @@ import { isSeq } from 'yaml';
 import { TOP_LEVEL_KEYS } from '../types.ts';
 import type {
   BoardMaterial, Board, DeviceSpec, FenceDocument, FenceError, NoteSpec, PartSpec, PointSpec, StyleSpec, UnusedSpec, WireSpec,
+  CableSpec,
 } from '../types.ts';
 
 /** yaml のメッセージはライブラリ側の文言なので、載せる長さを切る。 */
@@ -42,7 +43,7 @@ export type ParseResult = { readonly doc: FenceDocument; readonly errors: readon
 
 /** 何も読めなかったときに返す中身。基板だけは既定のものを持つ。 */
 const emptyDocument = (): FenceDocument => ({
-  board: DEFAULT_BOARD, boardName: null, title: null, lang: null, parts: [], wires: [], points: [], unused: [], shorted: [], style: EMPTY_STYLE, notes: [], devices: [],
+  board: DEFAULT_BOARD, boardName: null, title: null, lang: null, parts: [], wires: [], points: [], unused: [], shorted: [], style: EMPTY_STYLE, notes: [], devices: [], cables: [],
 });
 
 const scalarText = (node: unknown): string | null => {
@@ -122,6 +123,7 @@ function readFence(source: string): ParseResult {
   }
   const parts: PartSpec[] = [];
   const devices: DeviceSpec[] = [];
+  const cables: CableSpec[] = [];
   const wires: WireSpec[] = [];
   const points: PointSpec[] = [];
   const unused: UnusedSpec[] = [];
@@ -329,6 +331,15 @@ function readFence(source: string): ParseResult {
       // **入れ子なら基板の外の機器**。1 行に畳めない情報 (ピンの名前の並び) を持つ。
       if (isMap(item.value)) {
         const entries = (item.value as { toJSON?: () => unknown }).toJSON?.() as Record<string, unknown> | undefined;
+        // **USB ケーブルは基板にも帯にも置かない部品**なので、機器とは別の列に集める (52 の docs/157)。
+        if (entries?.type === USB_CABLE_TYPE) {
+          const cable = readUsbCable(entries, safeToken);
+          if (cable.ok) {
+            const label = cable.label === null ? null : clampText(cable.label, LIMITS.labelLength);
+            cables.push({ id, partId: cable.partId, far: cable.far, label, line });
+          } else errors.push(fenceError(`${safeToken(id)}: ${cable.message}`, line, cable.token));
+          continue;
+        }
         const device = parseDevice(id, entries ?? {});
         if (!device.ok) {
           errors.push({ ...device.error, line });
@@ -664,7 +675,7 @@ function readFence(source: string): ParseResult {
   }
 
   return {
-    doc: { board: board ?? DEFAULT_BOARD, boardName, title, lang, style, parts, devices, wires, points, unused, shorted, notes },
+    doc: { board: board ?? DEFAULT_BOARD, boardName, title, lang, style, parts, devices, cables, wires, points, unused, shorted, notes },
     errors,
   };
 }

@@ -263,6 +263,10 @@ parts:
       type: device
       at: 2.25,7
       model: DRV8833-POLOLU
+  M8:
+      type: device
+      at: 5,7
+      model: RPI-DEBUG-PROBE
 ```
 
 ![図04 ギャラリー device のモジュール](out/23-gallery-modules-4.png)

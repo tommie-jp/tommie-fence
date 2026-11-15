@@ -3,7 +3,7 @@ import type { PlacedPart, Point, Rect } from '../types.ts';
 import type { RenderTheme } from './theme.ts';
 import { textScale } from './theme.ts';
 import { element, num, svgText } from './svg.ts';
-import { PIN_NAME_GAP, pinNameInner, pinNameRow, pinNameWidth } from 'fence-kit';
+import { PIN_NAME_GAP, deviceLookOf, deviceSilk, drawDeviceLook, lookNameInk, lookNameInset, lookPinX, lookWidth, pinNameInner, pinNameRow, pinNameWidth } from 'fence-kit';
 
 const PIN_LENGTH = 8;
 const PIN_SPACING = 40;
@@ -41,7 +41,13 @@ const pinSpacingOf = (part: PlacedPart, scale: number): number => {
   return Math.max(PIN_SPACING, widest * scale * PIN_FONT + Math.max(PIN_NAME_GAP, 2 * NAME_INSET));
 };
 
-const widthOf = (part: PlacedPart, scale: number): number =>
+/** 機器の幅。**姿のある機器 (Debug Probe) は姿の幅**、ほかは名前とピンの数から。 */
+const widthOf = (part: PlacedPart, scale: number): number => {
+  const look = deviceLookOf(part.model ?? null);
+  return look === null ? boxWidthOf(part, scale) : lookWidth(look, scale);
+};
+
+const boxWidthOf = (part: PlacedPart, scale: number): number =>
   Math.max(part.pins.length * pinSpacingOf(part, scale), captionOf(part).length * scale * CHAR_WIDTH + 28, MIN_WIDTH);
 
 /**
@@ -91,15 +97,15 @@ export function layoutDevices(
       const edgeY = side === 'top' ? rect.y + rect.height : rect.y;
       const pinY = side === 'top' ? edgeY + PIN_LENGTH : edgeY - PIN_LENGTH;
 
+      // 姿のある機器は、ピンの x を姿の口の位置から取る (書いたピンの数に依らない)。
+      const look = deviceLookOf(device.model ?? null);
+      const pinX = (name: string, pinIndex: number): number =>
+        (look === null ? null : lookPinX(look, name, rect, side))
+        ?? rect.x + (rect.width * (pinIndex + 0.5)) / device.pins.length;
       placements.set(device.id, {
         rect,
         side,
-        pins: new Map(
-          device.pins.map((pin, pinIndex) => [
-            pin.name,
-            { x: rect.x + (rect.width * (pinIndex + 0.5)) / device.pins.length, y: pinY },
-          ]),
-        ),
+        pins: new Map(device.pins.map((pin, pinIndex) => [pin.name, { x: pinX(pin.name, pinIndex), y: pinY }])),
       });
       cursor = x + width + DEVICE_GAP * scale;
     });
@@ -115,25 +121,32 @@ export function renderDevice(part: PlacedPart, placement: DevicePlacement, theme
   const edgeY = side === 'top' ? rect.y + rect.height : rect.y;
   const labelY = side === 'top' ? rect.y + 20 : rect.y + rect.height - 12;
 
-  const shell = element('rect', {
-    x: num(rect.x), y: num(rect.y), width: num(rect.width), height: num(rect.height), rx: 6,
-    fill: palette.deviceBody, stroke: palette.deviceEdge,
-  });
-  const label = svgText(rect.x + rect.width / 2, labelY, captionOf(part), {
-    'font-size': num(scale * LABEL_FONT),
-    fill: palette.deviceText,
-  });
+  const look = deviceLookOf(part.model ?? null);
+  const body = look === null
+    ? element('rect', {
+      x: num(rect.x), y: num(rect.y), width: num(rect.width), height: num(rect.height), rx: 6,
+      fill: palette.deviceBody, stroke: palette.deviceEdge,
+    }) + svgText(rect.x + rect.width / 2, labelY, captionOf(part), {
+      'font-size': num(scale * LABEL_FONT),
+      fill: palette.deviceText,
+    })
+    : drawDeviceLook(look, { rect, side, label: captionOf(part), scale });
+  // 刷る字は表の `silk` (Debug Probe の UGND は GND)。配線の名前とは別。
+  const printed = part.pins.map((pin) => deviceSilk(part.model ?? null, pin.name));
 
   // 帯に詰め込まれてピンの間が縮んだら、名前は隣と触れない大きさまで縮め、
   // それでも触れるなら 2 段に互い違いに置く。
   const xs = part.pins.map((pin) => placement.pins.get(pin.name)?.x ?? rect.x);
   const largest = scale * PIN_FONT;
-  const nameRow = pinNameRow(xs, part.pins.map((pin) => pin.name), {
+  const nameRow = pinNameRow(xs, printed, {
     largest,
     smallest: Math.min(largest, MIN_PIN_FONT),
     within: { left: rect.x + NAME_INSET, right: rect.x + rect.width - NAME_INSET },
   });
-  const nameY = side === 'top' ? edgeY - 6 : edgeY + 12 - (largest - nameRow.size) * 0.72;
+  // 姿のある機器は、名前を 3 ピンの口の胴より内へ (胴に重ねない)。
+  const inset = look === null ? 0 : lookNameInset(look);
+  const nameY = side === 'top' ? edgeY - 6 - inset : edgeY + 12 + inset - (largest - nameRow.size) * 0.72;
+  const nameInk = look === null ? palette.chipPin : lookNameInk(look);
   const inwardStep = (side === 'top' ? -1 : 1) * nameRow.size * STAGGER_LINE;
 
   const pins = part.pins
@@ -145,13 +158,13 @@ export function renderDevice(part: PlacedPart, placement: DevicePlacement, theme
         x1: num(point.x), y1: num(edgeY), x2: num(point.x), y2: num(point.y),
         stroke: palette.chipPin, 'stroke-width': 3,
       });
-      const name = svgText(point.x, nameY + (inner ? inwardStep : 0), pin.name, {
+      const name = svgText(point.x, nameY + (inner ? inwardStep : 0), printed[index] ?? pin.name, {
         'font-size': num(nameRow.size),
-        fill: palette.chipPin,
+        fill: nameInk,
       });
       return stub + name;
     })
     .join('');
 
-  return `${shell}${label}${pins}`;
+  return `${body}${pins}`;
 }

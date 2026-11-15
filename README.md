@@ -173,3 +173,5 @@ make help             # list the goals
 ## License
 
 MIT
+
+Raspberry Pi is a trademark of Raspberry Pi Ltd. The Debug Probe and Pico drawings depict function only and do not reproduce the logo.

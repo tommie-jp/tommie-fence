@@ -19,6 +19,8 @@ export type ExpandedPart = {
   readonly turn: Turn;
   /** 部品の基板の色 (書かれたままの綴り)。 */
   readonly color: string | null;
+  /** 機器の型番 (表の代表の綴り)。姿・刷る字・線の既定の色を表から引くのに使う。 */
+  readonly model: string | null;
 };
 
 /**
@@ -143,6 +145,7 @@ export function validateExpandedPart(raw: unknown): Validation {
       holes,
       turn,
       color,
+      model: resolved === null ? null : resolved.model,
     },
   };
 }

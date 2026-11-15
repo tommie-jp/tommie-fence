@@ -55,6 +55,10 @@ export type DocumentInput = {
   readonly style: RenderStyle;
   readonly parts: readonly PlacedPart[];
   readonly devices: ReadonlyMap<string, DevicePlacement>;
+  /** USB ケーブル (描いた SVG)。部品の上・パッドへの線の下に重ねる。 */
+  readonly cables?: string;
+  /** 部品表に並べる物 (部品と USB ケーブル)。書かなければ `parts`。 */
+  readonly listed?: readonly PlacedPart[];
   readonly wires: readonly RenderedWire[];
   readonly notes: readonly ResolvedNote[];
   /** `- source` が図に書き出すフェンスの中身 (囲みつき)。 */
@@ -90,7 +94,7 @@ function listPlates(input: DocumentInput, layout: Layout): readonly ListPlate[] 
   if (sheet?.hold === true) return [];
   const listings = [
     ...(sheet?.earlier ?? []),
-    { caption: sheet?.caption ?? null, parts: input.partsList === 'none' ? [] : input.parts, board: input.board, layout, mode: input.partsList },
+    { caption: sheet?.caption ?? null, parts: input.partsList === 'none' ? [] : input.listed ?? input.parts, board: input.board, layout, mode: input.partsList },
   ];
   const shown = listings.filter((one) => one.parts.length > 0 && one.mode === 'symbols');
   const line = sheet === undefined ? 0 : Math.max(0, ...shown.map((one) => partsListLine(one.parts, theme, one.mode, one.layout)));
@@ -189,6 +193,7 @@ export function renderDocument(input: DocumentInput): string {
     renderBoard(input.board, layout, theme, covered, lettered),
     ...wireLayer(false),
     ...lifted.bodies,
+    input.cables ?? '',
     // パッド (Pico の SWD) へ入る線は板の上に載るので、部品の上・名札の下に描く。
     ...wireLayer(true),
     // パッドの名前はその線より上 (線は名前の下を通り、縁取りが線を消して字を読ませる)。

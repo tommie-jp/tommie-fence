@@ -8,13 +8,13 @@ describe('parseDevice', () => {
     const result = read({ type: 'device', at: 'bottom', label: '電池 3V', pins: ['+', '-'] });
 
     expect(result.ok && result.value).toEqual({
-      id: 'BAT', at: 'bottom', where: null, label: '電池 3V', pins: ['+', '-'], line: null,
+      id: 'BAT', at: 'bottom', where: null, label: '電池 3V', pins: ['+', '-'], model: null, line: null,
     });
   });
 
   test('takes the pins and the label from model:', () => {
     expect(read({ type: 'device', model: 'drv8833-pololu', pins: ['AIN1', 'AOUT1', 'GND'] })).toMatchObject({
-      ok: true, value: { label: 'drv8833-pololu', pins: ['AIN1', 'AOUT1', 'GND'] },
+      ok: true, value: { label: 'drv8833-pololu', pins: ['AIN1', 'AOUT1', 'GND'], model: 'DRV8833-POLOLU' },
     });
     expect(read({ type: 'device', model: 'MBC2596-01' })).toMatchObject({ ok: true, value: { pins: ['IN+', 'IN-', 'OUT+', 'OUT-'] } });
   });

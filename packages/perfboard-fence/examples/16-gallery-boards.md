@@ -96,7 +96,7 @@ parts:
 
 ```perf
 # ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
-title: 図05 基板の外の機器
+title: 図05 基板の外の機器 (1/2)
 board:
   size: 46x4
   h: 1.6mm
@@ -135,4 +135,23 @@ parts:
       model: DRV8833-POLOLU
 ```
 
-![図05 基板の外の機器](out/16-gallery-boards-5.svg)
+![図05 基板の外の機器 (1/2)](out/16-gallery-boards-5.svg)
+
+```perf
+# ユニバーサル基板の実体配線図 (tommie-fence の perf フェンス)
+title: 図06 基板の外の機器 (2/2)
+board:
+  size: 46x3
+  h: 1.6mm
+  material: FR-4
+  slots: on
+style:
+  check: off
+parts:
+  M1:
+      type: device
+      at: top
+      model: RPI-DEBUG-PROBE
+```
+
+![図06 基板の外の機器 (2/2)](out/16-gallery-boards-6.svg)

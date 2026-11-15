@@ -1,4 +1,4 @@
-import { applyExpectations, hasSheets, keptSourceLines, renderSheets, resolveLang, splitSheets } from 'fence-kit';
+import { applyExpectations, deviceWireColor, hasSheets, keptSourceLines, renderSheets, resolveLang, splitSheets } from 'fence-kit';
 import type { Lang, Scene, SceneEndKind, SheetExtras, SheetPoint } from 'fence-kit';
 import { breadboardScene } from './render/scene.ts';
 import { toroidNotices } from './parts/toroidNotices.ts';
@@ -25,6 +25,7 @@ import type { DevicePlacement } from './render/devices.ts';
 import type { NoteAnchor, ResolvedNote } from './render/notes.ts';
 import { captionDrops } from './render/captions.ts';
 import { connectorOverhang } from './render/connector.ts';
+import { cableListParts, cableMargins, cableOverhang, planCables, renderCables } from './render/usbCable.ts';
 import { partObstacles } from './render/parts.ts';
 import { boardPadPoints, padEntry } from './render/boardPart.ts';
 import { renderErrorBanner } from './render/errorHtml.ts';
@@ -229,14 +230,26 @@ function renderOneSheet(input: string, options: OneSheetOptions): RenderResult &
 
   const placed = placement.parts;
   const devices = placed.filter((part) => part.kind === 'device');
+  // 機器の口 (Debug Probe) から帯の外へ出る USB ケーブルのぶん、画布の上下を空ける。
+  const margins = cableMargins(parsed.doc.cables, placed);
   const bands = {
     deviceTop: devices.some((device) => device.at !== 'bottom'),
     deviceBottom: devices.some((device) => device.at === 'bottom'),
+    marginTop: margins.top,
+    marginBottom: margins.bottom,
   };
   // **基板の縁から張り出す USB コネクタのぶん、画布を伸ばす。** 一度組んで測り、
   // はみ出すときだけ組み直す (はみ出さない図は 1 バイトも変わらない)。
   const bare = createLayout(board, bands);
-  const jut = connectorOverhang(placed, bare, OVERHANG_MARGIN);
+  const connectorJut = connectorOverhang(placed, bare, OVERHANG_MARGIN);
+  // マイコンボードの口から出る USB ケーブルも、基板の縁の外へはみ出すぶん画布を伸ばす。
+  const cableJut = cableOverhang(planCables(parsed.doc.cables, placed, bare, null, null), bare);
+  const jut = {
+    top: Math.max(connectorJut.top, cableJut.top),
+    bottom: Math.max(connectorJut.bottom, cableJut.bottom),
+    left: Math.max(connectorJut.left, cableJut.left),
+    right: Math.max(connectorJut.right, cableJut.right),
+  };
   const layout = Object.values(jut).every((value) => value === 0)
     ? bare
     : createLayout(board, {
@@ -305,7 +318,9 @@ function renderOneSheet(input: string, options: OneSheetOptions): RenderResult &
     names: pointStrips(parsed.doc.points, board),
   });
 
-  options.onListed?.({ parts, board, layout, mode: parsed.doc.partsList });
+  const cables = planCables(parsed.doc.cables, parts, layout, placements, errors);
+  const listed = [...parts, ...cableListParts(parsed.doc.cables, cables)];
+  options.onListed?.({ parts: listed, board, layout, mode: parsed.doc.partsList });
 
   const svg = renderDocument({
     ...(options.sheetList === undefined ? {} : { sheetList: options.sheetList }),
@@ -316,6 +331,8 @@ function renderOneSheet(input: string, options: OneSheetOptions): RenderResult &
     style: options.stamp === false ? { ...style, stamp: false } : style,
     parts,
     devices: placements,
+    cables: renderCables(cables, style.theme),
+    listed,
     wires: rendered,
     notes,
     // **掴んで動かすときは書き出しを出さない** (52 の docs/45)。あれは公開する
@@ -720,11 +737,23 @@ function resolveWire(
   if (!to.ok) errors.push(to.error);
   if (!from.ok || !to.ok) return null;
 
-  return { from: from.value, to: to.value, color: wireColor(spec, errors), hints: spec.hints, line: spec.line };
+  const fallback = tableWireColor(from.value, parts) ?? tableWireColor(to.value, parts) ?? DEFAULT_WIRE_COLOR;
+  return { from: from.value, to: to.value, color: wireColor(spec, errors, fallback), hints: spec.hints, line: spec.line };
 }
 
-function wireColor(spec: WireSpec, errors: FenceError[]): string {
-  if (!spec.color) return DEFAULT_WIRE_COLOR;
+/**
+ * 色を書かない線の色を、機器の表から引く (Debug Probe の付属のケーブルの色。52 の docs/157)。
+ * 表に無ければ null。
+ */
+function tableWireColor(endpoint: Endpoint, parts: readonly PlacedPart[]): string | null {
+  if (endpoint.kind !== 'device') return null;
+  const model = parts.find((part) => part.id === endpoint.partId)?.model ?? null;
+  const name = deviceWireColor(model, endpoint.pin);
+  return name === null ? null : lookupWireColor(name);
+}
+
+function wireColor(spec: WireSpec, errors: FenceError[], fallback: string): string {
+  if (!spec.color) return fallback;
   const color = lookupWireColor(spec.color);
   if (color) return color;
   // 未知の色名は図に書き込まない (属性への流し込みを防ぐ)。使える名前だけを示す。
