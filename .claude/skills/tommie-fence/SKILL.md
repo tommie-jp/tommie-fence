@@ -301,6 +301,12 @@ logic (ロジックアナライザの画面) も**基板も部品も無い**。s
   部品の名前は図全体で 1 つ (重なるとエラー)。名前を書かない枚は `1枚め` `2枚め`。枚の題の末尾には `(N枚め)` が付く (`図01 LED 回路・電源 (1枚め)`)。**1 つの図は 3 枚まで** (4 枚以上はお知らせ。図を分ける)。
   本文から指すときは「図01 (2枚め)」か「図01 の電源の基板」と書く。**マップでは枚を 1 枚ずつ選んで掴む** (一覧に枚ごとの項目。links はマップに出ないので字で直す)。手本は各パッケージの
   `examples/12-sheets.md` (perf)・`16-sheets.md` (bread)・`09-sheets.md` (copper)
+- **表に無い部品を足すときは、まず部品カード** (`*.part.yaml`。手引きは `packages/part-card/README.ja.md`)。
+  型番でピンの名前が変わり、既にある姿 (`dipN` `sipN` `transistor/…` `device` `board`) で実物と同じ穴に挿さるならカード。
+  穴の位置や胴の絵が部品ごとに違う物 (リレー・コネクタ・新しい記号) だけがコード。図 1 枚だけなら `type: device` の `pins:` で足りる。
+  手元で試すなら `.tommie-fence/parts/`、公開側に足すなら `packages/fence-kit/parts/` に置いて `npm run cards` → `npm run rows` → 各フェンスの `npm run gallery`。
+  `node <root>/packages/fence-check/dist/part-card.cjs check <カード>` で検め、`preview` で焼いた図を**データシートの端子図と 1 本ずつ見比べる**
+  (並びが正しいかは機械では見られない)
 
 ## 5. 返すとき
 

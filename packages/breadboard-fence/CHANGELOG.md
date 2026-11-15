@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added
+
+- 部品カード (`*.part.yaml`) の型番を描ける。`renderBreadboard` `scenesOfBreadboard` の `cards`、`createBreadboardEditor({ cards })`、プレビューの plugin の 2 つめの引数で渡す
+- CLI は描くファイルから上へ辿って `.tommie-fence/parts/` のカードを読む。`--cards <dir>` `--no-cards` `--strict-cards` (手元のカードの型番を使った図を誤りにする)
+- 早見表に同梱の部品カードの表 (`npm run rows` が書き出す)。`74LS00` の行はそこへ移った
+
 ## [0.69.0] - 2026-11-15
 
 ### Changed

@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added
+
+- 部品カード (`*.part.yaml`) の型番を描ける。`renderPerfboard` `scenesOfPerfboard` の `cards`、`createPerfboardEditor({ cards })`、プレビューの plugin の 2 つめの引数で渡す
+- CLI は描くファイルから上へ辿って `.tommie-fence/parts/` のカードを読む。`--cards <dir>` `--no-cards` `--strict-cards`
+- 文法の手引きに同梱の部品カードの表 (`npm run rows` が書き出す)。`74LS00` の行はそこへ移った
+
 ## [0.66.0] - 2026-11-15
 
 ### Changed

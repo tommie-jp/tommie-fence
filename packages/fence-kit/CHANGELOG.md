@@ -5,6 +5,18 @@
 
 ## [Unreleased]
 
+### Added
+
+- 部品カード (`*.part.yaml`) の本体 (`parts/cards/`)。YAML を読んだ後の値を検める `readCard` (欄・姿・本数・ピンの名前の決まり。`source:` の無いカードは読まない)、表を組む `buildCardTable` (同梱の型番と重なれば同梱が勝ち、知らせる)、描いている間だけカードの表を有効にする `withCards` `withCardsUsed`、殻の全部の操作を包む `editorWithCards`
+- 同梱の部品カード (`parts/*.part.yaml` を焼いた `BUNDLED_CARDS`) を、ピンの名前・3 ピン・モジュール・ボードの表の後ろにつなぐ。ボードの種類の名前 (`boardPartNames`) には描いている間の手元のカードのボードも並ぶ
+- 表の行に `roleEn` (働きの英語) と `ic` (回路図の `ic` の箱の割り振り) を持てるようにした
+- `parseCliArgs` に値を取るオプション (`--cards <dir>`) を足した。書いたときだけ結果に `values` が付く
+- `rememberRecentPerCards`: 読み取りの控えを部品カードの表ごとに分ける
+
+### Changed
+
+- `74LS00` を TS の表から同梱の部品カード (`parts/74LS00.part.yaml`) へ移した。引ける名前と並びは変わらない
+
 ## [0.44.0] - 2026-11-15
 
 ### Changed

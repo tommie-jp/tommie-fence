@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added
+
+- 部品カード (`*.part.yaml`) の型番を描ける。`compileCircuit` の `cards`、`scenesOfCircuit` と `pinProbe` の引数、`createCircuitEditor(look, { cards })`、`circuitPlugin(figures, cards)` で渡す。回路図の `ic` の箱はカードの `ic:` の割り振りで描く
+- CLI は描くファイルから上へ辿って `.tommie-fence/parts/` のカードを読む。`--cards <dir>` `--no-cards` `--strict-cards`
+- 早見表に同梱の部品カードの表 (`npm run rows` が書き出す)。`74LS00` の行はそこへ移った
+
 ## [0.51.0] - 2026-11-15
 
 ### Added

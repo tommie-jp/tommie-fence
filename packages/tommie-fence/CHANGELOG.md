@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- 部品カード: ワークスペースの `.tommie-fence/parts/*.part.yaml` を読み、プレビュー・Problems・マップのエディタに渡す。カードを保存するとプレビューが描き直る (再表示の操作は要らない)。カードの誤りはカードのファイルの行に Problems として出る。信頼されていないワークスペースと web 版では読まない
+- `*.part.yaml` に JSON Schema を当てる (`contributes.yamlValidation`。補完と赤線は YAML 拡張が出す)。YAML のスニペット `part-card` `part-card-transistor` `part-card-device`
+
 ## [0.99.0] - 2026-11-15
 
 ### Changed

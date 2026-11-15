@@ -74,6 +74,7 @@ Markdown の行番号とその行の中身で返るエラー (vna・scope・spec
 ```text
 tommie-fence
 ├── packages/fence-kit          共有: 改行の正規化、フェンス抽出、markup のエスケープ
+├── packages/part-card         部品カード (*.part.yaml) を読む
 ├── packages/circuit-fence     ライブラリ + CLI
 ├── packages/breadboard-fence  ライブラリ + CLI
 ├── packages/perfboard-fence   ライブラリ + CLI
@@ -91,6 +92,9 @@ tommie-fence
 使う側の esbuild がソースのまま束ねるので、実行時の依存を持たない。
 外へ配るのは、図を掴んで動かすエディタを VS Code の外で動かす出口 2 つだけ
 ([packages/fence-kit](packages/fence-kit/README.ja.md))。
+
+表に無い部品は、コードを書かずに**部品カード** (`*.part.yaml`) を置けば足せる
+([packages/part-card](packages/part-card/README.ja.md))。
 
 ## ドキュメント
 

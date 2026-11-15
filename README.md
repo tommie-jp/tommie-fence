@@ -91,6 +91,7 @@ workspaces.
 ```text
 tommie-fence
 ├── packages/fence-kit          shared: newline normalisation, fence extraction, markup escaping
+├── packages/part-card         reads part cards (*.part.yaml)
 ├── packages/circuit-fence     library + CLI
 ├── packages/breadboard-fence  library + CLI
 ├── packages/perfboard-fence   library + CLI
@@ -109,6 +110,9 @@ there in advance. The packages that use it bundle its source with esbuild, so it
 has no runtime dependency of its own. The only parts shipped on their own are
 two entry points that run the drag-to-edit map outside VS Code
 ([packages/fence-kit](packages/fence-kit/README.md)).
+
+A part that is not in the tables can be added without code by dropping in a **part card**
+(`*.part.yaml`) ([packages/part-card](packages/part-card/README.md)).
 
 ## Documentation
 
