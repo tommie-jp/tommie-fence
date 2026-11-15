@@ -17,6 +17,18 @@ const MARK_RADIUS = 9;
 const STROKE = 2;
 /** 字を印からどれだけ上に置くか。 */
 const TEXT_RISE = 12;
+/** 字の行の送り (字の大きさに対する比)。`\n` で改行した字。 */
+const LINE_STEP = 1.25;
+
+/** 注釈の指し先の点。番地の無い注釈 (機器のピン) は `at`。 */
+const pointOf = (note: ResolvedNote, layout: Layout): { x: number; y: number } =>
+  note.at ?? (note.from === null ? { x: 0, y: 0 } : layout.point(note.from));
+
+/** 字を書き始める基準の点。機器のピンを指した字は機器の右の縁の外。 */
+const textPointOf = (note: ResolvedNote, layout: Layout): { x: number; y: number } => note.textAt ?? pointOf(note, layout);
+
+/** 字の行 (`\n` で分ける)。 */
+const linesOf = (note: ResolvedNote): readonly string[] => (note.text ?? '').split('\n');
 /** 指し棒の先の印の長さ。 */
 const ARROW_HEAD = 7;
 /** 基板の上の注釈と題の間に残す隙間。 */
@@ -49,6 +61,8 @@ const colorOf = (note: ResolvedNote, theme: Theme): string =>
 
 /** 丸の脇に置く字と丸の間の隙間。 */
 const SIDE_GAP = 5;
+/** `right` `left` の寄せで、字が指す穴から離れる量 (px)。 */
+export const NOTE_SIDE_PAD = MARK_RADIUS + SIDE_GAP;
 
 /**
  * 字を置く場所。**`left` / `right` を書いた字は穴の脇** (丸 `mark` のすぐ外) に、`center` は穴の真ん中に、穴と同じ高さで置く。
@@ -88,7 +102,7 @@ function textRoom(x: number, width: number): { anchor: 'start' | 'middle' | 'end
 }
 
 function renderNote(note: ResolvedNote, layout: Layout, theme: Theme): string {
-  const from = layout.point(note.from);
+  const from = pointOf(note, layout);
   const stroke = colorOf(note, theme);
 
   if (note.kind === 'mark') {
@@ -104,21 +118,23 @@ function renderNote(note: ResolvedNote, layout: Layout, theme: Theme): string {
     // **縦に回した字は高さで測る** (横幅で切ると基板の広い側で無駄に切れる)。
     const sideways = note.turn.rotate === 90 || note.turn.rotate === 270;
     const size = sizeOf(note, theme);
-    const place = placeOf(note, from, layout, size);
+    const place = placeOf(note, textPointOf(note, layout), layout, size);
     const { anchor, room } = sideways ? { anchor: 'middle' as const, room: layout.height } : place;
-    const text = fit(note.text ?? '', Math.max(0, room) / size);
     // **反転は字を裏返さない。** 鏡文字は読めないので、指す穴の**反対側**へ移す。
     // 上に何かあって字が重なるときに、下へ逃がすためのもの。
     const loud = isLoud(note);
-    const drawn = svgText(place.x, sideways ? from.y - TEXT_RISE : place.baseline, text, {
-      anchor,
-      fill: stroke,
-      'font-size': num(size),
-      ...(note.look.bold ? { 'font-weight': 'bold' } : {}),
-      // 目立たせた字の縁は白。基板の緑や変換基板の青の上でも、赤などの字が沈まない。
-      halo: loud ? LOUD_HALO : theme.palette.plate,
-      haloOpacity: loud ? 1 : BOARD_HALO_OPACITY, inkOpacity: loud ? 1 : BOARD_INK_OPACITY,
-    });
+    // `\n` で改行した字は、1 行ずつ下へ送る。
+    const drawn = linesOf(note).map((line, index) => svgText(
+      place.x, (sideways ? from.y - TEXT_RISE : place.baseline) + index * size * LINE_STEP, fit(line, Math.max(0, room) / size), {
+        anchor,
+        fill: stroke,
+        'font-size': num(size),
+        ...(note.look.bold ? { 'font-weight': 'bold' } : {}),
+        // 目立たせた字の縁は白。基板の緑や変換基板の青の上でも、赤などの字が沈まない。
+        halo: loud ? LOUD_HALO : theme.palette.plate,
+        haloOpacity: loud ? 1 : BOARD_HALO_OPACITY, inkOpacity: loud ? 1 : BOARD_INK_OPACITY,
+      },
+    )).join('');
     // 回すのは**指す穴のまわり**。字の真ん中で回すと、指す先から離れていく。
     return note.turn.rotate === 0
       ? drawn
@@ -187,18 +203,18 @@ export function noteBands(
   return notes.flatMap((note) => {
     if (note.kind !== 'text' || note.turn.rotate !== 0) return [];
     const size = sizeOf(note, theme);
-    const from = layout.point(note.from);
-    const { x: at, baseline, anchor, room } = placeOf(note, from, layout, size);
-    const text = fit(note.text ?? '', Math.max(0, room) / size);
-    const width = textWidth(text) * size;
-    const x = anchor === 'start' ? at : anchor === 'end' ? at - width : at - width / 2;
-    return [{ x, y: baseline - size * 0.72, width, height: size * 0.92 }];
+    const { x: at, baseline, anchor, room } = placeOf(note, textPointOf(note, layout), layout, size);
+    return linesOf(note).map((line, index) => {
+      const width = textWidth(fit(line, Math.max(0, room) / size)) * size;
+      const x = anchor === 'start' ? at : anchor === 'end' ? at - width : at - width / 2;
+      return { x, y: baseline + index * size * LINE_STEP - size * 0.72, width, height: size * 0.92 };
+    });
   });
 }
 
 /** 注釈 1 つが縦に占める幅 (上端と下端)。書き出しと部品表は基板の外の帯なので数えない。 */
 function noteSpan(note: ResolvedNote, layout: Layout, theme: Theme): { top: number; bottom: number } {
-  const from = layout.point(note.from);
+  const from = pointOf(note, layout);
   const to = note.to === null ? from : layout.point(note.to);
   const high = Math.min(from.y, to.y);
   const low = Math.max(from.y, to.y);
@@ -217,9 +233,9 @@ function noteSpan(note: ResolvedNote, layout: Layout, theme: Theme): { top: numb
     const half = (textWidth(text) * size) / 2 + halo;
     return { top: from.y - half, bottom: from.y + half };
   }
-  const { baseline } = placeOf(note, from, layout, size);
+  const { baseline } = placeOf(note, textPointOf(note, layout), layout, size);
   const top = baseline - size * ASCENT - halo;
-  const bottom = baseline + size * DESCENT + halo;
+  const bottom = baseline + (linesOf(note).length - 1) * size * LINE_STEP + size * DESCENT + halo;
   // 逆さの字は指す穴を挟んで反対側に来る。
   return note.turn.rotate === 180
     ? { top: 2 * from.y - bottom, bottom: 2 * from.y - top }

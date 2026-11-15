@@ -4,6 +4,9 @@ import { formatMm } from '../model/point.ts';
 import type { Mm, NoteSpec } from '../types.ts';
 import type { Theme } from './theme.ts';
 
+/** 字の行の送り (字の大きさに対する比)。`\n` で改行した字。 */
+const LINE_STEP = 1.25;
+
 /**
  * 注釈。**回路の一員ではない** (ネットにもネットリストにも出ない)。
  * `dim` は寸法線で、2 点の間の長さを測って出す — 手で切る基板の寸法図のため。
@@ -71,9 +74,10 @@ export function renderNotes(
         return note.from === null || note.to === null ? '' : dimension(note.from, note.to, layout, theme, color);
       case 'text': {
         if (from === null || note.text === null) return '';
-        const body = svgText(0, size * 0.35, note.text, {
+        // `\n` で改行した字は 1 行ずつ下へ送る。
+        const body = note.text.split('\n').map((line, index) => svgText(0, size * 0.35 + index * size * LINE_STEP, line, {
           anchor: 'start', fill: color, 'font-size': num(size), halo: theme.palette.halo, haloWidth: 2.4,
-        });
+        })).join('');
         // **回るのは指す点のまわり** (perfboard と同じ)。
         return element('g', { transform: `translate(${num(from.x + 2)} ${num(from.y)}) rotate(${note.turn})` }, body);
       }
@@ -89,8 +93,9 @@ export function noteBounds(notes: readonly NoteSpec[], theme: Theme, pxPerMm: nu
   return notes.flatMap((note) => {
     const points = [note.from, note.to].filter((point): point is Mm => point !== null);
     if (note.kind !== 'text' || note.from === null || note.text === null) return points;
-    const wide = (textWidth(note.text) * size + 4) / pxPerMm;
-    const tall = size / pxPerMm;
+    const lines = note.text.split('\n');
+    const wide = (Math.max(...lines.map((line) => textWidth(line))) * size + 4) / pxPerMm;
+    const tall = (size + (lines.length - 1) * size * LINE_STEP) / pxPerMm;
     const sideways = note.turn === 90 || note.turn === 270;
     return [
       note.from,

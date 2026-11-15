@@ -49,3 +49,27 @@ describe('USB ケーブル', () => {
     expect(errors.map((one) => one.message).join('\n')).toContain(message);
   });
 });
+
+describe('基板の外の注釈 (機器のピンを指す)', () => {
+  const source = (note: string): string => fence('parts:', '  MCU: pico2 e5', ...probe('bottom'),
+    'wires:', '  - PROBE.TX -- m6', 'notes:', `  - ${note}`);
+
+  test('starts a text by a device pin past the right edge of the device', () => {
+    const { svg, errors } = renderPerfboard(source('text PROBE.TX red: x1'));
+    expect(errors.filter((one) => one.notice !== true)).toEqual([]);
+    const caseRect = /class="cf-look-case" x="([\d.]+)" y="[\d.]+" width="([\d.]+)"/.exec(svg);
+    const textX = Number(/<text x="([\d.]+)"[^>]*>x1</.exec(svg)?.[1]);
+    expect(textX).toBeGreaterThan(Number(caseRect?.[1]) + Number(caseRect?.[2]));
+  });
+
+  test('breaks a text at \\n into lines', () => {
+    const { svg } = renderPerfboard(source('text c20 red: 1 行目\\n2 行目'));
+    expect(svg).toContain('>1 行目<');
+    expect(svg).toContain('>2 行目<');
+  });
+
+  test('refuses a pin the device does not have', () => {
+    const { errors } = renderPerfboard(source('text PROBE.SD: x'));
+    expect(errors.map((one) => one.message).join('\n')).toContain('そのピンはありません');
+  });
+});

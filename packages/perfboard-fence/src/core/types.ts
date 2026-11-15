@@ -248,8 +248,13 @@ export type ResolvedNote = {
   readonly turn: Turn;
   /** 字の見た目 (`large` `bold`)。`text` 以外はいつも `PLAIN_LOOK`。 */
   readonly look: TextLook;
-  readonly from: Address;
+  /** 指し先の番地。**基板の外の機器のピンを指した注釈は null** で、点は `at` に持つ。 */
+  readonly from: Address | null;
   readonly to: Address | null;
+  /** 指し先の点 (番地の無い注釈。機器のピン `PROBE.TX` の足の先)。 */
+  readonly at?: { readonly x: number; readonly y: number };
+  /** 字を書き始める所 (指し先と別のとき。機器のピンを指した字は機器の右の縁の外から書く)。 */
+  readonly textAt?: { readonly x: number; readonly y: number };
   readonly color: string | null;
   readonly text: string | null;
   /**

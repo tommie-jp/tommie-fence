@@ -149,7 +149,9 @@ export function parseNoteLine(
       ok: true,
       value: {
         kind, turn: words.value.turn, look: words.value.look, from, to: null,
-        color: words.value.color, text: clampText(text, LIMITS.noteLength),
+        color: words.value.color,
+        // **`\\n` で改行する** (YAML の 1 行の中に複数行の字を書くため)。行の数は `noteLines` まで。
+        text: clampText(text.replace(/\\n/g, '\n'), LIMITS.noteLength).split('\n').slice(0, LIMITS.noteLines).join('\n'),
         written: tokens, bodyWritten,
       },
     };

@@ -78,3 +78,12 @@ test('refuses a dimension, box or arrow whose two points are the same', () => {
   const said = parseNoteLine('dim 5,5 5,5', null);
   expect(said.ok ? '' : said.error.message).toMatch(/2 点が同じ/);
 });
+
+describe('注釈の字の改行', () => {
+  test('breaks a text at \\n into lines and keeps up to 120 characters', () => {
+    const read = parseNoteLine('text 20,18', '1 行目\\n2 行目');
+    expect(read.ok && read.value.text).toBe('1 行目\n2 行目');
+    const long = parseNoteLine('text 20,18', 'あ'.repeat(200));
+    expect(long.ok && [...(long.value.text ?? '')].length).toBeLessThanOrEqual(121);
+  });
+});

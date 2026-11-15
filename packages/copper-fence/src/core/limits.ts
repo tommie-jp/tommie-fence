@@ -46,7 +46,9 @@ export const LIMITS = {
   titleLength: 60,
   /** 注釈の数と、1 つの字数。 */
   notes: 200,
-  noteLength: 60,
+  noteLength: 120,
+  /** 注釈の字の行の数 (`\\n` で改行した字)。 */
+  noteLines: 8,
   /** `- source` が図に書き出すフェンスの行数と、1 行の長さ (perfboard と同じ値)。 */
   sourceLines: 1000,
   sourceLineLength: 160,

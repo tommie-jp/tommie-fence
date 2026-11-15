@@ -15,7 +15,7 @@ import { renderLeadWires } from './render/leadWires.ts';
 import { WIRE_WIDTH, renderDeviceWires, renderWires } from './render/wires.ts';
 import { crossingPoints } from './render/crossings.ts';
 import { renderTitle } from './render/title.ts';
-import { noteBands, noteOverhang, renderNotes } from './render/notes.ts';
+import { NOTE_SIDE_PAD, noteBands, noteOverhang, renderNotes } from './render/notes.ts';
 import { hatchDefs } from './render/hatch.ts';
 import { legendColors, legendSize, paintedColors, renderLegend } from './render/legend.ts';
 import { boardRow, partsIcons, partsListSize, partsListing, renderPartsList } from './render/partsList.ts';
@@ -151,6 +151,11 @@ function editLayer(
  * フェンスの中身を図に変換する。**`sheets:` を書いたフェンスは枚ごとに描いて縦に積む**
  * (52 の docs/118。`sheets:` を書かない図は今までの 1 枚の描き方のまま)。
  */
+/** 機器のピンを指した字と、機器の右の縁の間 (px)。 */
+const NOTE_DEVICE_GAP = 8;
+/** `right` の寄せで、字が指し先から離れる量 (`render/notes.ts` の MARK_RADIUS + SIDE_GAP)。書き始めを機器の縁に合わせるのに引く。 */
+const NOTE_SIDE_OFFSET = NOTE_SIDE_PAD;
+
 export function renderPerfboard(input: string, options: RenderOptions = {}): RenderResult {
   return withCards(options.cards, () => renderAllSheets(input, options));
 }
@@ -233,9 +238,16 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
   // **寸法を組む前に解決する** — 基板の外に書いた注釈のぶんも場所を空けるので。
   const noteErrors: FenceError[] = [];
   const notes: ResolvedNote[] = [];
+  // **基板の外の機器のピン** (`PROBE.TX`) を指した注釈。機器を帯に並べたあとで点を決める。
+  const pinNotes: { readonly note: (typeof parsed.doc.notes)[number]; readonly device: string; readonly pin: string }[] = [];
   for (const note of parsed.doc.notes) {
     // 書き出しと部品表は基板の外に出すので、指し先の番地を持たない。帯は別に描く。
     if (note.kind === 'source' || note.kind === 'parts') continue;
+    const pinRef = /^([\w-]+)\.(\S+)$/.exec(note.from ?? '');
+    if (pinRef !== null && note.to === null && devices.some((device) => device.id === pinRef[1])) {
+      pinNotes.push({ note, device: pinRef[1] ?? '', pin: pinRef[2] ?? '' });
+      continue;
+    }
     const from = parseAddress(note.from ?? '', board);
     const to = note.to === null ? null : parseAddress(note.to, board);
     // 見るのは書かれた番地だけ (`to` を書かない印では `from` 1 つ)。
@@ -308,6 +320,20 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
     deviceBottomHeight: deviceBandHeight(devices, 'bottom'),
   });
   const placedDevices = layoutDevices(devices, layout, board);
+  // 機器のピンを指した注釈の点を決める。字は機器の右の縁の外から、ピンの足の先の高さに書く (ピンへ入る線に重ねない)。
+  for (const { note, device, pin } of pinNotes) {
+    if (note.kind === 'source' || note.kind === 'parts') continue;
+    const placedDevice = placedDevices.placed.find((one) => one.device.id === device);
+    const at = placedDevice?.pins.get(pin);
+    if (placedDevice === undefined || at === undefined) {
+      noteErrors.push(fenceError(`注釈の指し先 ${safeToken(note.from ?? '')}: ${safeToken(device)} にそのピンはありません`, note.line));
+      continue;
+    }
+    // 字は右へ伸ばす (`right` の寄せ) — 寄せを書かなければそうする。書き始めは機器の右の縁の外。
+    const look = { ...note.look, side: note.look.side ?? 'right' as const };
+    const textAt = { x: placedDevice.box.x + placedDevice.box.width + NOTE_DEVICE_GAP - NOTE_SIDE_OFFSET, y: at.y };
+    notes.push({ kind: note.kind, turn: note.turn, look, from: null, to: null, at, textAt, color: note.color, text: note.text, line: note.line });
+  }
   const cableErrors: FenceError[] = [];
   const cables = planCables(parsed.doc.cables, placement.parts, devices, placedDevices.placed, layout, cableErrors);
   const devicePins = new Map(devices.map((device) => [device.id, new Set(device.pins)]));
@@ -401,9 +427,7 @@ function renderOneSheet(input: string, options: RenderOptions): RenderResult & S
   // 配線や注釈も基板の外を指せるので、部品の胴と一緒に見る。
   const pointsOn = (on: typeof layout) => [
     ...wiring.wires.flatMap((wire) => [on.point(wire.from), on.point(wire.to)]),
-    ...notes.flatMap((note) => (note.to === null
-      ? [on.point(note.from)]
-      : [on.point(note.from), on.point(note.to)])),
+    ...notes.flatMap((note) => [note.from, note.to].flatMap((address) => (address === null ? [] : [on.point(address)]))),
   ];
   // 機器の箱も数える。**番地で置いた機器は帯の外**へ出るので、基板の寸法だけでは
   // 画布が足りない (黙って切れる)。
