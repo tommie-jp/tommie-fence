@@ -60,6 +60,13 @@ function lieFlat(part: PlacedPart, layout: Layout): PlacedPart {
   };
 }
 
+/** 寝かせた 2 ピンの間の穴の数。詰める相手でなければ null (`withinSpan` が触らない部品)。 */
+function flatSpan(part: PlacedPart): number | null {
+  if (part.kind !== 'two-lead' || part.pins.length !== 2) return null;
+  const [a, b] = part.pins.map((pin) => pin.address);
+  return a?.kind !== 'hole' || b?.kind !== 'hole' || a.row !== b.row ? null : Math.abs(b.col - a.col);
+}
+
 /**
  * 横に寝かせた 2 ピンの間を `maxSpan` 穴まで詰める。胴の大きさはこの範囲で変わらない
  * (リードが短くなるだけ) ので、絵の高さと行の送りも変わらない。番地は表の絵のためだけのもの。
@@ -214,11 +221,30 @@ export function partsIconsWithin(
   theme: RenderTheme,
   fits: (icons: readonly (PartsIcon | null)[]) => boolean,
 ): readonly (PartsIcon | null)[] {
-  const drawn = (maxSpan?: number) => parts.map((part) => partsIcon(part, layout, theme, maxSpan));
-  const natural = drawn();
+  // 詰め幅で絵が変わるのは、寝かせた 2 ピンのうち間がその幅より広い物だけ。**変わらない絵は描き直さない**。
+  // 前は詰め幅を 1 穴ずつ変えるたびに全部の部品を描き直し、しかも収まる幅が見つかっても最後の幅まで描いていた
+  // (列の数だけ、約 28 回。部品の多い図で 1 枚 50 ms 掛かっていた。52 の docs/162)。
+  const spans = parts.map((part) => flatSpan(lieFlat(part, layout)));
+  const memo = parts.map(() => new Map<number, PartsIcon | null>());
+  const iconAt = (index: number, maxSpan: number): PartsIcon | null => {
+    const part = parts[index];
+    if (part === undefined) return null;
+    const span = spans[index] ?? null;
+    const key = span === null || span <= maxSpan ? Infinity : maxSpan;
+    const known = memo[index]?.get(key);
+    if (known !== undefined || memo[index]?.has(key) === true) return known ?? null;
+    const icon = partsIcon(part, layout, theme, key);
+    memo[index]?.set(key, icon);
+    return icon;
+  };
+  const drawn = (maxSpan: number) => parts.map((_part, index) => iconAt(index, maxSpan));
+  const natural = drawn(Infinity);
   if (fits(natural)) return natural;
-  const spans = Array.from({ length: Math.max(0, layout.columns - MIN_ICON_SPAN + 1) }, (_, index) => layout.columns - index);
-  return spans.map((span) => drawn(span)).find(fits) ?? drawn(MIN_ICON_SPAN);
+  for (let span = layout.columns; span >= MIN_ICON_SPAN; span -= 1) {
+    const icons = drawn(span);
+    if (fits(icons)) return icons;
+  }
+  return drawn(MIN_ICON_SPAN);
 }
 
 /** 絵を縮める下限。これより小さいと刷り込みとピンの名前が読めない。 */
