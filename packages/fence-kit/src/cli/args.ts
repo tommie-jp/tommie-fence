@@ -24,6 +24,11 @@ export type CliCommand = {
   readonly flags: ReadonlySet<string>;
   /** `--lang ja|en`。図の字の言語 (YAML の `lang:` より先)。書かなければ null。 */
   readonly lang: Lang | null;
+  /**
+   * 値を取るオプション (`--cards <dir>` など。呼ぶ側が `values` で名前を渡した物だけ)。
+   * **書いたときだけ**この欄が付く — 値のオプションを持たないフェンスの結果の形は変えない。
+   */
+  readonly values?: ReadonlyMap<string, string>;
 };
 
 export type ArgsResult =
@@ -39,22 +44,23 @@ const invalid = (message: string): ArgsResult => ({ ok: false, message });
  * 引数を読む。`flags` にはそのフェンスが知っている真偽のオプションを渡す
  * (渡さなければ `--out` 以外のオプションは全部「知らない」)。
  */
-export function parseCliArgs(argv: readonly string[], flags: readonly string[] = []): ArgsResult {
-  const [written, ...rest] = argv;
+export function parseCliArgs(argv: readonly string[], flags: readonly string[] = [], values: readonly string[] = []): ArgsResult {
+  const [verb, ...rest] = argv;
 
   // 版を訊く指定は**先頭に書いたときだけ**。どこに書いても効くことにすると、
   // `check docs -v` が何も調べずに 0 で終わり、CI の関門が黙って通る
   // (`-v` を verbose のつもりで書くのはありがちな取り違え)。
-  if (written !== undefined && VERSION_FLAGS.includes(written)) {
+  if (verb !== undefined && VERSION_FLAGS.includes(verb)) {
     return { ok: true, value: { command: 'version', targets: [], outDir: null, flags: new Set(), lang: null } };
   }
-  if (written !== 'render' && written !== 'check') return invalid('render か check を指定します');
-  const command = written;
+  if (verb !== 'render' && verb !== 'check') return invalid('render か check を指定します');
+  const command = verb;
 
   const targets: string[] = [];
   const raised = new Set<string>();
   let outDir: string | null = null;
   let lang: Lang | null = null;
+  const written = new Map<string, string>();
 
   for (let index = 0; index < rest.length; index += 1) {
     const argument = rest[index] ?? '';
@@ -71,6 +77,11 @@ export function parseCliArgs(argv: readonly string[], flags: readonly string[] =
       if (!isLang(value)) return invalid('--lang の後ろに ja か en を書きます');
       lang = value;
       index += 1;
+    } else if (values.includes(argument)) {
+      const value = rest[index + 1];
+      if (value === undefined || value === '' || value.startsWith('-')) return invalid(`${argument} の後ろに値を書きます`);
+      written.set(argument, value);
+      index += 1;
     } else if (flags.includes(argument)) {
       raised.add(argument);
     } else if (argument.startsWith('-')) {
@@ -82,5 +93,8 @@ export function parseCliArgs(argv: readonly string[], flags: readonly string[] =
 
   if (targets.length === 0) return invalid('描画するファイルかディレクトリを指定します');
 
-  return { ok: true, value: { command, targets, outDir, flags: raised, lang } };
+  return {
+    ok: true,
+    value: { command, targets, outDir, flags: raised, lang, ...(written.size === 0 ? {} : { values: written }) },
+  };
 }

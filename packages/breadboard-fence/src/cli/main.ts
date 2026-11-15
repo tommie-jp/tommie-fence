@@ -4,7 +4,8 @@ import { join } from 'node:path';
 import { errorText, extractBreadboardFences, renderBreadboard } from '../core/index.ts';
 import type { FenceError } from '../core/index.ts';
 import { collectFiles, readInput, reportNetlist } from 'fence-kit/cli';
-import { outputStem } from 'fence-kit';
+import { outputStem, withCardsUsed } from 'fence-kit';
+import { cliCards, strictCardsMessage } from 'part-card/cli';
 import { STAMP_TEXT } from '../core/version.ts';
 import { USAGE, parseArgs } from './args.ts';
 
@@ -56,6 +57,11 @@ function main(argv: readonly string[]): number {
   }
 
   const { command, targets, outDir, lang } = parsed.value;
+  const cards = cliCards(parsed.value, (line) => console.error(line));
+  if (typeof cards === 'string') {
+    console.error(`${cards}\n\n${USAGE}`);
+    return 2;
+  }
   const langOption = lang === null ? {} : { lang };
   const writing = command === 'render';
   let failed = 0;
@@ -64,8 +70,14 @@ function main(argv: readonly string[]): number {
     if (writing && outDir) mkdirSync(outDir, { recursive: true });
 
     for (const target of targets.flatMap(collectFiles)) {
+      const table = cards.tableFor(target);
       for (const job of jobsFor(target, outDir)) {
-        const { svg, netlist, errors, notices } = renderBreadboard(job.source, { offset: job.offset, ...langOption });
+        const { value, used } = withCardsUsed(table, () => renderBreadboard(job.source, { offset: job.offset, ...langOption }));
+        const { svg, netlist, errors, notices } = value;
+        if (cards.strict && used.length > 0) {
+          console.error(strictCardsMessage(job.label, used));
+          failed += 1;
+        }
         if (!writing) {
           console.log(job.label);
         } else if (svg) {

@@ -5,7 +5,9 @@ import { extractBreadboardFences, scenesOfBreadboard } from 'breadboard-fence/sr
 import { extractCircuitFences, pinProbe, readPinProbe, scenesOfCircuit } from 'circuit-fence/src/core';
 import { texConsole } from 'circuit-fence/tex';
 import { extractPerfboardFences, scenesOfPerfboard } from 'perfboard-fence/src/core';
-import type { SceneFence } from 'fence-kit';
+import { withCards } from 'fence-kit';
+import type { CardTable, SceneFence } from 'fence-kit';
+import { cardIssueLines, findCardDir, loadCardDir } from 'part-card/node';
 import {
   checkFence, diffBaseline, formatBaselineSummary, formatFindingsJson, formatRow, formatSummary, formatTop,
   readAllowList, readBaselineRows, rowsOf, shrunkBaseline, summarize, topFigures,
@@ -49,12 +51,35 @@ function markdownFiles(target: string): string[] {
  * circuit のフェンスの幾何を起こす関数。`--tex` なら TeX にピンと胴の座標を問い合わせてから
  * 起こす (1 個 1 秒ほど)。問い合わせるものが無いフェンスは TeX を回さない。
  */
-async function makersFor(fence: FenceInput, tex: boolean): Promise<SceneMakers> {
-  if (!tex || fence.fence !== 'circuit') return MAKERS;
-  const probe = pinProbe(fence.source);
-  if (probe === null) return MAKERS;
+async function makersFor(fence: FenceInput, tex: boolean, cards: CardTable | undefined): Promise<SceneMakers> {
+  const makers: SceneMakers = cards === undefined ? MAKERS : {
+    circuit: (source) => scenesOfCircuit(source, null, cards),
+    breadboard: (source) => scenesOfBreadboard(source, { cards }),
+    perfboard: (source) => scenesOfPerfboard(source, { cards }),
+  };
+  if (!tex || fence.fence !== 'circuit') return makers;
+  const probe = pinProbe(fence.source, cards);
+  if (probe === null) return makers;
   const pins = readPinProbe(await texConsole(probe.tex), probe.keys);
-  return { ...MAKERS, circuit: (source) => scenesOfCircuit(source, pins) };
+  return { ...makers, circuit: (source) => scenesOfCircuit(source, pins, cards) };
+}
+
+/**
+ * 描くファイルの部品カード (52 の docs/158)。上へ辿って `.tommie-fence/parts/` を探し、置き場ごとに 1 度だけ読む。
+ * カードの言うことは置き場ごとに 1 度だけ標準エラーへ。
+ */
+function cardLoader(): (path: string) => CardTable | undefined {
+  const loaded = new Map<string, CardTable>();
+  return (path) => {
+    const dir = findCardDir(path);
+    if (dir === null) return undefined;
+    const known = loaded.get(dir);
+    if (known !== undefined) return known;
+    const read = loadCardDir(dir);
+    for (const line of cardIssueLines(read)) console.error(line);
+    loaded.set(dir, read.table);
+    return read.table;
+  };
 }
 
 /** JSON のファイルを読んで `read` に通す。読めなければ理由の文。 */
@@ -136,6 +161,7 @@ async function main(argv: readonly string[]): Promise<number> {
   let done = 0;
   const options = min === null ? {} : { min };
   const figures: FigureResult[] = [];
+  const cardsOf = cardLoader();
   for (const target of targets) {
     let files: string[];
     try {
@@ -146,12 +172,14 @@ async function main(argv: readonly string[]): Promise<number> {
     }
     for (const path of files) {
       const text = readFileSync(path, 'utf8');
+      const cards = cardsOf(path);
       const shown = relative(process.cwd(), path) || path;
       const fences: FenceInput[] = only.flatMap((fence) =>
         EXTRACT[fence](text).map((block) => ({ fence, source: block.source, line: block.line })));
       fences.sort((a, b) => a.line - b.line);
       for (const fence of fences) {
-        figures.push(...checkFence(shown, fence, await makersFor(fence, tex), options));
+        const makers = await makersFor(fence, tex, cards);
+        figures.push(...withCards(cards, () => checkFence(shown, fence, makers, options)));
         done += 1;
         if (tex && done % PROGRESS_EVERY === 0) console.error(`… ${done} fences`);
       }

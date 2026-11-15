@@ -5,11 +5,14 @@ import {
   STAMP_TEXT, attachSourceText, compileCircuit, embedFonts, extractCircuitFences, finishSvg, outputStem, shiftErrors,
   texFontFamilies,
 } from '../core/index.ts';
+import type { CompileResult } from '../core/index.ts';
 import { loadTexFonts, texFontDir } from '../host/texFonts.ts';
 import { renderTex } from '../host/texSvg.ts';
 import { standaloneTex } from '../core/tex/generate.ts';
 import { texErrors } from '../core/tex/texLog.ts';
 import { collectFiles, reportNetlist } from 'fence-kit/cli';
+import { withCardsUsed } from 'fence-kit';
+import { cliCards, strictCardsMessage } from 'part-card/cli';
 import { USAGE, embedsFonts, emitsTex, parseArgs } from './args.ts';
 import { checkHeading, reportErrors, reportNotices, reportProblem } from './report.ts';
 
@@ -124,8 +127,8 @@ function checkJob(job: Job): number {
 }
 
 /** 1 枚描く。図にできなかった数を返す。 */
-async function runJob(job: Job, withFonts: boolean): Promise<number> {
-  const { tex, lineMap, netlist, theme, width, notes, errors: raw, notices, debug } = compileCircuit(job.source);
+async function runJob(job: Job, withFonts: boolean, compiled: CompileResult): Promise<number> {
+  const { tex, lineMap, netlist, theme, width, notes, errors: raw, notices, debug } = compiled;
   const errors = shiftErrors(raw, job.line);
 
   if (tex === null) {
@@ -188,6 +191,11 @@ async function main(argv: readonly string[]): Promise<number> {
   }
 
   const { command, targets, outDir } = parsed.value;
+  const cards = cliCards(parsed.value, reportProblem);
+  if (typeof cards === 'string') {
+    reportProblem(`${cards}\n\n${USAGE}`);
+    return 2;
+  }
   const texOnly = emitsTex(parsed.value);
   const withFonts = embedsFonts(parsed.value);
   let failed = 0;
@@ -200,10 +208,18 @@ async function main(argv: readonly string[]): Promise<number> {
     const written = new Map<string, string>();
 
     for (const target of targets.flatMap(collectFiles)) {
+      const table = cards.tableFor(target);
+      /** 手元のカードを有効にして組む。`--strict-cards` なら、手元のカードの型番を使った図を誤りに数える。 */
+      const strictOf = (job: Job, used: readonly string[]): number => {
+        if (!cards.strict || used.length === 0) return 0;
+        reportProblem(strictCardsMessage(job.label, used));
+        return 1;
+      };
       for (const job of jobsFor(target, outDir)) {
         // check は何も書き出さないので、書き出し先の重なりは起きない。
         if (command === 'check') {
-          failed += checkJob(job);
+          const { value, used } = withCardsUsed(table, () => checkJob(job));
+          failed += value + strictOf(job, used);
           continue;
         }
 
@@ -215,7 +231,14 @@ async function main(argv: readonly string[]): Promise<number> {
           continue;
         }
         written.set(path, job.label);
-        failed += texOnly ? emitTex(job) : await runJob(job, withFonts);
+        if (texOnly) {
+          const { value, used } = withCardsUsed(table, () => emitTex(job));
+          failed += value + strictOf(job, used);
+        } else {
+          // TeX の描画は非同期なので、組むところ (compileCircuit) にだけカードを渡す。
+          const { value, used } = withCardsUsed(table, () => compileCircuit(job.source));
+          failed += strictOf(job, used) + await runJob(job, withFonts, value);
+        }
       }
     }
   } catch (error) {

@@ -1,0 +1,108 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/tommie-jp/tommie-fence/packages/part-card/schema/part-card.schema.json",
+  "title": "tommie-fence の部品カード",
+  "description": "1 部品 1 ファイル (*.part.yaml)。型番を書くと、ピンの名前がこのカードから引かれて図に刷られる。絵は持たず、姿はフェンスに既にある物から選ぶ。",
+  "type": "object",
+  "required": ["models", "package", "pins", "role", "source"],
+  "properties": {
+    "models": {
+      "description": "書ける型番。先頭が代表の綴り (お知らせと部品表に出る)。大文字小文字は問わない。board では型番がそのまま種類の名前になる (小文字と -)。",
+      "type": "array", "minItems": 1, "maxItems": 40,
+      "items": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_+\\-./#]*$" }
+    },
+    "package": {
+      "description": "フェンスの「種類/姿」の綴り。dipN (dip28/wide・dip8/sop)・sipN・transistor/to92・regulator/to220・device・board。",
+      "type": "string",
+      "pattern": "^((dip|sip)\\d+(/[a-z0-9-]+)?|(transistor|regulator)(/[a-z0-9-]+)?|device|board)$"
+    },
+    "pins": {
+      "description": "ピンの名前。dip は 1 番から番号順、sip は 1 番から、3 ピンは印字面を手前に左から、device は view: の向きで、board は 1 番から反時計回り。",
+      "type": "array", "minItems": 1,
+      "items": { "type": ["string", "number"] }
+    },
+    "role": { "description": "一言で言う働き (部品表に出る)。", "type": "string", "minLength": 1 },
+    "role-en": { "description": "働きの英語。無ければ英語の部品表にも role: が出る。", "type": "string" },
+    "note": { "description": "早見表に添える一言。", "type": "string" },
+    "source": { "description": "並びを確かめた資料 (データシートの名前・版・図の番号)。無いカードは読まない。", "type": "string", "minLength": 1 },
+    "spice": {
+      "description": "LTspice の模型 (今は形だけ見て、何にも使わない)。",
+      "type": "object", "additionalProperties": false, "required": ["model"],
+      "properties": {
+        "model": { "description": ".model / .subckt の名前。", "type": "string" },
+        "lib": { "description": "模型のファイル。省けば LTspice の標準ライブラリから引く。", "type": "string" },
+        "nodes": { "description": "模型の節点の順を、ピンの名前で。", "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "look": {
+      "description": "1 列のモジュールの基板の色。",
+      "type": "object", "additionalProperties": false, "required": ["body", "edge"],
+      "properties": {
+        "body": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "edge": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" }
+      }
+    },
+    "outline": {
+      "description": "ヘッダに載った基板と胴の外形 (mm)。",
+      "type": "object", "additionalProperties": false, "required": ["along", "across", "inset", "jack"],
+      "properties": {
+        "along": { "type": "number" }, "across": { "type": "number" }, "inset": { "type": "number" },
+        "jack": {
+          "type": "object", "additionalProperties": false, "required": ["along", "from", "to"],
+          "properties": { "along": { "type": "number" }, "from": { "type": "number" }, "to": { "type": "number" } }
+        },
+        "mark": { "type": "string" }
+      }
+    },
+    "smd": {
+      "description": "変換基板に載せる面実装の胴の寸法 (mm)。",
+      "type": "object", "additionalProperties": false, "required": ["length", "width", "span", "pitch", "lead", "mark"],
+      "properties": {
+        "length": { "type": "number" }, "width": { "type": "number" }, "span": { "type": "number" },
+        "pitch": { "type": "number" }, "lead": { "type": "number" },
+        "wide": {
+          "type": "object", "additionalProperties": false, "required": ["pin", "lead"],
+          "properties": { "pin": { "type": "number" }, "lead": { "type": "number" } }
+        },
+        "mark": { "type": "string" }
+      }
+    },
+    "ic": {
+      "description": "回路図の ic の箱の左右上下に並べるピンの名前。",
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "left": { "type": "array", "items": { "type": "string" } },
+        "right": { "type": "array", "items": { "type": "string" } },
+        "top": { "type": "array", "items": { "type": "string" } },
+        "bottom": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "kind": { "description": "3 ピンの部品の系統。回路図の記号と食い違ったら知らせる。", "enum": ["npn", "pnp", "nch-mos", "pch-mos", "nch-jfet", "pch-jfet", "regulator"] },
+    "case": { "description": "パッケージの名前 (TO-92MOD など)。書かなければ package: の姿から。", "type": "string" },
+    "view": { "description": "device のピンの並びを見る向き。", "type": "string" },
+    "product": { "description": "device の標準に決めた品 (販売元・型番)。", "type": "string" },
+    "name": { "description": "board の名前 (図に刷る)。書かなければ型番。", "type": "string" },
+    "chip": { "description": "board に載っているチップの名前。", "type": "string" },
+    "row-span": { "description": "board の列の間 (ピッチの数。Pico は 7)。", "type": "integer", "minimum": 2, "maximum": 20 },
+    "reach": { "description": "board の縁がピンの列から張り出す長さ (ピッチ)。既定 0.55。", "type": "number" },
+    "usb": { "description": "board の USB の口の種類。", "enum": ["micro-b", "usb-c", "usb-a"] },
+    "mark": { "description": "board のチップに刷る字。", "type": "string" },
+    "hdmi": { "type": "boolean" },
+    "wireless": { "type": "boolean" }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "package": { "pattern": "^(transistor|regulator)" } }, "required": ["package"] },
+      "then": { "required": ["kind"], "properties": { "pins": { "minItems": 3, "maxItems": 3 } } }
+    },
+    {
+      "if": { "properties": { "package": { "const": "device" } }, "required": ["package"] },
+      "then": { "required": ["view", "product"] }
+    },
+    {
+      "if": { "properties": { "package": { "const": "board" } }, "required": ["package"] },
+      "then": { "required": ["chip", "row-span", "usb"] }
+    }
+  ]
+}

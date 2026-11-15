@@ -23,6 +23,10 @@ const BY_KIND: Readonly<Record<PartCard['kind'], readonly string[]>> = {
   board: ['name', 'chip', 'row-span', 'reach', 'usb', 'mark', 'hdmi', 'wireless'],
 };
 
+/** 書ける欄 (JSON Schema と食い違わないことを `part-card` の試験が見張る)。 */
+export const cardFields = (): { readonly common: readonly string[]; readonly byKind: Readonly<Record<PartCard['kind'], readonly string[]>> } =>
+  ({ common: COMMON, byKind: BY_KIND });
+
 const DISCRETE_KINDS: readonly DiscreteKind[] = ['npn', 'pnp', 'nch-mos', 'pch-mos', 'nch-jfet', 'pch-jfet', 'regulator'];
 const USB_KINDS: readonly UsbKind[] = ['micro-b', 'usb-c', 'usb-a'];
 const DIP_RANGE = { min: 4, max: 40 } as const;

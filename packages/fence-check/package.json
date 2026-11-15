@@ -1,6 +1,6 @@
 {
   "name": "fence-check",
-  "description": "circuit / breadboard / perfboard の図の崩れ (重なり・横切り・十字・名札の衝突・ピンの上の線・溝の向こうの機器) を数える",
+  "description": "circuit / breadboard / perfboard の図の崩れ (重なり・横切り・十字・名札の衝突・ピンの上の線・溝の向こうの機器) を数える。部品カード (*.part.yaml) を確かめる part-card も持つ",
   "version": "0.1.0",
   "license": "MIT",
   "private": true,
@@ -13,7 +13,8 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "fence-check": "./dist/cli.cjs"
+    "fence-check": "./dist/cli.cjs",
+    "part-card": "./dist/part-card.cjs"
   },
   "scripts": {
     "build": "node esbuild.mjs",
@@ -29,8 +30,10 @@
     "circuit-fence": "*",
     "esbuild": "^0.28.2",
     "fence-kit": "*",
+    "part-card": "*",
     "perfboard-fence": "*",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "yaml": "^2.9.0"
   }
 }

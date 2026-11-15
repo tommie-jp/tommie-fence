@@ -65,3 +65,19 @@ describe('parseCliArgs', () => {
     });
   });
 });
+
+describe('value options', () => {
+  test('reads a value option only when the fence names it, and adds values only when written', () => {
+    expect(parseCliArgs(['check', 'a.md', '--cards', 'dir'], [], ['--cards'])).toEqual({
+      ok: true, value: { command: 'check', targets: ['a.md'], outDir: null, flags: new Set(), lang: null, values: new Map([['--cards', 'dir']]) },
+    });
+    expect(parseCliArgs(['check', 'a.md'], [], ['--cards'])).toEqual({
+      ok: true, value: { command: 'check', targets: ['a.md'], outDir: null, flags: new Set(), lang: null },
+    });
+    expect(parseCliArgs(['check', 'a.md', '--cards', 'dir'])).toEqual({ ok: false, message: '知らないオプションです: --cards' });
+  });
+
+  test('refuses a value option without its value', () => {
+    expect(parseCliArgs(['check', 'a.md', '--cards'], [], ['--cards'])).toEqual({ ok: false, message: '--cards の後ろに値を書きます' });
+  });
+});

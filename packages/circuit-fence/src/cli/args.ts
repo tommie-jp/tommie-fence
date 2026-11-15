@@ -4,6 +4,7 @@
  * このフェンスだけの決まり (`--emit-tex` と、check が何も書き出さないこと)。
  */
 import { parseCliArgs } from 'fence-kit/cli';
+import { CARD_FLAGS, CARD_USAGE, CARD_VALUES } from 'part-card/cli';
 import type { ArgsResult, CliCommand } from 'fence-kit/cli';
 
 export type { ArgsResult, CliCommand } from 'fence-kit/cli';
@@ -36,12 +37,14 @@ export const USAGE = `使い方:
   読めなかった行が 1 つでもあれば 0 以外で終わります。
 
   --version は処理系の版を出します。図の右下にも既定で刻みます (消すなら style: stamp: off)
-  (字は処理系が埋めるので、手で書いて古びることがありません)。`;
+  (字は処理系が埋めるので、手で書いて古びることがありません)。
+
+${CARD_USAGE}`;
 
 const invalid = (message: string): ArgsResult => ({ ok: false, message });
 
 export function parseArgs(argv: readonly string[]): ArgsResult {
-  const parsed = parseCliArgs(argv, [EMIT_TEX, EMBED_FONTS]);
+  const parsed = parseCliArgs(argv, [EMIT_TEX, EMBED_FONTS, ...CARD_FLAGS], CARD_VALUES);
   if (!parsed.ok) return parsed;
 
   // check は何も書き出さないので、書き出し先を受けると嘘になる。

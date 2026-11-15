@@ -4,6 +4,7 @@
  * 書ける物も注意書きもフェンスごとに違う。
  */
 import { parseCliArgs } from 'fence-kit/cli';
+import { CARD_FLAGS, CARD_USAGE, CARD_VALUES } from 'part-card/cli';
 import type { ArgsResult } from 'fence-kit/cli';
 
 export type { ArgsResult, CliCommand, CliVerb } from 'fence-kit/cli';
@@ -20,6 +21,8 @@ export const USAGE = `使い方:
   (読めない行が 1 つでもあれば終了コードは 1)。
 
   --version は処理系の版を出します。図の右下にも既定で刻みます (消すなら style: stamp: off)
-  (字は処理系が埋めるので、手で書いて古びることがありません)。`;
+  (字は処理系が埋めるので、手で書いて古びることがありません)。
 
-export const parseArgs = (argv: readonly string[]): ArgsResult => parseCliArgs(argv);
+${CARD_USAGE}`;
+
+export const parseArgs = (argv: readonly string[]): ArgsResult => parseCliArgs(argv, CARD_FLAGS, CARD_VALUES);
