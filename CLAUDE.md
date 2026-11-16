@@ -119,7 +119,9 @@ npm workspaces なので、`npm install` は直下で 1 回。lock も直下の 
 
 ```bash
 npm install
-npm run check                                # 全パッケージの型チェック + テスト
+npm run check                                # 全パッケージの型チェック + lint + テスト (と下の見張り)
+npm run lint                                 # ESLint (非同期の取りこぼし)。パッケージごとに順に回す
+npm run images                               # 例の PNG の追跡を、本文が指している物だけにそろえる
 npm run check --workspace=circuit-fence      # 1 つだけ
 npm run examples --workspace=circuit-fence   # 図を作り直す
 npm run build --workspace=playground         # 試す頁 (playground) を組む
@@ -143,6 +145,15 @@ make help             # 目標の一覧
 `.vsix` の新しさで決まる。印と作業場は `.build/` に置く (`.gitignore` 済み)。
 **作業場は依存を入れたまま残す** — 2 回目からの `npm install` が
 5.4 秒 → 0.6 秒になるため。1 GB 近くなるので、片付けるときは `make clean`。
+
+**見張りが 3 つある** (どれも `npm run check` と CI で回る。52 の docs/164):
+
+- **例の PNG は本文から指している物だけを追跡する** (`scripts/images.mjs`)。図の右下に版が入るので、
+  描き直すたびに PNG が全部変わり、差分で縮まずに履歴へ積もる。PNG は描き続けるが `.gitignore` 済みで、
+  README などが指している物だけを追跡する。PNG を新しく指したら `npm run images` で足す
+- **1 ファイル 800 行まで** (`scripts/file-size.mjs`)。越えたまま残っているファイルは表に今の行数を
+  上限として載せてあり、**それ以上は大きくしない**。足すなら先に割る
+- **ESLint は非同期の取りこぼしだけを見る** (`eslint.config.mjs`)。型チェックが見ている物は足さない
 
 ## 約束
 

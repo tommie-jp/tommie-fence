@@ -24,6 +24,10 @@
     "labels": "node scripts/fence-labels.mjs",
     "labels:check": "node --test scripts/fence-labels.test.mjs && node scripts/fence-labels.mjs --check",
     "gallery:check": "node --test scripts/gallery-index.test.mjs",
+    "images": "node scripts/images.mjs",
+    "images:check": "node --test scripts/images.test.mjs && node scripts/images.mjs --check",
+    "lint": "node scripts/lint.mjs",
+    "size:check": "node --test scripts/file-size.test.mjs && node scripts/file-size.mjs",
     "profile:build": "node scripts/profile/build.mjs",
     "profile:bundle": "node scripts/profile/bundle.mjs",
     "profile:tex": "node --experimental-transform-types --disable-warning=ExperimentalWarning scripts/profile/tex.mjs",
@@ -34,6 +38,10 @@
     "cards": "node packages/part-card/scripts/bake.mjs",
     "rows": "node packages/part-card/scripts/rows.mjs",
     "cards:check": "node packages/part-card/scripts/bake.mjs --check && node packages/part-card/scripts/rows.mjs --check",
-    "check": "npm run labels:check && npm run gallery:check && npm run cards:check && npm run typecheck && npm run test"
+    "check": "npm run labels:check && npm run gallery:check && npm run images:check && npm run size:check && npm run cards:check && npm run typecheck && npm run lint && npm run test"
+  },
+  "devDependencies": {
+    "eslint": "10.14.0",
+    "typescript-eslint": "8.72.1"
   }
 }

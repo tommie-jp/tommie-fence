@@ -22,6 +22,25 @@ jobs:
           node-version: 22
       - run: node --test scripts/fence-labels.test.mjs
       - run: node scripts/fence-labels.mjs --check
+      # 例の PNG は本文から指している物だけを追跡する (scripts/images.mjs)。
+      - run: node --test scripts/images.test.mjs
+      - run: node scripts/images.mjs --check
+      # 1 ファイル 800 行まで。越えたまま残るファイルは、それ以上大きくしない (scripts/file-size.mjs)。
+      - run: node --test scripts/file-size.test.mjs
+      - run: node scripts/file-size.mjs
+
+  # 型の情報を使う ESLint (非同期の取りこぼし)。パッケージごとに順に回す (scripts/lint.mjs)。
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run lint
 
   check:
     runs-on: ubuntu-latest

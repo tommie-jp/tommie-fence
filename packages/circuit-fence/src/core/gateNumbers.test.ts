@@ -90,8 +90,8 @@ describe('図', () => {
 });
 
 describe('お知らせ', () => {
-  test('tells a unit that does not exist, and a gate with the wrong number of inputs', async () => {
-    const result = await compileCircuit('parts:\n  U1E: nand 3,3 74HC00\n  U2A: nand 6,3 74HC10\n');
+  test('tells a unit that does not exist, and a gate with the wrong number of inputs', () => {
+    const result = compileCircuit('parts:\n  U1E: nand 3,3 74HC00\n  U2A: nand 6,3 74HC10\n');
     const said = result.notices.map((one) => one.message).join('\n');
 
     expect(said).toContain('U1E: 74HC00 の回路は A・B・C・D までです');

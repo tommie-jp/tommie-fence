@@ -8,17 +8,17 @@ import { compileCircuit } from './index.ts';
 const circuit = (...lines: string[]): string => ['parts:', ...lines].join('\n');
 
 describe('transformer-ct / transformer-ct2', () => {
-  test('declares its own shape only when the part is used', async () => {
-    const used = await compileCircuit(circuit('  T1: transformer-ct 6,5', '  T2: transformer-ct2 12,5'));
-    const unused = await compileCircuit(circuit('  T1: transformer 6,5'));
+  test('declares its own shape only when the part is used', () => {
+    const used = compileCircuit(circuit('  T1: transformer-ct 6,5', '  T2: transformer-ct2 12,5'));
+    const unused = compileCircuit(circuit('  T1: transformer 6,5'));
 
     expect(used.tex).toContain('\\pgfdeclareshape{xfmrct}');
     expect(used.tex).toContain('\\pgfdeclareshape{xfmrct2}');
     expect(unused.tex).not.toContain('xfmrct');
   });
 
-  test('wires the centre tap by name and reads it back in the netlist', async () => {
-    const result = await compileCircuit(circuit(
+  test('wires the centre tap by name and reads it back in the netlist', () => {
+    const result = compileCircuit(circuit(
       '  T1: transformer-ct2 6,5', '  G1: ground 9,8', '  G2: ground 3,8',
       'wires:', '  - T1.BCT -- 9,5', '  - 9,5 -- 9,8', '  - T1.ACT -- 3,5', '  - 3,5 -- 3,8',
     ));
@@ -27,8 +27,8 @@ describe('transformer-ct / transformer-ct2', () => {
     expect(result.netlist.flatMap((net) => net.refs)).toEqual(expect.arrayContaining(['T1.ACT', 'T1.BCT']));
   });
 
-  test('has no primary tap on transformer-ct, and says which pins it has', async () => {
-    const result = await compileCircuit(circuit('  T1: transformer-ct 6,5', 'wires:', '  - T1.ACT -- 3,5'));
+  test('has no primary tap on transformer-ct, and says which pins it has', () => {
+    const result = compileCircuit(circuit('  T1: transformer-ct 6,5', 'wires:', '  - T1.ACT -- 3,5'));
 
     expect(result.errors.map((one) => one.message).join('\n')).toMatch(/ACT.*(はありません)|ピン/);
   });

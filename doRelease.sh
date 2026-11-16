@@ -186,6 +186,8 @@ EOF
     git checkout -q -- "$f"
   done
   # 新しく増えた図は残す (untracked のまま add される)
+  # PNG は本文から指している物だけを追跡する (.gitignore 済み)。新しく指された PNG を足し、指されなくなった物を外す
+  node scripts/images.mjs >/dev/null || die "本文が指している PNG がありません (scripts/images.mjs)"
 
   echo "==> 試験"
   npm run -s check >/dev/null || die "npm run check が落ちました (コミットはしていません)"

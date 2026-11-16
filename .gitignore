@@ -47,3 +47,9 @@ test-results/
 packages/tommie-fence/media/
 packages/tommie-fence/syntaxes/
 packages/tommie-fence/schemas/
+
+# 例と文書の図の PNG は、本文 (Markdown) から指している物だけを追跡する (52 の docs/164)。
+# 図の右下に版が入るので、描き直すたびに PNG が全部変わり、差分で縮まずに履歴へ丸ごと積もる。
+# 指されている物は追跡したまま (無視の指定は追跡中のファイルに効かない)。過不足は scripts/images.mjs が直す。
+packages/*/examples/out/**/*.png
+packages/*/docs/out/**/*.png

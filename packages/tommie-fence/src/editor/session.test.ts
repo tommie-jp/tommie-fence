@@ -1106,10 +1106,10 @@ describe('欄 (インスペクタ)', () => {
     return { doc, host, session };
   };
 
-  test('sends what the fields hold when a part is picked', () => {
+  test('sends what the fields hold when a part is picked', async () => {
     const { host, session } = opened();
 
-    session.handle({ kind: 'select', what: 'part', id: 'R1' });
+    await session.handle({ kind: 'select', what: 'part', id: 'R1' });
 
     expect(last(host, 'fields')?.part).toMatchObject({ id: 'R1', type: 'resistor', value: '10k' });
   });
