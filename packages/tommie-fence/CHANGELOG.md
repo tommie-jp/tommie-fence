@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.106.1] - 2026-11-16
+
 ### Fixed
 
 - VS Code の中で部品カード (`.tommie-fence/parts/*.part.yaml`) を作る・保存する・消す・名前を変えたときも、
