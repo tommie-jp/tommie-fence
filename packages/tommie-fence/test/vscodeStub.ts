@@ -123,6 +123,10 @@ export const workspace = {
   },
   onDidGrantWorkspaceTrust: () => ({ dispose() {} }),
   onDidChangeWorkspaceFolders: () => ({ dispose() {} }),
+  onDidCreateFiles: () => ({ dispose() {} }),
+  onDidDeleteFiles: () => ({ dispose() {} }),
+  onDidRenameFiles: () => ({ dispose() {} }),
+  onDidSaveTextDocument: () => ({ dispose() {} }),
 };
 
 /** 日本語の画面を真似る (`test/l10nJa.ts`)。表に無い文は投げる。 */

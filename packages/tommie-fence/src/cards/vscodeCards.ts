@@ -13,6 +13,8 @@ import { setCardLookup } from './cardHooks.ts';
  */
 
 const GLOB = '**/.tommie-fence/parts/*.part.yaml';
+/** `GLOB` に当たるファイルか (VS Code の操作の知らせを振り分ける)。 */
+const isCardFile = (uri: vscode.Uri): boolean => /\/\.tommie-fence\/parts\/[^/]+\.part\.yaml$/.test(uri.path);
 const SOURCE = 'tommie-fence (部品カード)';
 /** Problems に並べるために探すカードの上限。 */
 const MAX_FILES = 2000;
@@ -64,6 +66,15 @@ export function registerCards(context: vscode.ExtensionContext, changed: () => v
     void publish();
   };
 
+  /**
+   * ファイルの見張りだけに頼らない。**VS Code は新しいファイルの「作成」の知らせを時々落とす**
+   * (落ちる回は 30 秒待っても来ない。後の「変更」は来る)。VS Code の中で作る・保存する・消す・
+   * 名前を変える操作は、その操作の知らせでも読み直す。
+   */
+  const reloadIfCard = (uris: readonly vscode.Uri[]): void => {
+    if (uris.some(isCardFile)) reload();
+  };
+
   const watcher = vscode.workspace.createFileSystemWatcher(GLOB);
   context.subscriptions.push(
     collection,
@@ -71,6 +82,10 @@ export function registerCards(context: vscode.ExtensionContext, changed: () => v
     watcher.onDidCreate(reload),
     watcher.onDidChange(reload),
     watcher.onDidDelete(reload),
+    vscode.workspace.onDidCreateFiles((event) => reloadIfCard(event.files)),
+    vscode.workspace.onDidDeleteFiles((event) => reloadIfCard(event.files)),
+    vscode.workspace.onDidRenameFiles((event) => reloadIfCard(event.files.flatMap((one) => [one.oldUri, one.newUri]))),
+    vscode.workspace.onDidSaveTextDocument((document) => reloadIfCard([document.uri])),
     vscode.workspace.onDidGrantWorkspaceTrust(reload),
     vscode.workspace.onDidChangeWorkspaceFolders(reload),
     { dispose: () => setCardLookup(null) },

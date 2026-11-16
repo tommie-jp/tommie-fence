@@ -144,6 +144,15 @@ const readsLocalCards: Case = {
     const broken = vscode.Uri.joinPath(parts, 'e2e-broken.part.yaml');
     const page = vscode.Uri.joinPath(folder.uri, 'e2e-cards.md');
     const write = (uri: vscode.Uri, text: string) => vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(text));
+    /**
+     * カードは利用者と同じく VS Code の操作で作る (エクスプローラの「新しいファイル」と同じ道)。
+     * `fs.writeFile` で作ると、VS Code が「作成」の知らせを時々落とし、CI で時々落ちた。
+     */
+    const create = async (uri: vscode.Uri, text: string): Promise<void> => {
+      const edit = new vscode.WorkspaceEdit();
+      edit.createFile(uri, { overwrite: true, contents: new TextEncoder().encode(text) });
+      expectThat(await vscode.workspace.applyEdit(edit), `${uri.path} を作れません`);
+    };
     try {
       await write(page, '# カード\n\n```bread\nparts:\n  U1: dip8 e10 XY1234\n```\n');
       const editor = await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(page));
@@ -151,12 +160,12 @@ const readsLocalCards: Case = {
         .some((one) => one.source === 'tommie-fence' && one.message.includes('XY1234'));
       await until(unknown, 'カードが無いうちは「表に無い」が載る');
 
-      await write(card, 'models: [XY1234]\npackage: dip8\nrole: 試験\npins: [1A, 1B, 1Y, GND, 2Y, 2A, 2B, VCC]\nsource: 試験\n');
+      await create(card, 'models: [XY1234]\npackage: dip8\nrole: 試験\npins: [1A, 1B, 1Y, GND, 2Y, 2A, 2B, VCC]\nsource: 試験\n');
       await until(() => !unknown(), 'カードを置くと「表に無い」が消える');
       const html = await vscode.commands.executeCommand<string>('markdown.api.render', editor.document);
       expectThat(html.includes('1Y'), 'プレビューにカードのピンの名前が出ていません');
 
-      await write(broken, 'models: [XB1]\npackage: dip8\nrole: r\npins: [A]\nsource: s\n');
+      await create(broken, 'models: [XB1]\npackage: dip8\nrole: r\npins: [A]\nsource: s\n');
       await until(() => vscode.languages.getDiagnostics(broken).some((one) => one.range.start.line === 3), '壊れたカードの 4 行目に Problems が載る');
     } finally {
       for (const uri of [card, broken, page]) await vscode.workspace.fs.delete(uri).then(undefined, () => undefined);
