@@ -8,12 +8,12 @@
 横断の作法は直下の [CLAUDE.md](../CLAUDE.md)、各パッケージの細かい約束は
 `packages/*/CLAUDE.md` が正で、ここはその地図に当たる。
 
-## 1. ひとことで言うと
+## 1. 9 つの関数と、それを呼ぶホスト
 
-**Markdown のフェンス (YAML に近い字) を受け取り、外部の資源を参照しない
-SVG と、読めなかった行の報告と、数で突き合わせられる結果 (ネットリスト・読み値)
-を返す純粋な関数が 9 つある。** VS Code 拡張・CLI・ブラウザの playground は、
-どれもこの 9 つの関数を呼ぶ宿主にすぎない。
+**フェンスは 9 つあり、どれも 1 つの純粋な関数で図になる。** 関数はフェンスの字
+(YAML に近い) を受け取り、3 つの物を返す。外の資源を参照しない SVG、読めなかった
+行の報告、数で突き合わせられる結果 (ネットリストや読み値) である。
+VS Code 拡張・CLI・ブラウザの playground は、どれもこの関数を呼ぶホストにすぎない。
 
 | フェンス | パッケージ | 描くもの | 描き方 |
 | --- | --- | --- | --- |
@@ -21,7 +21,7 @@ SVG と、読めなかった行の報告と、数で突き合わせられる結�
 | ` ```bread ` | breadboard-fence | ブレッドボードの実体配線図 | SVG を自分で組む |
 | ` ```perf ` | perfboard-fence | ユニバーサル基板の実体配線図 | SVG を自分で組む |
 | ` ```copper ` | copper-fence | 銅張り基板の寸法図 (mm) | SVG を自分で組む |
-| ` ```vna ` | vna-fence | NanoVNA の画面 | 模型を ABCD 行列で計算し、Touchstone を重ねる |
+| ` ```vna ` | vna-fence | NanoVNA の画面 | モデルを ABCD 行列で計算し、Touchstone を重ねる |
 | ` ```scope ` | scope-fence | オシロスコープの画面 | 理想の波を 8192 点で計算し、CSV を重ねる |
 | ` ```spectrum ` | spectrum-fence | スペクトラムの画面 | `device:` で FFT 型と掃引型を選ぶ |
 | ` ```graph ` | graph-fence | 教科書の x-y グラフ | 式か点列を破線、CSV を ○ |
@@ -39,7 +39,7 @@ skinparam componentStyle rectangle
 skinparam defaultFontName "Noto Sans CJK JP"
 left to right direction
 
-package "宿主 (コアを呼ぶ側)" {
+package "ホスト (コアを呼ぶ側)" {
   [tommie-fence\n(VS Code 拡張)] as ext
   [playground\n(GitHub Pages)] as pg
   [各コアの CLI\n(check / render)] as cli
@@ -162,17 +162,17 @@ stop
 @enduml
 ```
 
-この流れには守っている約束がいくつかある。
+この流れは次の約束を守っている。
 
 - **純粋関数。** 同じ入力なら同じ出力 (乱数は種を固定)。ファイルも DOM も触らない。
   外の物 (部品カード・`data:` のファイル) は引数か `withCards` で渡す
 - **図は必ず描く。** 読めなかった行は `errors` に入れ、図からは抜いて描き続ける
 - **報告は図の外。** `errorHtml` は SVG の外に置くので、書き出した SVG を貼っても
   エラーの帯は付いてこない
-- **行番号はフェンスの中で数える。** Markdown の行へずらすのは宿主
+- **行番号はフェンスの中で数える。** Markdown の行へずらすのはホスト
   (markdown-it の口が `offset` を渡す)
 - **エスケープはコアの中で済ませる。** VS Code のプレビューは返した HTML を
-  サニタイズしないので、宿主は字をそのまま貼るだけにしてある
+  サニタイズしないので、ホストは字をそのまま貼るだけにしてある
 
 ## 4. 盤面の図 (breadboard・perfboard)
 
@@ -204,8 +204,9 @@ d --> s
 ```
 
 - **盤面モデル** は「どの穴とどの穴が最初からつながっているか」を持つ。
-  ブレッドボードは 5 穴の列と電源レール、ユニバーサル基板は全穴が独立
-  (だから perfboard は盤面モデルを共有できず、共有したのは描画層の方)
+  ブレッドボードには 5 穴の列と電源レールがあり、ユニバーサル基板は全穴が独立
+  している。この違いのため、perfboard は breadboard の盤面モデル・配置・ルーターを
+  使えない。perfboard が breadboard から引き継いだのは描画層の方
 - **ネットリスト** は穴の導通・部品のピン・配線から `computeNets` が組む。
   これが `check` の出す「数で突き合わせられる結果」の中心
 - **Scene** (`fence-kit/scene.ts`) は胴の長方形・ピンの点・線の折れ線だけの幾何。
@@ -234,9 +235,9 @@ stop
 ```
 
 TeX → SVG は 1 枚 0.8 秒ほど掛かる。ところが markdown-it の差し替えは**同期**で
-返さなければならない。そこで circuit の口だけは「控えに無ければ順番に積んで
-『描いています』と下書きを返し、描き上がったらプレビューに描き直させる」という
-2 回描きの形になっている。
+返さなければならない。そこで circuit の口だけは 2 回に分けて描く。1 回目は、
+控えに図が無ければ描く順番に積み、下書きを返す。図が描き上がるとプレビューに
+描き直させ、2 回目で控えから図を出す。
 
 ```plantuml
 @startuml circuit-async
@@ -274,7 +275,7 @@ plug --> prev : 図
 @enduml
 ```
 
-押さえておく点:
+この段取りで押さえておく点は 5 つある。
 
 - **1 枚ずつ描く。** node-tikzjax はグローバルを書き換えるシングルトンなので、
   2 枚を同時に描くと壊れる。打ち切りも置かない (待つのをやめても WASM は止まらない)
@@ -289,8 +290,9 @@ plug --> prev : 図
 
 ## 6. 計器の画面とグラフ (vna・scope・spectrum・graph・logic)
 
-部品も配線も無いかわりに、**理想の模型を計算した線 (破線)** と
-**測ったファイルの線 (実線や ○)** を同じ画面に重ねる。vna の `renderVna` の流れ:
+計器の画面とグラフには部品も配線も無い。かわりに、**理想のモデルを計算した線 (破線)** と
+**測ったファイルの線 (実線や ○)** を同じ画面に重ねる。vna の `renderVna` を例にとると、
+流れは次のようになる。
 
 ```plantuml
 @startuml instrument-flow
@@ -299,9 +301,9 @@ start
 :parseFence\ndevice / sweep / dut / data / traces / markers;
 :機種の範囲を確かめる\n(範囲の外ならお知らせ);
 fork
-  :dut: の模型を計算\nABCD 行列 → S パラメータ\n(model/abcd.ts・sparams.ts);
+  :dut: のモデルを計算\nABCD 行列 → S パラメータ\n(model/abcd.ts・sparams.ts);
 fork again
-  :data: のファイルを読む\nTouchstone (.s1p / .s2p)\n(宿主が options.data で渡す);
+  :data: のファイルを読む\nTouchstone (.s1p / .s2p)\n(ホストが options.data で渡す);
 end fork
 :trace ごとに系列を作る\n(Log Mag・Smith・SWR・TDR);
 :マーカーの読み値を出す\n(readings);
@@ -312,7 +314,7 @@ stop
 @enduml
 ```
 
-- **`data:` の読み込みは宿主の仕事。** コアはファイルを開かない。拡張のデスクトップ版は
+- **`data:` の読み込みはホストの仕事。** コアはファイルを開かない。拡張のデスクトップ版は
   `.md` の隣のファイルを読んで渡し (`neighborData.ts`)、CLI は `fence-kit/cli` の
   `readNeighbor` で読む。web 版は読めない
 - scope と spectrum は **波の書き方を共有**する (fence-kit の `wave.ts`)。scope は
@@ -324,7 +326,7 @@ stop
 
 ## 7. VS Code 拡張 (packages/tommie-fence) への組み込み
 
-VS Code に出るのはこの 1 つだけで、中身はほぼ入口になっている。
+VS Code に入る拡張はこの 1 つだけ。中身のほとんどは入口で、図を描くのは 9 つのコアである。
 
 ```plantuml
 @startuml extension
@@ -377,9 +379,10 @@ ed --> shell
 残らず、クリック位置から番地を引けないので、掴ませるのはマップの方。
 
 殻 (fence-kit の `session.ts` と webview) は**フェンスの文法を知らない**。
-フェンスごとの違いは `FenceEditor` の実装 (`<パッケージ>/src/core/edit/fenceEditor.ts`)
-の向こうに閉じ込め、やり取りは文字列 (番地は書かれた綴りのまま) だけにしてある。
-だから同じ殻が 4 つのフェンスと playground と、VS Code の外の宿主で動く。
+フェンスごとの違いは、各コアの `src/core/edit/fenceEditor.ts` が実装する
+`FenceEditor` の向こうに閉じ込めてある。殻と `FenceEditor` は文字列だけでやり取りし、
+番地も書かれた綴りのまま渡す。だから同じ殻が、4 つのフェンスでも、playground でも、
+VS Code の外のホストでも動く。
 
 ```plantuml
 @startuml map-edit
@@ -416,13 +419,13 @@ end note
 - `.md` のタブそのものをマップにする**カスタムエディタ** (`editor/customEditor.ts`)。
   戻す・やり直すは VS Code に任せる
 
-**殻の型を変えたら 5 つの版を同じ日に切る。** `FenceEditor` などの型は
-`fence-kit/shell` の `.d.ts` と、4 つのコアの `./core` の `.d.ts` の両方に写されており、
-VS Code の外の宿主はこの 2 つを構造で突き合わせるため。
+**殻の型を変えたら、fence-kit と 4 つのコアの版を同じ日に切る。** `FenceEditor` などの
+型は、`fence-kit/shell` の `.d.ts` と、4 つのコアの `./core` の `.d.ts` の両方に写されている。
+VS Code の外のホストはこの 2 つを構造で突き合わせるので、片方だけ切るとホストの型チェックが割れる。
 
 ## 9. 部品カード
 
-部品の型番 → ピンの並び・パッケージ・役割の表は、TS のコードではなく
+型番から引く部品の表 (ピンの並び・パッケージ・役割) は、TS のコードではなく
 **`*.part.yaml` のファイル**に置いてある (fence-kit の `parts/` に約 160 枚、
 `boards/` `chips/` `discretes/` `modules/`)。
 
@@ -452,10 +455,10 @@ with --> core
 @enduml
 ```
 
-手元のカードを読むのはファイルを開ける宿主 (拡張のデスクトップ版と CLI) だけで、
-コアは `withCards` で渡された表を引くだけ。
+手元のカードを読めるのは、ファイルを開けるホスト (拡張のデスクトップ版と CLI) に限られる。
+コアはファイルを開かず、`withCards` で渡された表を引く。
 
-## 10. 同じコアを呼ぶほかの宿主
+## 10. 同じコアを呼ぶほかのホスト
 
 ### CLI (各コアの `src/cli/`)
 
@@ -464,9 +467,9 @@ circuit-fence check  <ファイルかディレクトリ...>   # 読めなかっ�
 circuit-fence render <ファイルかディレクトリ...> --out <出力先>   # .svg (circuit は .tex も) を書き出す
 ```
 
-`check` は**図を見なくても意図と突き合わせられる物** (ネットリスト・読み値・寸法)
-を出すのが役目で、AI が書いたフェンスを本文の表と数で合わせる段に使う。
-読めなかった行が 1 つでもあれば 0 以外で終わるので CI にも乗る。
+`check` の役目は、**図を見なくても意図と突き合わせられる物** (ネットリスト・読み値・寸法)
+を出すこと。AI が書いたフェンスを、本文の表と数で合わせるときに使う。
+読めなかった行が 1 つでもあれば 0 以外で終わるので、CI にも乗る。
 
 ### playground (packages/playground)
 
@@ -525,8 +528,9 @@ stop
 7. 同じ入力は同じ出力
 8. 早見表 (`docs/02-cheatsheet.md`) を必ず置き、例は教科書の題から起こす
 
-「図は必ず描く」「報告は図の外」「純粋関数」「`check` が数を出す」は、どれも
-2〜4 を実装の形にしたもの。
+§3 の約束と `check` は、この方針を実装に落としたものである。純粋関数は 7 を、
+`check` がネットリストや読み値を出すのは 4 を、エラーの帯に行番号と直し方を
+添えるのは 3 を形にしている。
 
 ## 13. 読み始める順
 
