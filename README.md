@@ -142,6 +142,10 @@ files read as documentation in the Markdown preview. Rebuild them with
 
 ## Development
 
+How it works (package layout, how one drawing is made, how the extension wires
+the fences together) is in [docs/architecture.ja.md](docs/architecture.ja.md),
+with PlantUML diagrams (in Japanese).
+
 One `npm install` at the root covers every package, and there is a single
 lockfile.
 

@@ -67,6 +67,10 @@
   目安 (実測)。**流儀そのものは [electronics-drawing-skills](https://github.com/tommie-jp/electronics-drawing-skills)
   に置き、ここには写さない** (2 か所にあると片方だけ直る)。**記号や字の大きさ・置き方を変えたら目安を測り直す**
 
+しくみの全体図 (パッケージの関係・描画の流れ・拡張と殻の組み込み) は
+[docs/architecture.ja.md](docs/architecture.ja.md) (PlantUML)。**パッケージの分け方や
+描画の流れを変えたら図も直す**。
+
 言語は別、作法は同じ。**先回りして共通化しない** — 実際に重複してから引き上げる。
 いま fence-kit にあるのは、実測で重複が確かめられたものだけ:
 改行を揃える処理、フェンスの取り出し (言語名は引数)、markup のエスケープと
@@ -196,7 +200,7 @@ make help             # 目標の一覧
    `git merge --ff-only` で main に取り込み、ブランチを消す。
 8. **コミットは conventional commits 形式**。
 9. **Markdown は lint を通す**:
-   `npx markdownlint-cli 'README.md' 'README.ja.md' 'CLAUDE.md' 'examples/*.md'`。
+   `npx markdownlint-cli 'README.md' 'README.ja.md' 'CLAUDE.md' 'docs/*.md' 'examples/*.md'`。
    パッケージの中は各パッケージの CLAUDE.md の指定に従う。
 10. **README は日本語が正、英語が追随**。節の構成は 2 本で 1 対 1 に保つ。
     **例外は拡張の README** (`packages/tommie-fence/README.md`) — 拡張ビューと

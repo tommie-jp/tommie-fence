@@ -124,6 +124,9 @@ tommie-fence
 
 ## 開発
 
+しくみ (パッケージの構成・1 枚の図ができるまで・拡張への組み込み) は
+[docs/architecture.ja.md](docs/architecture.ja.md) に PlantUML の図つきでまとめてある。
+
 `npm install` はリポジトリ直下で 1 回。lock も 1 本だけ。
 
 ```bash
